@@ -75,12 +75,8 @@ def detect_intent_texts(project_id, session_id, text, language_code):
         
         from google.cloud import dialogflow_v2 as dialogflow
         
-        # Değişiklik burada: Global endpoint kullanıyoruz (bölge belirtmeden)
-        # client_options = {"api_endpoint": "europe-west2-dialogflow.googleapis.com"}
-        # Global endpoint için client_options'ı kaldırıyoruz
-        
+        # Global endpoint kullanıyoruz (bölge belirtmeden)
         print("Creating session client...")
-        # session_client = dialogflow.SessionsClient(credentials=credentials, client_options=client_options)
         session_client = dialogflow.SessionsClient(credentials=credentials)
         
         print(f"Creating session path for project: {project_id}, session: {session_id}")
@@ -118,17 +114,28 @@ def webhook():
         return "Invalid token", 403
 
     print("Processing POST request (incoming message)")
+    
+    # Tüm request verilerini detaylı olarak loglayalım
+    print("Request Headers:")
+    print(dict(request.headers))
+    
+    print("Request Raw Data:")
+    print(request.get_data().decode('utf-8'))
+    
     data = request.get_json()
-    print("GELEN MESAJ:", json.dumps(data, indent=2))
+    print("GELEN MESAJ (JSON):", json.dumps(data, indent=2))
 
     try:
         # Check if this is a WhatsApp message
         if "entry" in data and data["entry"] and "changes" in data["entry"][0] and data["entry"][0]["changes"]:
             value = data["entry"][0]["changes"][0]["value"]
+            print("Value object:", json.dumps(value, indent=2))
             
             # Check if there are messages
             if "messages" in value and value["messages"]:
                 msg = value["messages"][0]
+                print("Message object:", json.dumps(msg, indent=2))
+                
                 sender = msg["from"]
                 print(f"Message from sender: {sender}")
                 
@@ -157,11 +164,14 @@ def webhook():
                     response = requests.post(url, headers=headers, json=payload)
                     print(f"WhatsApp API response: {response.status_code} - {response.text}")
                 else:
-                    print("Received message is not a text message")
+                    print("Received message is not a text message or text structure is different than expected")
+                    print("Full message structure:", json.dumps(msg, indent=2))
             else:
-                print("No messages in the request")
+                print("No messages in the request or messages structure is different than expected")
+                print("Full value structure:", json.dumps(value, indent=2))
         else:
-            print("Not a valid WhatsApp message format")
+            print("Not a valid WhatsApp message format or structure is different than expected")
+            print("Full request data:", json.dumps(data, indent=2))
 
     except Exception as e:
         print(f"HATA: {e}")
