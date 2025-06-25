@@ -74,9 +74,15 @@ def detect_intent_texts(project_id, session_id, text, language_code):
         print("Credentials loaded successfully")
         
         from google.cloud import dialogflow_v2 as dialogflow
-        client_options = {"api_endpoint": "europe-west2-dialogflow.googleapis.com"}
+        
+        # Değişiklik burada: Global endpoint kullanıyoruz (bölge belirtmeden)
+        # client_options = {"api_endpoint": "europe-west2-dialogflow.googleapis.com"}
+        # Global endpoint için client_options'ı kaldırıyoruz
+        
         print("Creating session client...")
-        session_client = dialogflow.SessionsClient(credentials=credentials, client_options=client_options)
+        # session_client = dialogflow.SessionsClient(credentials=credentials, client_options=client_options)
+        session_client = dialogflow.SessionsClient(credentials=credentials)
+        
         print(f"Creating session path for project: {project_id}, session: {session_id}")
         session = session_client.session_path(project_id, session_id)
         text_input = dialogflow.TextInput(text=text, language_code=language_code)
