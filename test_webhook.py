@@ -8,6 +8,7 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
+from main import get_gemini_response
 
 # .env dosyasından değişkenleri yükle
 load_dotenv()
@@ -145,11 +146,35 @@ def test_gemini_direct():
         print(f"Error testing Gemini AI: {e}")
         return False
 
+def test_product_lookup():
+    # Test user ID
+    user_id = "test_user_123"
+    
+    # Test queries
+    test_queries = [
+        "Embraco EMY 80 CLP",
+        "EMY 80 CLP",
+        "EMY 80",
+        "Was kostet Embraco EMY 80 CLP",
+        "Preis für EMY 80 CLP",
+        "Zeige mir Produkte von Embraco unter 100 Euro",
+        "Danfoss Produkte"
+    ]
+    
+    print("\nTesting product lookup functionality:")
+    print("-" * 50)
+    
+    for query in test_queries:
+        print(f"\nQuery: '{query}'")
+        response = get_gemini_response(user_id, query)
+        print(f"Response:\n{response}")
+        print("-" * 50)
+
 if __name__ == "__main__":
     print("WhatsApp Gemini Bot Test Tool")
     print("=========================\n")
     
-    choice = input("Ne yapmak istiyorsunuz?\n1. Webhook'a test mesajı gönder\n2. WhatsApp API ile doğrudan mesaj gönder\n3. Gemini AI'yi doğrudan test et\nSeçiminiz (1/2/3): ")
+    choice = input("Ne yapmak istiyorsunuz?\n1. Webhook'a test mesajı gönder\n2. WhatsApp API ile doğrudan mesaj gönder\n3. Gemini AI'yi doğrudan test et\n4. Ürün arama işlevini test et\nSeçiminiz (1/2/3/4): ")
     
     if choice == "1":
         webhook_url = input("Webhook URL'nizi girin (örn: https://durmusbaba.onrender.com/webhook): ")
@@ -188,6 +213,9 @@ if __name__ == "__main__":
             print("\n✅ Test başarılı! Gemini AI yanıt verdi.")
         else:
             print("\n❌ Test başarısız. Gemini AI yanıt vermedi veya bir hata oluştu.")
+    
+    elif choice == "4":
+        test_product_lookup()
     
     else:
         print("Geçersiz seçim.") 
