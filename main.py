@@ -77,6 +77,8 @@ def get_gemini_response(user_id, text):
             - WICHTIG: Verwende NIEMALS Platzhalter wie "[Bitte geben Sie den Preis ein]" oder ähnliches
             - Wenn du die Produktinformationen nicht kennst, sage ehrlich, dass du das Produkt nicht finden konntest
             - Verwende IMMER die tatsächlichen Daten aus der Datenbank, nicht Vorlagen oder Platzhalter
+            - Verwende NIEMALS eckige Klammern wie [Produktname] oder [Preis] in deinen Antworten
+            - Wenn du unsicher bist, ob ein Produkt existiert, sage, dass du es nicht finden konntest
             
             Kundenservice:
             - Bei Fragen zur Verfügbarkeit oder technischen Details können Kunden uns kontaktieren
@@ -135,10 +137,41 @@ def get_gemini_response(user_id, text):
         if product_info:
             # If product information is found, add it to the message
             text = f"{text}\n\nProduktinformationen: {product_info}"
+            
+            # For product queries, we'll handle the response directly to avoid template responses
+            # This is especially important for cases where Gemini might generate placeholders
+            return product_info
         
-        # Get response from Gemini
+        # For non-product queries, get response from Gemini
         response = CHAT_HISTORY[user_id].send_message(text)
         response_text = response.text
+        
+        # Check if the response contains template placeholders
+        placeholder_patterns = [
+            r'\[\s*[Bb]itte[^]]*\]',  # [Bitte geben Sie...]
+            r'\[\s*[Pp]lease[^]]*\]',  # [Please enter...]
+            r'\[\s*[Pp]rodukt[^]]*\]', # [Produktname]
+            r'\[\s*[Pp]reis[^]]*\]',   # [Preis]
+            r'\[\s*[Pp]rice[^]]*\]',   # [Price]
+            r'\[\s*[Vv]erfügbarkeit[^]]*\]', # [Verfügbarkeit]
+            r'\[\s*[Ss]tatus[^]]*\]',  # [Status]
+            r'\[\s*[Ll]ink[^]]*\]'     # [Link]
+        ]
+        
+        has_placeholders = any(re.search(pattern, response_text) for pattern in placeholder_patterns)
+        
+        if has_placeholders:
+            # If the response contains placeholders, return a generic response
+            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                # Turkish
+                return "Üzgünüm, bu ürün hakkında bilgi bulamadım. Lütfen ürün adını kontrol edin veya başka bir ürün sorun."
+            elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
+                # English
+                return "I'm sorry, I couldn't find information about this product. Please check the product name or ask about a different product."
+            else:
+                # Default to German
+                return "Es tut mir leid, ich konnte keine Informationen zu diesem Produkt finden. Bitte überprüfen Sie den Produktnamen oder fragen Sie nach einem anderen Produkt."
+        
         print(f"Gemini response: {response_text}")
         return response_text
     except Exception as e:
@@ -147,77 +180,139 @@ def get_gemini_response(user_id, text):
         return f"Üzgünüm, bir hata oluştu: {str(e)}"
 
 def find_exact_product(text):
-    """Find a product by its exact name in the database."""
+    """Find a product by its exact name or a close match in the database."""
     # Clean up the input text
     cleaned_text = text.strip()
     print(f"Looking for product matching: '{cleaned_text}'")
     
-    # First try exact match
+    # Normalize the query: remove spaces, convert to lowercase
+    query_normalized = cleaned_text.lower().replace(" ", "").replace("-", "")
+    
+    # 1. First try exact match (case-insensitive)
     for product in PRODUCT_DATABASE:
         if product['product_name'].lower() == cleaned_text.lower():
             print("Found exact match!")
             return product
     
-    # Try with spaces removed (for products like "DCB31" vs "DCB 31")
-    cleaned_no_spaces = cleaned_text.replace(" ", "")
+    # 2. Try with normalized names (remove spaces, hyphens)
     for product in PRODUCT_DATABASE:
-        product_no_spaces = product['product_name'].replace(" ", "")
-        if product_no_spaces.lower() == cleaned_no_spaces.lower():
-            print("Found match after removing spaces!")
+        product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
+        if product_normalized == query_normalized:
+            print(f"Found match after normalization! (removed spaces/hyphens)")
             return product
     
-    # If no exact match, try to find products where the name is contained in the query
-    # or the query contains the full product name
+    # 3. Check if query is fully contained in product name or vice versa
+    # This helps with queries like "DCB31" matching "DCB31 - Dijital"
     for product in PRODUCT_DATABASE:
-        product_name = product['product_name'].lower()
-        if product_name in cleaned_text.lower() or cleaned_text.lower() in product_name:
-            # Check if it's a substantial match (at least 80% of the product name)
-            if len(product_name) >= 5 and (
-                len(product_name) >= 0.8 * len(cleaned_text) or 
-                len(cleaned_text) >= 0.8 * len(product_name)
-            ):
-                print("Found substantial match!")
+        product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
+        if query_normalized in product_normalized or product_normalized in query_normalized:
+            # Ensure it's a substantial match (to avoid matching just "DCB" to all DCB products)
+            if len(query_normalized) >= 4 and len(product_normalized) >= 4:
+                print(f"Found containment match! Query contained in product or vice versa")
                 return product
     
-    # Extract potential model numbers from the text
-    # Look for patterns like "EMY 80 CLP", "NEK 6160 Z", etc.
+    # 4. Try to extract and match model numbers
+    # Many products have model numbers like "EMY 80 CLP", "NEK 6160 Z", "DCB31", etc.
+    model_patterns = [
+        r'([A-Za-z]{2,4})\s*[-]?\s*(\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "EMY 80 CLP", "DCB31", etc.
+        r'([A-Za-z]{2,4})\s*[-]?\s*(\d+[.]\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "FF 8.5 HBK"
+        r'([A-Za-z]{1,4})\s*[-]?\s*(\d+[A-Za-z]{0,2})\s*[-]?\s*(\d*[A-Za-z0-9]{0,6})'  # Matches "NJ 6220 Z", "S4G-12,2Y"
+    ]
+    
     potential_models = []
     
-    # Pattern for model numbers like "EMY 80 CLP" or "NEK 6160 Z"
-    pattern1 = r'([A-Za-z]{2,4})\s*(\d+)\s*([A-Za-z]{0,4})'  # Made \s* to handle cases with/without spaces
-    matches = re.findall(pattern1, cleaned_text)
-    for match in matches:
-        model = ''.join(match).strip()  # Join without spaces
-        if model:
-            potential_models.append(model)
-            # Also add version with spaces
-            model_with_spaces = ' '.join(match).strip()
-            if model_with_spaces != model:
+    # Extract potential model numbers using multiple patterns
+    for pattern in model_patterns:
+        matches = re.findall(pattern, cleaned_text, re.IGNORECASE)
+        for match in matches:
+            # Create variations of the model with and without spaces/hyphens
+            model_parts = [part for part in match if part]
+            
+            # Add joined version (no spaces)
+            model_no_spaces = ''.join(model_parts).strip()
+            if model_no_spaces and len(model_no_spaces) >= 3:
+                potential_models.append(model_no_spaces)
+            
+            # Add spaced version
+            model_with_spaces = ' '.join(model_parts).strip()
+            if model_with_spaces and model_with_spaces != model_no_spaces:
                 potential_models.append(model_with_spaces)
-    
-    print(f"Potential models: {potential_models}")
-    
-    # If we found potential model numbers, search for them in the database
-    if potential_models:
-        for model in potential_models:
-            for product in PRODUCT_DATABASE:
-                product_no_spaces = product['product_name'].replace(" ", "").lower()
-                model_no_spaces = model.replace(" ", "").lower()
                 
-                if model_no_spaces in product_no_spaces or model.lower() in product['product_name'].lower():
-                    print(f"Found match by model number: {model}")
-                    return product
+            # Add hyphenated version
+            model_with_hyphens = '-'.join(model_parts).strip()
+            if model_with_hyphens and model_with_hyphens != model_no_spaces and model_with_hyphens != model_with_spaces:
+                potential_models.append(model_with_hyphens)
     
-    # If still no match, try to match individual words that might be model numbers
+    # Also add the original query and its variations
     words = cleaned_text.split()
     for word in words:
-        if len(word) >= 2 and any(c.isdigit() for c in word):  # Changed from 3 to 2 to catch models like "DCB31"
+        if len(word) >= 3 and (any(c.isdigit() for c in word) or any(c.isupper() for c in word)):
+            potential_models.append(word)
+    
+    # Ensure we have unique models
+    potential_models = list(set(potential_models))
+    print(f"Potential models extracted: {potential_models}")
+    
+    # Search for these models in the product database
+    if potential_models:
+        for model in potential_models:
+            model_normalized = model.lower().replace(" ", "").replace("-", "")
+            for product in PRODUCT_DATABASE:
+                product_name = product['product_name']
+                product_normalized = product_name.lower().replace(" ", "").replace("-", "")
+                
+                # Check if model is in product name (normalized comparison)
+                if model_normalized in product_normalized:
+                    # For short models (like "DCB"), ensure it's a substantial match
+                    if len(model_normalized) <= 3:
+                        # For short models, check if it's followed by numbers in the product
+                        model_position = product_normalized.find(model_normalized)
+                        if model_position + len(model_normalized) < len(product_normalized):
+                            next_char = product_normalized[model_position + len(model_normalized)]
+                            if next_char.isdigit():
+                                print(f"Found match by model number (short): {model} in {product_name}")
+                                return product
+                    else:
+                        print(f"Found match by model number: {model} in {product_name}")
+                        return product
+    
+    # 5. Try to match individual words that might be model numbers or significant parts
+    words = cleaned_text.split()
+    for word in words:
+        word_normalized = word.lower().replace("-", "")
+        if len(word_normalized) >= 2:
+            # Skip common words that aren't likely to be model numbers
+            if word_normalized in ['preis', 'price', 'cost', 'fiyat', 'für', 'for', 'the', 'der', 'die', 'das', 'wie', 'viel', 'how', 'much', 'was', 'kostet', 'ist']:
+                continue
+                
             print(f"Checking word: {word}")
             for product in PRODUCT_DATABASE:
-                product_no_spaces = product['product_name'].replace(" ", "").lower()
-                if word.lower() in product_no_spaces or word.lower() in product['product_name'].lower():
-                    print(f"Found match by word: {word}")
+                product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
+                
+                # For model numbers, they should be exact matches or at boundaries
+                if (word_normalized in product_normalized and 
+                    (any(c.isdigit() for c in word_normalized) or len(word_normalized) >= 4)):
+                    print(f"Found match by significant word: {word} in {product['product_name']}")
                     return product
+    
+    # 6. For queries with multiple words, try to match based on brand + model pattern
+    if len(words) >= 2:
+        # Common brand names
+        brands = ['embraco', 'danfoss', 'bitzer', 'dcb', 'ebm', 'ebmpapst', 'york']
+        
+        # Check if first word is a brand and second might be a model
+        if words[0].lower() in brands and len(words) > 1:
+            brand = words[0].lower()
+            rest = ' '.join(words[1:])
+            
+            for product in PRODUCT_DATABASE:
+                if brand in product['product_name'].lower():
+                    # Check if any part of the rest matches in the product name
+                    rest_parts = rest.split()
+                    for part in rest_parts:
+                        if len(part) >= 2 and part.lower() in product['product_name'].lower():
+                            print(f"Found match by brand + model pattern: {brand} + {part}")
+                            return product
     
     print("No match found")
     return None
@@ -228,28 +323,42 @@ def check_product_query(text):
     
     # List of keywords that might indicate a product query
     product_keywords = [
-        "preis", "price", "fiyat", "kosten", "cost", "kompressor", "compressor", "kompresör",
-        "embraco", "bitzer", "danfoss", "kältetechnik", "cooling", "soğutma", "kühlsystem",
-        "kühlung", "refrigeration", "soğutucu", "produkt", "product", "ürün", "modell", "model",
-        "dcb", "dcb31", "dcb51", "dcb100" # Add specific product families
+        # Price-related keywords
+        "preis", "price", "fiyat", "kosten", "cost", "euro", "€", "eur",
+        # Product-related keywords
+        "kompressor", "compressor", "kompresör", "produkt", "product", "ürün", 
+        "modell", "model", "typ", "type", "artikel", "item",
+        # Brand names
+        "embraco", "bitzer", "danfoss", "secop", "copeland", "tecumseh", 
+        "dcb", "ebm", "ebmpapst", "york", "drc",
+        # Product categories
+        "kältetechnik", "cooling", "soğutma", "kühlsystem", "kühlung", 
+        "refrigeration", "soğutucu", "kühlschrank", "fridge", "freezer"
     ]
     
     # Check if the message contains any product keywords
     is_product_query = any(keyword in text_lower for keyword in product_keywords)
     
-    # Special handling for short product names (like DCB31, DCB51, etc.)
-    # These might not be caught by the regular keyword check
-    words = text_lower.split()
-    for word in words:
-        if (len(word) >= 3 and 
-            any(c.isdigit() for c in word) and 
-            any(c.isalpha() for c in word)):
-            is_product_query = True
-            break
+    # Special handling for queries that might be product names but don't contain keywords
+    if not is_product_query:
+        # Check for alphanumeric combinations that might be product codes
+        words = text_lower.split()
+        for word in words:
+            # Look for patterns like "DCB31", "EMY80", "NEK6160Z" - alphanumeric combinations
+            if (len(word) >= 3 and 
+                any(c.isdigit() for c in word) and 
+                any(c.isalpha() for c in word)):
+                is_product_query = True
+                break
+                
+        # Check for standalone numbers that might be product codes
+        if not is_product_query and len(words) <= 3:
+            # Short queries with numbers might be product codes
+            if any(any(c.isdigit() for c in word) for word in words):
+                is_product_query = True
     
     if is_product_query:
         # First try direct product lookup for the query
-        # This helps with simple queries like "DCB31" or "DCB 31"
         direct_product = find_exact_product(text)
         if direct_product:
             status_text = "auf Lager" if direct_product.get('status') == "instock" else "nicht auf Lager"
@@ -265,28 +374,8 @@ def check_product_query(text):
         if price_range_request:
             return price_range_request
         
-        # Search for product matches by name
-        matching_products = []
-        for product in PRODUCT_DATABASE:
-            product_name = product.get("product_name", "").lower()
-            product_no_spaces = product_name.replace(" ", "")
-            
-            # Check if any significant word from the query is in the product name
-            for term in text_lower.split():
-                term_no_spaces = term.replace(" ", "")
-                if ((len(term) > 2 and term in product_name) or 
-                    (len(term_no_spaces) > 2 and term_no_spaces in product_no_spaces)):
-                    matching_products.append(product)
-                    break
-                    
-            # Also check if the product model number is in the query
-            # Many products have model numbers like "EMY 80 CLP" or "NEK 6160 Z"
-            words = product_name.split()
-            for word in words:
-                if len(word) >= 2 and any(c.isdigit() for c in word) and word in text_lower:
-                    if product not in matching_products:
-                        matching_products.append(product)
-                        break
+        # If we get here, try to find similar products based on partial matches
+        matching_products = find_similar_products(text)
         
         # If we found matching products, return the information
         if matching_products:
@@ -302,6 +391,80 @@ def check_product_query(text):
                 return result
     
     return None
+
+def find_similar_products(text):
+    """Find products that are similar to the query text."""
+    text_lower = text.lower()
+    text_normalized = text_lower.replace(" ", "").replace("-", "")
+    
+    matching_products = []
+    
+    # 1. Extract potential model numbers or significant terms
+    potential_terms = []
+    
+    # Add all words from the query that might be significant
+    words = text_lower.split()
+    for word in words:
+        # Skip very short words and common words
+        if len(word) <= 2:
+            continue
+        if word in ['der', 'die', 'das', 'für', 'von', 'mit', 'und', 'oder', 'the', 'for', 'with', 'and', 'or']:
+            continue
+        potential_terms.append(word)
+    
+    # Add potential model numbers using regex patterns
+    model_patterns = [
+        r'([A-Za-z]{2,4})\s*[-]?\s*(\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "EMY 80 CLP", "DCB31"
+        r'([A-Za-z]{2,4})\s*[-]?\s*(\d+[.]\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "FF 8.5 HBK"
+    ]
+    
+    for pattern in model_patterns:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        for match in matches:
+            model_parts = [part for part in match if part]
+            model = ''.join(model_parts).strip()
+            if model and model not in potential_terms:
+                potential_terms.append(model)
+    
+    print(f"Potential terms for similarity search: {potential_terms}")
+    
+    # 2. Search for products matching these terms
+    for product in PRODUCT_DATABASE:
+        product_name = product['product_name'].lower()
+        product_normalized = product_name.replace(" ", "").replace("-", "")
+        
+        # Check if any significant term is in the product name
+        for term in potential_terms:
+            term_normalized = term.replace(" ", "").replace("-", "")
+            
+            if term_normalized in product_normalized:
+                if product not in matching_products:
+                    matching_products.append(product)
+                    break
+    
+    # 3. If we have too many matches, try to refine based on brand or category
+    if len(matching_products) > 10:
+        # Check if we can identify a brand in the query
+        brands = ['embraco', 'bitzer', 'danfoss', 'secop', 'copeland', 'tecumseh', 'dcb', 'ebm', 'ebmpapst', 'york', 'drc']
+        identified_brand = None
+        
+        for brand in brands:
+            if brand in text_lower:
+                identified_brand = brand
+                break
+        
+        # If we identified a brand, filter the results
+        if identified_brand:
+            filtered_products = []
+            for product in matching_products:
+                if identified_brand in product['product_name'].lower():
+                    filtered_products.append(product)
+            
+            # If we have filtered products, use them instead
+            if filtered_products:
+                matching_products = filtered_products
+    
+    return matching_products
 
 def check_category_request(text):
     """Check if the user is asking for products from a specific category or brand."""
