@@ -131,7 +131,7 @@ def get_gemini_response(user_id, text):
         return f"Üzgünüm, bir hata oluştu: {str(e)}"
 
 def find_exact_product(text):
-    """Find a product by its exact name in the database."""
+    """Find a product by its exact name or partial match in the database."""
     # Clean up the input text
     cleaned_text = text.strip()
     
@@ -140,41 +140,137 @@ def find_exact_product(text):
         if product['product_name'].lower() == cleaned_text.lower():
             return product
     
-    # If no exact match, try to find products where the name is contained in the query
-    # or the query contains the full product name
-    for product in PRODUCT_DATABASE:
-        product_name = product['product_name'].lower()
-        if product_name in cleaned_text.lower() or cleaned_text.lower() in product_name:
-            # Check if it's a substantial match (at least 80% of the product name)
-            if len(product_name) >= 5 and (
-                len(product_name) >= 0.8 * len(cleaned_text) or 
-                len(cleaned_text) >= 0.8 * len(product_name)
-            ):
+    # Preprocess the query to handle common variations
+    # Handle concatenated model numbers like "EMY80CLP" -> "EMY 80 CLP"
+    preprocessed_text = cleaned_text
+    
+    # Pattern for model numbers without spaces like "EMY80CLP" or "NEK6160Z"
+    pattern_nospace = r'([A-Za-z]{2,4})(\d+)([A-Za-z]{0,4})'
+    preprocessed_text = re.sub(pattern_nospace, r'\1 \2 \3', preprocessed_text)
+    
+    # If preprocessing changed the text, try exact match again with the preprocessed text
+    if preprocessed_text != cleaned_text:
+        for product in PRODUCT_DATABASE:
+            if product['product_name'].lower() == preprocessed_text.lower():
                 return product
     
-    # Extract potential model numbers from the text
-    # Look for patterns like "EMY 80 CLP", "NEK 6160 Z", etc.
-    potential_models = []
+    # If no exact match, try to find products where the name is contained in the query
+    # or the query contains the full product name
+    potential_matches = []
+    for product in PRODUCT_DATABASE:
+        product_name = product['product_name'].lower()
+        cleaned_text_lower = cleaned_text.lower()
+        preprocessed_text_lower = preprocessed_text.lower()
+        
+        # Calculate similarity score based on several factors
+        score = 0
+        
+        # Direct substring match
+        if product_name in cleaned_text_lower or cleaned_text_lower in product_name:
+            score += 10
+        elif product_name in preprocessed_text_lower or preprocessed_text_lower in product_name:
+            score += 8
+            
+        # Check if it's a substantial match (at least 80% of the product name)
+        if len(product_name) >= 5 and (
+            len(product_name) >= 0.8 * len(cleaned_text) or 
+            len(cleaned_text) >= 0.8 * len(product_name)
+        ):
+            score += 20
+        
+        # Word-level matching
+        product_words = product_name.split()
+        query_words = cleaned_text_lower.split()
+        preprocessed_words = preprocessed_text_lower.split()
+        
+        # Count matching words
+        matching_words = 0
+        for word in query_words:
+            if len(word) >= 3 and word in product_words:
+                matching_words += 1
+                score += 5
+        
+        # Also try with preprocessed words
+        for word in preprocessed_words:
+            if len(word) >= 3 and word in product_words and word not in query_words:
+                matching_words += 1
+                score += 4  # Slightly lower score for preprocessed matches
+        
+        # Bonus for matching a high percentage of words
+        if matching_words > 0:
+            word_match_percentage = matching_words / max(len(query_words), len(preprocessed_words))
+            score += int(word_match_percentage * 15)
+        
+        # Model number detection (higher weight)
+        # Pattern for model numbers like "EMY 80 CLP" or "NEK 6160 Z"
+        pattern1 = r'([A-Za-z]{2,4})\s+(\d+)\s*([A-Za-z]{0,4})'
+        product_models = re.findall(pattern1, product_name)
+        query_models = re.findall(pattern1, cleaned_text_lower)
+        preprocessed_models = re.findall(pattern1, preprocessed_text_lower)
+        
+        # Check for model number matches
+        all_query_models = query_models + preprocessed_models
+        for q_model in all_query_models:
+            q_model_str = ' '.join(q_model).strip()
+            for p_model in product_models:
+                p_model_str = ' '.join(p_model).strip()
+                if q_model_str == p_model_str:
+                    score += 30  # Exact model match is highly valuable
+                elif q_model_str in p_model_str or p_model_str in q_model_str:
+                    score += 20  # Partial model match
+        
+        # Check for individual number matches (like part numbers)
+        product_numbers = [word for word in product_words if any(c.isdigit() for c in word)]
+        query_numbers = [word for word in query_words if any(c.isdigit() for c in word)]
+        preprocessed_numbers = [word for word in preprocessed_words if any(c.isdigit() for c in word)]
+        
+        all_query_numbers = query_numbers + [n for n in preprocessed_numbers if n not in query_numbers]
+        for q_num in all_query_numbers:
+            if len(q_num) >= 2:  # Lowered threshold to catch more matches
+                for p_num in product_numbers:
+                    if q_num == p_num:
+                        score += 25  # Exact number match
+                    elif q_num in p_num or p_num in q_num:
+                        score += 15  # Partial number match
+        
+        # Brand name detection
+        brands = ["embraco", "bitzer", "danfoss", "secop", "copeland", "tecumseh", "ebm", "ebmpapst", "york"]
+        for brand in brands:
+            if brand in product_name:
+                if brand in cleaned_text_lower:
+                    score += 15  # Brand match is valuable
+                elif brand.lower() in cleaned_text_lower:  # Case insensitive match
+                    score += 10
+        
+        # Handle common misspellings of brands
+        misspellings = {
+            "embracco": "embraco", 
+            "embracho": "embraco",
+            "danfos": "danfoss", 
+            "danfoss": "danfoss",
+            "bitzer": "bitzer",
+            "bitser": "bitzer"
+        }
+        
+        for misspelled, correct in misspellings.items():
+            if misspelled in cleaned_text_lower and correct in product_name:
+                score += 8  # Misspelled brand still counts
+        
+        # If we have any kind of match, add to potential matches
+        if score > 0:
+            potential_matches.append((product, score))
     
-    # Pattern for model numbers like "EMY 80 CLP" or "NEK 6160 Z"
-    pattern1 = r'([A-Za-z]{2,4})\s+(\d+)\s*([A-Za-z]{0,4})'
-    matches = re.findall(pattern1, cleaned_text)
-    for match in matches:
-        model = ' '.join(match).strip()
-        if model:
-            potential_models.append(model)
+    # Sort by score (highest first)
+    potential_matches.sort(key=lambda x: x[1], reverse=True)
     
-    # If we found potential model numbers, search for them in the database
-    if potential_models:
-        for model in potential_models:
-            for product in PRODUCT_DATABASE:
-                if model.lower() in product['product_name'].lower():
-                    return product
+    # Return the best match if we have one with a minimum threshold
+    if potential_matches and potential_matches[0][1] >= 10:  # Minimum threshold
+        return potential_matches[0][0]
     
-    # If still no match, try to match individual words that might be model numbers
-    words = cleaned_text.split()
+    # If we still haven't found a match, try to match individual words that might be model numbers
+    words = cleaned_text.split() + preprocessed_text.split()
     for word in words:
-        if len(word) >= 3 and any(c.isdigit() for c in word):
+        if len(word) >= 2 and any(c.isdigit() for c in word):
             for product in PRODUCT_DATABASE:
                 if word in product['product_name']:
                     return product
@@ -192,10 +288,25 @@ def check_product_query(text):
         "kühlung", "refrigeration", "soğutucu", "produkt", "product", "ürün", "modell", "model"
     ]
     
+    # First, try to find an exact product match
+    exact_product = find_exact_product(text)
+    if exact_product:
+        # If we found an exact match, return its information directly
+        product_name = exact_product['product_name']
+        price = exact_product['price_eur']
+        
+        # Detect language to format response appropriately
+        if any(word in text_lower for word in ["fiyat", "fiyatı", "ne kadar", "kaç", "tl", "lira"]):
+            return f"{product_name} fiyatı: {price} EUR"
+        elif any(word in text_lower for word in ["price", "cost", "how much", "what is the price"]):
+            return f"The price of {product_name} is {price} EUR"
+        else:
+            return f"Der Preis für {product_name} beträgt {price} EUR"
+    
     # Check if the message contains any product keywords
     is_product_query = any(keyword in text_lower for keyword in product_keywords)
     
-    if is_product_query:
+    if is_product_query or len(text_lower) >= 3:  # Also check short queries that might be just product names
         # Check for category filtering requests
         category_request = check_category_request(text_lower)
         if category_request:
@@ -206,37 +317,81 @@ def check_product_query(text):
         if price_range_request:
             return price_range_request
         
-        # Search for product matches by name
+        # Search for product matches by name with scoring
         matching_products = []
         for product in PRODUCT_DATABASE:
             product_name = product.get("product_name", "").lower()
+            score = 0
             
-            # Check if any significant word from the query is in the product name
-            for term in text_lower.split():
-                if len(term) > 3 and term in product_name:
-                    matching_products.append(product)
-                    break
-                    
-            # Also check if the product model number is in the query
-            # Many products have model numbers like "EMY 80 CLP" or "NEK 6160 Z"
-            words = product_name.split()
-            for word in words:
-                if len(word) >= 2 and any(c.isdigit() for c in word) and word in text_lower:
-                    if product not in matching_products:
-                        matching_products.append(product)
-                        break
+            # Check for direct substring matches
+            if text_lower in product_name:
+                score += 15
+            elif any(term in product_name for term in text_lower.split() if len(term) > 3):
+                score += 10
+                
+            # Check for word-level matches
+            product_words = product_name.split()
+            query_words = text_lower.split()
+            
+            matching_words = sum(1 for word in query_words if len(word) > 2 and word in product_words)
+            score += matching_words * 5
+            
+            # Check for model number matches
+            product_numbers = [word for word in product_words if any(c.isdigit() for c in word)]
+            query_numbers = [word for word in query_words if any(c.isdigit() for c in word)]
+            
+            for q_num in query_numbers:
+                if len(q_num) >= 2 and any(q_num in p_num for p_num in product_numbers):
+                    score += 20
+            
+            # Brand detection
+            brands = ["embraco", "bitzer", "danfoss", "secop", "copeland", "tecumseh", "ebm", "ebmpapst", "york"]
+            for brand in brands:
+                if brand in product_name and brand in text_lower:
+                    score += 15
+            
+            # If we have any kind of match, add to potential matches
+            if score > 0:
+                matching_products.append((product, score))
+        
+        # Sort by score (highest first)
+        matching_products.sort(key=lambda x: x[1], reverse=True)
+        matching_products = [p[0] for p in matching_products]
         
         # If we found matching products, return the information
         if matching_products:
             if len(matching_products) > 5:
-                # If too many matches, return a summary
-                return f"Ich habe {len(matching_products)} passende Produkte gefunden. Bitte geben Sie spezifischere Details an."
-            else:
-                # Return detailed information for up to 5 products
-                result = ""
+                # If too many matches, return the top 5 most relevant
+                result = f"Ich habe {len(matching_products)} passende Produkte gefunden. Hier sind die relevantesten:"
                 for product in matching_products[:5]:
                     result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
                 return result
+            else:
+                # Return detailed information for up to 5 products
+                result = f"Ich habe {len(matching_products)} passende Produkte gefunden:"
+                for product in matching_products:
+                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
+                return result
+        else:
+            # Try a more lenient search if we didn't find anything
+            lenient_matches = []
+            for product in PRODUCT_DATABASE:
+                product_name = product.get("product_name", "").lower()
+                
+                # Check if any word from the query (min 2 chars) is in the product name
+                for term in text_lower.split():
+                    if len(term) >= 2 and term in product_name:
+                        lenient_matches.append(product)
+                        break
+            
+            if lenient_matches:
+                if len(lenient_matches) > 5:
+                    return f"Ich habe {len(lenient_matches)} mögliche Übereinstimmungen gefunden. Bitte geben Sie spezifischere Details an."
+                else:
+                    result = "Meinten Sie eines dieser Produkte?"
+                    for product in lenient_matches[:5]:
+                        result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
+                    return result
     
     return None
 
