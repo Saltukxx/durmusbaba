@@ -36,16 +36,19 @@ ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN", "EAA3oBtMMm1MBOxLs4OIoek3CnWSCdpfJ
 PHONE_NUMBER_ID = os.getenv("META_PHONE_NUMBER_ID", "670086282856954")
 VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN", "whatsapptoken")
 
-# Load e-commerce intents from JSON file
-def load_ecommerce_intents():
+# Load product database
+def load_product_database():
     try:
-        with open('ecommerce_intents.json', 'r', encoding='utf-8') as f:
-            return json.load(f)
+        with open('produkt_preise_db.json', 'r', encoding='utf-8') as f:
+            products = json.load(f)
+            print(f"Product database loaded successfully. {len(products)} products found.")
+            return products
     except Exception as e:
-        print(f"Error loading ecommerce intents: {e}")
-        return {"intents": [], "entities": []}
+        print(f"Error loading product database: {e}")
+        traceback.print_exc()
+        return []
 
-ECOMMERCE_DATA = load_ecommerce_intents()
+PRODUCT_DATABASE = load_product_database()
 
 def get_gemini_response(user_id, text):
     print(f"Getting Gemini response for text: '{text}'")
@@ -54,16 +57,27 @@ def get_gemini_response(user_id, text):
         if user_id not in CHAT_HISTORY:
             # Create a new chat session with system prompt in German
             system_prompt = """
-            Du bist ein Kundendienstassistent für einen E-Commerce-Shop. 
-            Du kannst über folgende Produktkategorien und Informationen helfen:
-            - Hemden (Preis: ab 199 TL)
-            - Hosen (Preis: ab 249 TL)
-            - Schuhe (Preis: ab 399 TL)
-            - Taschen (Preis: ab 299 TL)
-            - Accessoires (Preis: ab 49 TL)
+            Du bist ein Kundendienstassistent für durmusbaba.de, einen Online-Shop für Kältetechnik und Kompressoren. 
             
-            Alle Produkte sind auf Lager verfügbar. Sei immer höflich und hilfsbereit zu den Kunden.
-            Du kannst ihnen empfehlen, die Website zu besuchen oder den Kundenservice unter 0212 123 45 67 anzurufen, um eine Bestellung aufzugeben.
+            Über durmusbaba.de:
+            - durmusbaba.de ist ein spezialisierter Online-Shop für Kältetechnik, Kompressoren und Kühlsysteme
+            - Wir bieten Produkte von führenden Herstellern wie Embraco, Bitzer, Danfoss und anderen an
+            - Unser Hauptfokus liegt auf Kompressoren, Kühltechnik und Zubehör
+            
+            Produktinformationen:
+            - Wir haben eine große Auswahl an Kompressoren verschiedener Marken und Modelle
+            - Die Produktdatenbank enthält genaue Informationen zu Produktnamen und Preisen in Euro
+            - Alle Preise sind in Euro (EUR) angegeben
+            
+            Kundenservice:
+            - Bei Fragen zur Verfügbarkeit oder technischen Details können Kunden uns kontaktieren
+            - Wir bieten Beratung zur Auswahl des richtigen Kompressors oder Kühlsystems
+            - Für detaillierte technische Informationen können Kunden unsere Website besuchen oder uns direkt kontaktieren
+            
+            Bestellung und Versand:
+            - Bestellungen können über unsere Website durmusbaba.de aufgegeben werden
+            - Wir versenden in ganz Europa
+            - Bei Fragen zum Versand oder zur Lieferzeit stehen wir zur Verfügung
             
             WICHTIG: Erkenne die Sprache des Benutzers und antworte IMMER in derselben Sprache, in der der Benutzer dich anspricht.
             Wenn der Benutzer auf Türkisch schreibt, antworte auf Türkisch.
@@ -79,6 +93,12 @@ def get_gemini_response(user_id, text):
                 {"role": "model", "parts": [system_prompt]}
             ])
         
+        # Check if the message is a product query
+        product_info = check_product_query(text)
+        if product_info:
+            # If product information is found, add it to the message
+            text = f"{text}\n\nProduktinformationen: {product_info}"
+        
         # Get response from Gemini
         response = CHAT_HISTORY[user_id].send_message(text)
         response_text = response.text
@@ -89,9 +109,45 @@ def get_gemini_response(user_id, text):
         traceback.print_exc()
         return f"Üzgünüm, bir hata oluştu: {str(e)}"
 
+def check_product_query(text):
+    """Check if the user is asking about a specific product and return relevant information."""
+    text_lower = text.lower()
+    
+    # List of keywords that might indicate a product query
+    product_keywords = [
+        "preis", "price", "fiyat", "kosten", "cost", "kompressor", "compressor", "kompresör",
+        "embraco", "bitzer", "danfoss", "kältetechnik", "cooling", "soğutma", "kühlsystem",
+        "kühlung", "refrigeration", "soğutucu", "produkt", "product", "ürün", "modell", "model"
+    ]
+    
+    # Check if the message contains any product keywords
+    is_product_query = any(keyword in text_lower for keyword in product_keywords)
+    
+    if is_product_query:
+        # Search for product matches
+        matching_products = []
+        for product in PRODUCT_DATABASE:
+            product_name = product.get("product_name", "").lower()
+            if any(term.lower() in product_name for term in text_lower.split() if len(term) > 3):
+                matching_products.append(product)
+        
+        # If we found matching products, return the information
+        if matching_products:
+            if len(matching_products) > 5:
+                # If too many matches, return a summary
+                return f"Ich habe {len(matching_products)} passende Produkte gefunden. Bitte geben Sie spezifischere Details an."
+            else:
+                # Return detailed information for up to 5 products
+                result = ""
+                for product in matching_products[:5]:
+                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
+                return result
+    
+    return None
+
 @app.route("/", methods=["GET"])
 def home():
-    return "WhatsApp Gemini Bot is running. Use /webhook endpoint for WhatsApp API."
+    return "WhatsApp Gemini Bot for durmusbaba.de is running. Use /webhook endpoint for WhatsApp API."
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
