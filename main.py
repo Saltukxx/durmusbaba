@@ -16,12 +16,21 @@ app = Flask(__name__)
 
 # Configuration from environment variables
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-pro")
-LANGUAGE_CODE = os.getenv("LANGUAGE_CODE", "tr")
-CHAT_HISTORY = {}  # Store chat history for different users
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
+LANGUAGE_CODE = os.getenv("LANGUAGE_CODE", "de")
+
+# Debug environment variables
+print(f"GEMINI_API_KEY: {'*****' + GEMINI_API_KEY[-4:] if GEMINI_API_KEY else 'Not set'}")
+print(f"GEMINI_MODEL: {GEMINI_MODEL}")
+print(f"LANGUAGE_CODE: {LANGUAGE_CODE}")
 
 # Configure Gemini AI
-genai.configure(api_key=GEMINI_API_KEY)
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    print("WARNING: GEMINI_API_KEY is not set!")
+
+CHAT_HISTORY = {}  # Store chat history for different users
 
 ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN", "EAA3oBtMMm1MBOzkt67d9vFc6dk1LzeHKv8MWy2PZA4GP2QGCZCpEdOYcw9jxDOkwetRCZCAhC3jCZCBNO5TQZCfcUOZCeDfgwldYRVT4mjLwgPs4tJ7FhaC3AoWK3FaeoaTbTZCnRzpyRAIfdMGVqQSO2ZA1l9vngzK5s5P7zQIAGdT2Ve7jWhCLg9TyJGyo5rjhaJAMiPbMcdTUS7SvmzfEHkjR36fZCoQL5xV2EpS5UVmkJNyAZD")
 PHONE_NUMBER_ID = os.getenv("META_PHONE_NUMBER_ID", "670086282856954")
