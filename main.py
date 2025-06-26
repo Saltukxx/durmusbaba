@@ -34,6 +34,7 @@ else:
 CHAT_HISTORY = {}  # Store chat history for different users
 
 ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN", "EAA3oBtMMm1MBO2niZA7bevRovOyIS479wXtOg0C9pWztSvnPHJIuWpsrO6fCvB6DGcDH5LMZCqaMwGSmpXJIMPlNZCSZBbjmp7gOGZBl8iZBpMSzS6B1NgfBtwU2cVJBGOrARd9VF5VpQpi7vW5itTOPyUZCPgiXwXYZClX5O6q44kCd7zvw8hrGRzyltfiOhykywvqFsimKXdB4uFFUEt49UaZBSp6bkHEw7stAeUKIF")
+# Default phone number ID, but we'll use the one from the incoming message
 PHONE_NUMBER_ID = os.getenv("META_PHONE_NUMBER_ID", "725422520644608")
 VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN", "whatsapptoken")
 
@@ -954,6 +955,11 @@ def webhook():
             value = data["entry"][0]["changes"][0]["value"]
             print("Value object:", json.dumps(value, indent=2))
             
+            # Log metadata information if available
+            if "metadata" in value:
+                print("Metadata:", json.dumps(value["metadata"], indent=2))
+                print(f"Phone number ID from metadata: {value['metadata'].get('phone_number_id')}")
+            
             # Check if there are messages
             if "messages" in value and value["messages"]:
                 msg = value["messages"][0]
@@ -971,8 +977,12 @@ def webhook():
                     response_text = get_gemini_response(sender, message_text)
                     print(f"Response from Gemini: {response_text}")
                     
-                    # Send response back to WhatsApp
-                    url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
+                    # Extract the phone number ID from the incoming message
+                    recipient_phone_id = value.get("metadata", {}).get("phone_number_id", PHONE_NUMBER_ID)
+                    print(f"Using phone_number_id: {recipient_phone_id}")
+                    
+                    # Send response back to WhatsApp using the correct phone number ID
+                    url = f"https://graph.facebook.com/v18.0/{recipient_phone_id}/messages"
                     headers = {
                         "Authorization": f"Bearer {ACCESS_TOKEN}",
                         "Content-Type": "application/json"
