@@ -429,6 +429,23 @@ def find_exact_product(text):
                 continue
                 
             print(f"Checking word: {word}")
+            
+            # Special handling for numeric-only queries (like "9238")
+            if word.isdigit() and len(word) >= 4:
+                print(f"Numeric search for: {word}")
+                exact_numeric_matches = []
+                
+                for product in PRODUCT_DB:
+                    product_name = product['product_name']
+                    # Check if this exact number appears in the product name
+                    if word in product_name:
+                        exact_numeric_matches.append(product)
+                
+                # If we found exact numeric matches, return the first one
+                if exact_numeric_matches:
+                    print(f"Found exact numeric match: {exact_numeric_matches[0]['product_name']}")
+                    return exact_numeric_matches[0]
+            
             for product in PRODUCT_DB:
                 product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
                 
@@ -484,6 +501,10 @@ def check_product_query(text):
     
     # Special handling for queries that might be product names but don't contain keywords
     if not is_product_query:
+        # Check for pure numeric queries (like "9238")
+        if text_lower.strip().isdigit() and len(text_lower.strip()) >= 4:
+            is_product_query = True
+            
         # Check for alphanumeric combinations that might be product codes
         words = text_lower.split()
         for word in words:
@@ -624,6 +645,23 @@ def find_similar_products(text):
     text_normalized = text_lower.replace(" ", "").replace("-", "")
     
     matching_products = []
+    
+    # Special handling for numeric-only queries (like "9238")
+    if text.strip().isdigit() and len(text.strip()) >= 4:
+        numeric_query = text.strip()
+        print(f"Numeric search in similar products for: {numeric_query}")
+        
+        # First pass: look for exact numeric matches
+        for product in PRODUCT_DB:
+            product_name = product['product_name']
+            # Check if this exact number appears in the product name
+            if numeric_query in product_name:
+                matching_products.append(product)
+        
+        # If we found matches, return them
+        if matching_products:
+            print(f"Found {len(matching_products)} products with exact numeric match for {numeric_query}")
+            return matching_products
     
     # 1. Extract potential model numbers or significant terms
     potential_terms = []
