@@ -74,6 +74,9 @@ def get_gemini_response(user_id, text):
             - Wenn ein Benutzer nur den Produktnamen sendet, verstehe dies als Preisanfrage und gib den Preis zurück
             - Wenn du Produktinformationen bereitstellst, füge IMMER den Link zum Produkt hinzu
             - Gib auch die Verfügbarkeit des Produkts an (auf Lager oder nicht auf Lager)
+            - WICHTIG: Verwende NIEMALS Platzhalter wie "[Bitte geben Sie den Preis ein]" oder ähnliches
+            - Wenn du die Produktinformationen nicht kennst, sage ehrlich, dass du das Produkt nicht finden konntest
+            - Verwende IMMER die tatsächlichen Daten aus der Datenbank, nicht Vorlagen oder Platzhalter
             
             Kundenservice:
             - Bei Fragen zur Verfügbarkeit oder technischen Details können Kunden uns kontaktieren
@@ -147,10 +150,20 @@ def find_exact_product(text):
     """Find a product by its exact name in the database."""
     # Clean up the input text
     cleaned_text = text.strip()
+    print(f"Looking for product matching: '{cleaned_text}'")
     
     # First try exact match
     for product in PRODUCT_DATABASE:
         if product['product_name'].lower() == cleaned_text.lower():
+            print("Found exact match!")
+            return product
+    
+    # Try with spaces removed (for products like "DCB31" vs "DCB 31")
+    cleaned_no_spaces = cleaned_text.replace(" ", "")
+    for product in PRODUCT_DATABASE:
+        product_no_spaces = product['product_name'].replace(" ", "")
+        if product_no_spaces.lower() == cleaned_no_spaces.lower():
+            print("Found match after removing spaces!")
             return product
     
     # If no exact match, try to find products where the name is contained in the query
@@ -163,6 +176,7 @@ def find_exact_product(text):
                 len(product_name) >= 0.8 * len(cleaned_text) or 
                 len(cleaned_text) >= 0.8 * len(product_name)
             ):
+                print("Found substantial match!")
                 return product
     
     # Extract potential model numbers from the text
@@ -170,28 +184,42 @@ def find_exact_product(text):
     potential_models = []
     
     # Pattern for model numbers like "EMY 80 CLP" or "NEK 6160 Z"
-    pattern1 = r'([A-Za-z]{2,4})\s+(\d+)\s*([A-Za-z]{0,4})'
+    pattern1 = r'([A-Za-z]{2,4})\s*(\d+)\s*([A-Za-z]{0,4})'  # Made \s* to handle cases with/without spaces
     matches = re.findall(pattern1, cleaned_text)
     for match in matches:
-        model = ' '.join(match).strip()
+        model = ''.join(match).strip()  # Join without spaces
         if model:
             potential_models.append(model)
+            # Also add version with spaces
+            model_with_spaces = ' '.join(match).strip()
+            if model_with_spaces != model:
+                potential_models.append(model_with_spaces)
+    
+    print(f"Potential models: {potential_models}")
     
     # If we found potential model numbers, search for them in the database
     if potential_models:
         for model in potential_models:
             for product in PRODUCT_DATABASE:
-                if model.lower() in product['product_name'].lower():
+                product_no_spaces = product['product_name'].replace(" ", "").lower()
+                model_no_spaces = model.replace(" ", "").lower()
+                
+                if model_no_spaces in product_no_spaces or model.lower() in product['product_name'].lower():
+                    print(f"Found match by model number: {model}")
                     return product
     
     # If still no match, try to match individual words that might be model numbers
     words = cleaned_text.split()
     for word in words:
-        if len(word) >= 3 and any(c.isdigit() for c in word):
+        if len(word) >= 2 and any(c.isdigit() for c in word):  # Changed from 3 to 2 to catch models like "DCB31"
+            print(f"Checking word: {word}")
             for product in PRODUCT_DATABASE:
-                if word in product['product_name']:
+                product_no_spaces = product['product_name'].replace(" ", "").lower()
+                if word.lower() in product_no_spaces or word.lower() in product['product_name'].lower():
+                    print(f"Found match by word: {word}")
                     return product
     
+    print("No match found")
     return None
 
 def check_product_query(text):
@@ -202,13 +230,31 @@ def check_product_query(text):
     product_keywords = [
         "preis", "price", "fiyat", "kosten", "cost", "kompressor", "compressor", "kompresör",
         "embraco", "bitzer", "danfoss", "kältetechnik", "cooling", "soğutma", "kühlsystem",
-        "kühlung", "refrigeration", "soğutucu", "produkt", "product", "ürün", "modell", "model"
+        "kühlung", "refrigeration", "soğutucu", "produkt", "product", "ürün", "modell", "model",
+        "dcb", "dcb31", "dcb51", "dcb100" # Add specific product families
     ]
     
     # Check if the message contains any product keywords
     is_product_query = any(keyword in text_lower for keyword in product_keywords)
     
+    # Special handling for short product names (like DCB31, DCB51, etc.)
+    # These might not be caught by the regular keyword check
+    words = text_lower.split()
+    for word in words:
+        if (len(word) >= 3 and 
+            any(c.isdigit() for c in word) and 
+            any(c.isalpha() for c in word)):
+            is_product_query = True
+            break
+    
     if is_product_query:
+        # First try direct product lookup for the query
+        # This helps with simple queries like "DCB31" or "DCB 31"
+        direct_product = find_exact_product(text)
+        if direct_product:
+            status_text = "auf Lager" if direct_product.get('status') == "instock" else "nicht auf Lager"
+            return f"Produktinformation:\n- {direct_product['product_name']}: {direct_product['price_eur']} EUR | {status_text} | {direct_product.get('url', '')}"
+        
         # Check for category filtering requests
         category_request = check_category_request(text_lower)
         if category_request:
@@ -223,10 +269,13 @@ def check_product_query(text):
         matching_products = []
         for product in PRODUCT_DATABASE:
             product_name = product.get("product_name", "").lower()
+            product_no_spaces = product_name.replace(" ", "")
             
             # Check if any significant word from the query is in the product name
             for term in text_lower.split():
-                if len(term) > 3 and term in product_name:
+                term_no_spaces = term.replace(" ", "")
+                if ((len(term) > 2 and term in product_name) or 
+                    (len(term_no_spaces) > 2 and term_no_spaces in product_no_spaces)):
                     matching_products.append(product)
                     break
                     
