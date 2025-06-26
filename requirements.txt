@@ -3,6 +3,5 @@ requests
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
-google-api-python-client
-google-cloud-dialogflow
+google-generativeai>=0.3.0
 python-dotenv
