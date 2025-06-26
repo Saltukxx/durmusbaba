@@ -37,20 +37,19 @@ ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN", "EAA3oBtMMm1MBOxLs4OIoek3CnWSCdpfJ
 PHONE_NUMBER_ID = os.getenv("META_PHONE_NUMBER_ID", "670086282856954")
 VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN", "whatsapptoken")
 
-# Load product database
-def load_product_database():
+def load_product_db():
+    """Load product database from JSON file."""
     try:
-        # Changed from produkt_preise_db.json to durmusbaba_products_chatbot.json
         with open('durmusbaba_products_chatbot.json', 'r', encoding='utf-8') as f:
-            products = json.load(f)
-            print(f"Product database loaded successfully. {len(products)} products found.")
-            return products
+            data = json.load(f)
+            print(f"Loaded {len(data)} products from database.")
+            return data
     except Exception as e:
         print(f"Error loading product database: {e}")
-        traceback.print_exc()
         return []
 
-PRODUCT_DATABASE = load_product_database()
+# Load product database
+PRODUCT_DB = load_product_db()
 
 def get_gemini_response(user_id, text):
     print(f"Getting Gemini response for text: '{text}'")
@@ -59,7 +58,7 @@ def get_gemini_response(user_id, text):
         if user_id not in CHAT_HISTORY:
             # Create a new chat session with system prompt in German
             system_prompt = """
-            Du bist ein Kundendienstassistent für durmusbaba.de, einen Online-Shop für Kältetechnik und Kompressoren. 
+            Du bist ein freundlicher Kundendienstassistent für durmusbaba.de, einen Online-Shop für Kältetechnik und Kompressoren.
             
             Über durmusbaba.de:
             - durmusbaba.de ist ein spezialisierter Online-Shop für Kältetechnik, Kompressoren und Kühlsysteme
@@ -74,6 +73,7 @@ def get_gemini_response(user_id, text):
             - Wenn ein Benutzer nur den Produktnamen sendet, verstehe dies als Preisanfrage und gib den Preis zurück
             - Wenn du Produktinformationen bereitstellst, füge IMMER den Link zum Produkt hinzu
             - Gib auch die Verfügbarkeit des Produkts an (auf Lager oder nicht auf Lager)
+            - Bei nicht verfügbaren Produkten, erwähne immer, dass Sonderbestellungen per E-Mail oder Telefon möglich sind
             - WICHTIG: Verwende NIEMALS Platzhalter wie "[Bitte geben Sie den Preis ein]" oder ähnliches
             - Wenn du die Produktinformationen nicht kennst, sage ehrlich, dass du das Produkt nicht finden konntest
             - Verwende IMMER die tatsächlichen Daten aus der Datenbank, nicht Vorlagen oder Platzhalter
@@ -84,11 +84,21 @@ def get_gemini_response(user_id, text):
             - Bei Fragen zur Verfügbarkeit oder technischen Details können Kunden uns kontaktieren
             - Wir bieten Beratung zur Auswahl des richtigen Kompressors oder Kühlsystems
             - Für detaillierte technische Informationen können Kunden unsere Website besuchen oder uns direkt kontaktieren
+            - E-Mail-Kontakt: info@durmusbaba.com
+            - Telefonnummer: +4915228474571
+            - Reguläre Lieferzeit: 3-5 Werktage
             
             Bestellung und Versand:
             - Bestellungen können über unsere Website durmusbaba.de aufgegeben werden
             - Wir versenden in ganz Europa
+            - Die reguläre Lieferzeit beträgt 3-5 Werktage
             - Bei Fragen zum Versand oder zur Lieferzeit stehen wir zur Verfügung
+            
+            Stil und Ton:
+            - Sei freundlich, hilfsbereit und professionell
+            - Verwende gelegentlich passende Emojis, um deine Antworten freundlicher zu gestalten
+            - Stelle dich bei der ersten Nachricht eines Benutzers als KI-Kundendienstassistent für durmusbaba.de vor
+            - Sei präzise und informativ, aber halte einen freundlichen Ton
             
             WICHTIG: Erkenne die Sprache des Benutzers und antworte IMMER in derselben Sprache, in der der Benutzer dich anspricht.
             Wenn der Benutzer auf Türkisch schreibt, antworte auf Türkisch.
@@ -103,6 +113,10 @@ def get_gemini_response(user_id, text):
                 {"role": "user", "parts": ["Systeminfo"]},
                 {"role": "model", "parts": [system_prompt]}
             ])
+            
+            # Send a welcome message for first-time users
+            welcome_message = generate_welcome_message()
+            CHAT_HISTORY[user_id].send_message(welcome_message)
         
         # First check if the message is just a product name (direct product query)
         exact_product = find_exact_product(text)
@@ -123,14 +137,38 @@ def get_gemini_response(user_id, text):
             # Detect language and format response accordingly
             if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
                 # Turkish
-                return f"{product_name} fiyatı: {price} EUR\nDurum: {status_message}\nÜrün linki: {url}"
+                response = f"📦 {product_name} fiyatı: {price} EUR\n"
+                if status == "instock":
+                    response += f"✅ Durum: {status_message}\n"
+                    response += f"🚚 Teslimat süresi: 3-5 iş günü\n"
+                else:
+                    response += f"⚠️ Durum: {status_message}\n"
+                    response += f"📧 Özel sipariş için lütfen bizimle iletişime geçin: info@durmusbaba.com veya +4915228474571\n"
+                response += f"🔗 Ürün linki: {url}"
+                return response
             elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
                 # English
                 status_text = "in stock" if status == "instock" else "out of stock"
-                return f"The price of {product_name} is {price} EUR\nStatus: {status_text}\nProduct link: {url}"
+                response = f"📦 The price of {product_name} is {price} EUR\n"
+                if status == "instock":
+                    response += f"✅ Status: {status_text}\n"
+                    response += f"🚚 Delivery time: 3-5 business days\n"
+                else:
+                    response += f"⚠️ Status: {status_text}\n"
+                    response += f"📧 For special orders, please contact us at: info@durmusbaba.com or +4915228474571\n"
+                response += f"🔗 Product link: {url}"
+                return response
             else:
                 # Default to German
-                return f"Der Preis für {product_name} beträgt {price} EUR\nStatus: {status_message}\nProduktlink: {url}"
+                response = f"📦 Der Preis für {product_name} beträgt {price} EUR\n"
+                if status == "instock":
+                    response += f"✅ Status: {status_message}\n"
+                    response += f"🚚 Lieferzeit: 3-5 Werktage\n"
+                else:
+                    response += f"⚠️ Status: {status_message}\n"
+                    response += f"📧 Für Sonderbestellungen kontaktieren Sie uns bitte unter: info@durmusbaba.com oder +4915228474571\n"
+                response += f"🔗 Produktlink: {url}"
+                return response
         
         # Check if the message is a product query
         product_info = check_product_query(text)
@@ -141,6 +179,14 @@ def get_gemini_response(user_id, text):
             # For product queries, we'll handle the response directly to avoid template responses
             # This is especially important for cases where Gemini might generate placeholders
             return product_info
+        
+        # Check if this is a contact information request
+        if is_contact_request(text):
+            return generate_contact_info_response(text)
+        
+        # Check if this is a delivery time request
+        if is_delivery_request(text):
+            return generate_delivery_info_response(text)
         
         # For non-product queries, get response from Gemini
         response = CHAT_HISTORY[user_id].send_message(text)
@@ -164,13 +210,13 @@ def get_gemini_response(user_id, text):
             # If the response contains placeholders, return a generic response
             if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
                 # Turkish
-                return "Üzgünüm, bu ürün hakkında bilgi bulamadım. Lütfen ürün adını kontrol edin veya başka bir ürün sorun."
+                return "❓ Üzgünüm, bu ürün hakkında bilgi bulamadım. Lütfen ürün adını kontrol edin veya başka bir ürün sorun.\n\n📧 Yardıma ihtiyacınız varsa, lütfen bizimle iletişime geçin: info@durmusbaba.com veya +4915228474571"
             elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
                 # English
-                return "I'm sorry, I couldn't find information about this product. Please check the product name or ask about a different product."
+                return "❓ I'm sorry, I couldn't find information about this product. Please check the product name or ask about a different product.\n\n📧 If you need assistance, please contact us at: info@durmusbaba.com or +4915228474571"
             else:
                 # Default to German
-                return "Es tut mir leid, ich konnte keine Informationen zu diesem Produkt finden. Bitte überprüfen Sie den Produktnamen oder fragen Sie nach einem anderen Produkt."
+                return "❓ Es tut mir leid, ich konnte keine Informationen zu diesem Produkt finden. Bitte überprüfen Sie den Produktnamen oder fragen Sie nach einem anderen Produkt.\n\n📧 Wenn Sie Hilfe benötigen, kontaktieren Sie uns bitte unter: info@durmusbaba.com oder +4915228474571"
         
         print(f"Gemini response: {response_text}")
         return response_text
@@ -178,6 +224,102 @@ def get_gemini_response(user_id, text):
         print(f"Error in get_gemini_response: {e}")
         traceback.print_exc()
         return f"Üzgünüm, bir hata oluştu: {str(e)}"
+
+def is_contact_request(text):
+    """Check if the message is asking for contact information."""
+    text_lower = text.lower()
+    contact_keywords = [
+        'kontakt', 'contact', 'iletişim', 'email', 'e-mail', 'telefon', 'phone', 'nummer', 'number',
+        'anrufen', 'call', 'arama', 'erreichen', 'reach', 'ulaşmak'
+    ]
+    return any(keyword in text_lower for keyword in contact_keywords)
+
+def is_delivery_request(text):
+    """Check if the message is asking about delivery times."""
+    text_lower = text.lower()
+    delivery_keywords = [
+        'lieferzeit', 'delivery', 'teslimat', 'versand', 'shipping', 'kargo', 'wann', 'when', 'ne zaman',
+        'liefern', 'deliver', 'teslim', 'zustellung', 'delivery time', 'teslimat süresi'
+    ]
+    return any(keyword in text_lower for keyword in delivery_keywords)
+
+def generate_welcome_message():
+    """Generate a welcome message for first-time users."""
+    return """
+Hallo! 👋 Ich bin der KI-Kundendienstassistent für durmusbaba.de, Ihren Spezialisten für Kältetechnik und Kompressoren.
+
+Wie kann ich Ihnen heute helfen? Sie können mich nach Produkten, Preisen, Verfügbarkeit oder anderen Informationen fragen.
+
+Hello! 👋 I'm the AI customer service assistant for durmusbaba.de, your specialist for refrigeration technology and compressors.
+
+How can I help you today? You can ask me about products, prices, availability, or other information.
+
+Merhaba! 👋 Ben durmusbaba.de'nin yapay zeka müşteri hizmetleri asistanıyım, soğutma teknolojisi ve kompresörler konusunda uzmanınız.
+
+Bugün size nasıl yardımcı olabilirim? Bana ürünler, fiyatlar, stok durumu veya diğer bilgiler hakkında sorular sorabilirsiniz.
+"""
+
+def generate_contact_info_response(text):
+    """Generate a response with contact information."""
+    # Detect language
+    if any(word in text.lower() for word in ['iletişim', 'telefon', 'e-posta', 'email', 'mail', 'ulaşmak']):
+        # Turkish
+        return """📞 İletişim Bilgileri:
+
+📧 E-posta: info@durmusbaba.com
+📱 Telefon: +4915228474571
+🌐 Web sitesi: https://durmusbaba.de
+
+Size nasıl yardımcı olabiliriz? 😊"""
+    elif any(word in text.lower() for word in ['contact', 'phone', 'email', 'mail', 'reach']):
+        # English
+        return """📞 Contact Information:
+
+📧 Email: info@durmusbaba.com
+📱 Phone: +4915228474571
+🌐 Website: https://durmusbaba.de
+
+How can we assist you further? 😊"""
+    else:
+        # Default to German
+        return """📞 Kontaktinformationen:
+
+📧 E-Mail: info@durmusbaba.com
+📱 Telefon: +4915228474571
+🌐 Website: https://durmusbaba.de
+
+Wie können wir Ihnen weiterhelfen? 😊"""
+
+def generate_delivery_info_response(text):
+    """Generate a response with delivery information."""
+    # Detect language
+    if any(word in text.lower() for word in ['teslimat', 'kargo', 'ne zaman', 'teslim']):
+        # Turkish
+        return """🚚 Teslimat Bilgileri:
+
+📦 Standart teslimat süresi: 3-5 iş günü
+🇪🇺 Tüm Avrupa'ya gönderim yapıyoruz
+📧 Özel teslimat talepleri için lütfen bizimle iletişime geçin: info@durmusbaba.com
+
+Başka bir sorunuz var mı? 😊"""
+    elif any(word in text.lower() for word in ['delivery', 'shipping', 'when', 'ship']):
+        # English
+        return """🚚 Delivery Information:
+
+📦 Standard delivery time: 3-5 business days
+🇪🇺 We ship throughout Europe
+📧 For special delivery requests, please contact us at: info@durmusbaba.com
+
+Do you have any other questions? 😊"""
+    else:
+        # Default to German
+        return """🚚 Lieferinformationen:
+
+📦 Standardlieferzeit: 3-5 Werktage
+🇪🇺 Wir versenden in ganz Europa
+📧 Für besondere Lieferanfragen kontaktieren Sie uns bitte unter: info@durmusbaba.com
+
+Haben Sie weitere Fragen? 😊"""
 
 def find_exact_product(text):
     """Find a product by its exact name or a close match in the database."""
@@ -189,13 +331,13 @@ def find_exact_product(text):
     query_normalized = cleaned_text.lower().replace(" ", "").replace("-", "")
     
     # 1. First try exact match (case-insensitive)
-    for product in PRODUCT_DATABASE:
+    for product in PRODUCT_DB:
         if product['product_name'].lower() == cleaned_text.lower():
             print("Found exact match!")
             return product
     
     # 2. Try with normalized names (remove spaces, hyphens)
-    for product in PRODUCT_DATABASE:
+    for product in PRODUCT_DB:
         product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
         if product_normalized == query_normalized:
             print(f"Found match after normalization! (removed spaces/hyphens)")
@@ -203,7 +345,7 @@ def find_exact_product(text):
     
     # 3. Check if query is fully contained in product name or vice versa
     # This helps with queries like "DCB31" matching "DCB31 - Dijital"
-    for product in PRODUCT_DATABASE:
+    for product in PRODUCT_DB:
         product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
         if query_normalized in product_normalized or product_normalized in query_normalized:
             # Ensure it's a substantial match (to avoid matching just "DCB" to all DCB products)
@@ -257,7 +399,7 @@ def find_exact_product(text):
     if potential_models:
         for model in potential_models:
             model_normalized = model.lower().replace(" ", "").replace("-", "")
-            for product in PRODUCT_DATABASE:
+            for product in PRODUCT_DB:
                 product_name = product['product_name']
                 product_normalized = product_name.lower().replace(" ", "").replace("-", "")
                 
@@ -286,7 +428,7 @@ def find_exact_product(text):
                 continue
                 
             print(f"Checking word: {word}")
-            for product in PRODUCT_DATABASE:
+            for product in PRODUCT_DB:
                 product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
                 
                 # For model numbers, they should be exact matches or at boundaries
@@ -305,7 +447,7 @@ def find_exact_product(text):
             brand = words[0].lower()
             rest = ' '.join(words[1:])
             
-            for product in PRODUCT_DATABASE:
+            for product in PRODUCT_DB:
                 if brand in product['product_name'].lower():
                     # Check if any part of the rest matches in the product name
                     rest_parts = rest.split()
@@ -362,7 +504,42 @@ def check_product_query(text):
         direct_product = find_exact_product(text)
         if direct_product:
             status_text = "auf Lager" if direct_product.get('status') == "instock" else "nicht auf Lager"
-            return f"Produktinformation:\n- {direct_product['product_name']}: {direct_product['price_eur']} EUR | {status_text} | {direct_product.get('url', '')}"
+            status_emoji = "✅" if direct_product.get('status') == "instock" else "⚠️"
+            
+            # Detect language and format response
+            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                # Turkish
+                response = f"📦 Ürün Bilgileri:\n\n"
+                response += f"🔍 {direct_product['product_name']}\n"
+                response += f"💰 Fiyat: {direct_product['price_eur']} EUR\n"
+                response += f"{status_emoji} Durum: {status_text}\n"
+                if direct_product.get('status') != "instock":
+                    response += f"📧 Özel sipariş için lütfen bizimle iletişime geçin: info@durmusbaba.com\n"
+                response += f"🚚 Teslimat süresi: 3-5 iş günü\n"
+                response += f"🔗 Ürün linki: {direct_product.get('url', '')}"
+                return response
+            elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
+                # English
+                response = f"📦 Product Information:\n\n"
+                response += f"🔍 {direct_product['product_name']}\n"
+                response += f"💰 Price: {direct_product['price_eur']} EUR\n"
+                response += f"{status_emoji} Status: {status_text}\n"
+                if direct_product.get('status') != "instock":
+                    response += f"📧 For special orders, please contact us at: info@durmusbaba.com\n"
+                response += f"🚚 Delivery time: 3-5 business days\n"
+                response += f"🔗 Product link: {direct_product.get('url', '')}"
+                return response
+            else:
+                # Default to German
+                response = f"📦 Produktinformation:\n\n"
+                response += f"🔍 {direct_product['product_name']}\n"
+                response += f"💰 Preis: {direct_product['price_eur']} EUR\n"
+                response += f"{status_emoji} Status: {status_text}\n"
+                if direct_product.get('status') != "instock":
+                    response += f"📧 Für Sonderbestellungen kontaktieren Sie uns bitte unter: info@durmusbaba.com\n"
+                response += f"🚚 Lieferzeit: 3-5 Werktage\n"
+                response += f"🔗 Produktlink: {direct_product.get('url', '')}"
+                return response
         
         # Check for category filtering requests
         category_request = check_category_request(text_lower)
@@ -379,16 +556,64 @@ def check_product_query(text):
         
         # If we found matching products, return the information
         if matching_products:
+            # Detect language
+            is_turkish = any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
+            is_english = any(word in text.lower() for word in ['price', 'cost', 'how much', 'product', 'compressor'])
+            
             if len(matching_products) > 5:
                 # If too many matches, return a summary
-                return f"Ich habe {len(matching_products)} passende Produkte gefunden. Bitte geben Sie spezifischere Details an."
+                if is_turkish:
+                    result = f"🔍 {len(matching_products)} adet eşleşen ürün buldum. İşte ilk 5 tanesi:\n\n"
+                elif is_english:
+                    result = f"🔍 I found {len(matching_products)} matching products. Here are the first 5:\n\n"
+                else:
+                    result = f"🔍 Ich habe {len(matching_products)} passende Produkte gefunden. Hier sind die ersten 5:\n\n"
             else:
                 # Return detailed information for up to 5 products
-                result = ""
-                for product in matching_products[:5]:
-                    status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR | {status_text} | {product.get('url', '')}"
-                return result
+                if is_turkish:
+                    result = f"🔍 {len(matching_products)} adet eşleşen ürün buldum:\n\n"
+                elif is_english:
+                    result = f"🔍 I found {len(matching_products)} matching products:\n\n"
+                else:
+                    result = f"🔍 Ich habe {len(matching_products)} passende Produkte gefunden:\n\n"
+            
+            # Add product information
+            for i, product in enumerate(matching_products[:5]):
+                status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
+                if is_turkish:
+                    status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
+                elif is_english:
+                    status_text = "in stock" if product.get('status') == "instock" else "out of stock"
+                
+                status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
+                result += f"{i+1}. 📦 {product['product_name']}\n"
+                result += f"   💰 {product['price_eur']} EUR | {status_emoji} {status_text}\n"
+                result += f"   🔗 {product.get('url', '')}\n\n"
+            
+            # Add contact information for further assistance
+            if is_turkish:
+                result += "📞 Daha fazla yardıma ihtiyacınız varsa, lütfen bizimle iletişime geçin: info@durmusbaba.com"
+            elif is_english:
+                result += "📞 If you need further assistance, please contact us at: info@durmusbaba.com"
+            else:
+                result += "📞 Wenn Sie weitere Hilfe benötigen, kontaktieren Sie uns bitte unter: info@durmusbaba.com"
+                
+            return result
+        else:
+            # No matching products found
+            if is_contact_request(text):
+                return generate_contact_info_response(text)
+            
+            # Detect language for no results message
+            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör']):
+                # Turkish
+                return "❓ Üzgünüm, aradığınız ürünü bulamadım. Lütfen ürün adını kontrol edin veya başka bir ürün sorun.\n\n📧 Yardıma ihtiyacınız varsa, lütfen bizimle iletişime geçin: info@durmusbaba.com veya +4915228474571"
+            elif any(word in text.lower() for word in ['price', 'cost', 'how much', 'product', 'compressor']):
+                # English
+                return "❓ I'm sorry, I couldn't find the product you're looking for. Please check the product name or ask about a different product.\n\n📧 If you need assistance, please contact us at: info@durmusbaba.com or +4915228474571"
+            else:
+                # Default to German
+                return "❓ Es tut mir leid, ich konnte das gesuchte Produkt nicht finden. Bitte überprüfen Sie den Produktnamen oder fragen Sie nach einem anderen Produkt.\n\n📧 Wenn Sie Hilfe benötigen, kontaktieren Sie uns bitte unter: info@durmusbaba.com oder +4915228474571"
     
     return None
 
@@ -429,7 +654,7 @@ def find_similar_products(text):
     print(f"Potential terms for similarity search: {potential_terms}")
     
     # 2. Search for products matching these terms
-    for product in PRODUCT_DATABASE:
+    for product in PRODUCT_DB:
         product_name = product['product_name'].lower()
         product_normalized = product_name.replace(" ", "").replace("-", "")
         
@@ -467,83 +692,169 @@ def find_similar_products(text):
     return matching_products
 
 def check_category_request(text):
-    """Check if the user is asking for products from a specific category or brand."""
-    # Define common brands and categories
-    brands = {
-        "embraco": ["embraco"],
-        "bitzer": ["bitzer"],
-        "danfoss": ["danfoss"],
-        "secop": ["secop"],
-        "copeland": ["copeland"],
-        "tecumseh": ["tecumseh"]
-    }
-    
+    """Check if the user is asking for products in a specific category."""
+    # Define categories and their associated keywords
     categories = {
-        "kompressor": ["kompressor", "compressor", "kompresör"],
-        "kältetechnik": ["kältetechnik", "refrigeration", "soğutma"],
-        "ersatzteile": ["ersatzteile", "spare parts", "yedek parça"],
-        "zubehör": ["zubehör", "accessories", "aksesuar"]
+        "embraco": ["embraco", "embrac"],
+        "bitzer": ["bitzer", "bitze"],
+        "danfoss": ["danfoss", "danfo"],
+        "secop": ["secop", "seco"],
+        "copeland": ["copeland", "copel"],
+        "tecumseh": ["tecumseh", "tecum"],
+        "dcb": ["dcb"],
+        "ebm": ["ebm", "ebmpapst", "papst"],
+        "drc": ["drc"],
+        "york": ["york"]
     }
     
-    # Check for brand filtering
-    brand_filter = None
-    for brand, keywords in brands.items():
-        if any(keyword in text for keyword in keywords):
-            brand_filter = brand
-            break
-    
-    # Check for category filtering
-    category_filter = None
+    # Check if the text contains any category keywords
     for category, keywords in categories.items():
         if any(keyword in text for keyword in keywords):
-            category_filter = category
-            break
-    
-    # Apply filters if any
-    if brand_filter or category_filter:
-        matching_products = []
-        
-        for product in PRODUCT_DATABASE:
-            product_name = product.get("product_name", "").lower()
+            # Find products in this category
+            matching_products = []
+            for product in PRODUCT_DB:
+                product_name = product.get('product_name', '').lower()
+                if any(keyword in product_name for keyword in keywords):
+                    matching_products.append(product)
             
-            # Apply brand filter if present
-            if brand_filter and brand_filter not in product_name:
-                continue
+            if matching_products:
+                # Detect language
+                is_turkish = any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
+                is_english = any(word in text for word in ['price', 'cost', 'how much', 'product', 'compressor'])
                 
-            # Apply category filter if present
-            if category_filter and not any(keyword in product_name for keyword in categories.get(category_filter, [])):
-                continue
+                # Format the response based on language
+                if is_turkish:
+                    result = f"🏭 {category.upper()} kategorisinde {len(matching_products)} ürün buldum:\n\n"
+                elif is_english:
+                    result = f"🏭 I found {len(matching_products)} products in the {category.upper()} category:\n\n"
+                else:
+                    result = f"🏭 Ich habe {len(matching_products)} Produkte in der Kategorie {category.upper()} gefunden:\n\n"
                 
-            matching_products.append(product)
-        
-        # Return results
-        if matching_products:
-            if len(matching_products) > 10:
-                # If too many matches, return a summary with the first 5
-                result = f"Ich habe {len(matching_products)} passende Produkte gefunden. Hier sind die ersten 5:"
-                for product in matching_products[:5]:
+                # Show up to 5 products
+                for i, product in enumerate(matching_products[:5]):
                     status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR | {status_text} | {product.get('url', '')}"
+                    if is_turkish:
+                        status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
+                    elif is_english:
+                        status_text = "in stock" if product.get('status') == "instock" else "out of stock"
+                    
+                    status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
+                    result += f"{i+1}. 📦 {product['product_name']}\n"
+                    result += f"   💰 {product['price_eur']} EUR | {status_emoji} {status_text}\n"
+                    result += f"   🔗 {product.get('url', '')}\n\n"
+                
+                # Add more info message if there are more than 5 products
+                if len(matching_products) > 5:
+                    if is_turkish:
+                        result += f"... ve {len(matching_products) - 5} ürün daha.\n\n"
+                    elif is_english:
+                        result += f"... and {len(matching_products) - 5} more products.\n\n"
+                    else:
+                        result += f"... und {len(matching_products) - 5} weitere Produkte.\n\n"
+                
+                # Add contact information
+                if is_turkish:
+                    result += "📞 Daha fazla bilgi için bizimle iletişime geçin: info@durmusbaba.com"
+                elif is_english:
+                    result += "📞 For more information, please contact us at: info@durmusbaba.com"
+                else:
+                    result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
+                
                 return result
             else:
-                # Return detailed information for up to 10 products
-                result = f"Ich habe {len(matching_products)} passende Produkte gefunden:"
-                for product in matching_products[:10]:
-                    status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR | {status_text} | {product.get('url', '')}"
-                return result
-        else:
-            if brand_filter and category_filter:
-                return f"Ich konnte keine {category_filter} Produkte von {brand_filter} finden."
-            elif brand_filter:
-                return f"Ich konnte keine Produkte von {brand_filter} finden."
-            else:
-                return f"Ich konnte keine {category_filter} Produkte finden."
+                # No products found in this category
+                if any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                    # Turkish
+                    return f"❓ Üzgünüm, {category} kategorisinde ürün bulamadım. Lütfen başka bir kategori deneyin veya bizimle iletişime geçin: info@durmusbaba.com"
+                elif any(word in text for word in ['price', 'cost', 'how much']):
+                    # English
+                    return f"❓ I'm sorry, I couldn't find any products in the {category} category. Please try another category or contact us at: info@durmusbaba.com"
+                else:
+                    # Default to German
+                    return f"❓ Es tut mir leid, ich konnte keine Produkte in der Kategorie {category} finden. Bitte versuchen Sie eine andere Kategorie oder kontaktieren Sie uns unter: info@durmusbaba.com"
     
     return None
 
 def check_price_range_request(text):
     """Check if the user is asking for products in a specific price range."""
+    # Try to extract price range from the text
+    price_range = extract_price_range(text)
+    if price_range:
+        min_price, max_price = price_range
+        
+        # Find products in this price range
+        matching_products = []
+        for product in PRODUCT_DB:
+            try:
+                price = float(product.get('price_eur', '0').replace('€', '').replace(',', '.').strip())
+                if min_price <= price <= max_price:
+                    matching_products.append(product)
+            except (ValueError, TypeError):
+                continue
+        
+        if matching_products:
+            # Detect language
+            is_turkish = any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
+            is_english = any(word in text for word in ['price', 'cost', 'how much', 'product', 'compressor'])
+            
+            # Format the response based on language
+            if is_turkish:
+                result = f"💰 {min_price}-{max_price} EUR fiyat aralığında {len(matching_products)} ürün buldum:\n\n"
+            elif is_english:
+                result = f"💰 I found {len(matching_products)} products in the price range of {min_price}-{max_price} EUR:\n\n"
+            else:
+                result = f"💰 Ich habe {len(matching_products)} Produkte im Preisbereich von {min_price}-{max_price} EUR gefunden:\n\n"
+            
+            # Sort products by price
+            matching_products.sort(key=lambda x: float(x.get('price_eur', '0').replace('€', '').replace(',', '.').strip()))
+            
+            # Show up to 5 products
+            for i, product in enumerate(matching_products[:5]):
+                status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
+                if is_turkish:
+                    status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
+                elif is_english:
+                    status_text = "in stock" if product.get('status') == "instock" else "out of stock"
+                
+                status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
+                result += f"{i+1}. 📦 {product['product_name']}\n"
+                result += f"   💰 {product['price_eur']} EUR | {status_emoji} {status_text}\n"
+                result += f"   🔗 {product.get('url', '')}\n\n"
+            
+            # Add more info message if there are more than 5 products
+            if len(matching_products) > 5:
+                if is_turkish:
+                    result += f"... ve {len(matching_products) - 5} ürün daha.\n\n"
+                elif is_english:
+                    result += f"... and {len(matching_products) - 5} more products.\n\n"
+                else:
+                    result += f"... und {len(matching_products) - 5} weitere Produkte.\n\n"
+            
+            # Add contact information
+            if is_turkish:
+                result += "📞 Daha fazla bilgi için bizimle iletişime geçin: info@durmusbaba.com"
+            elif is_english:
+                result += "📞 For more information, please contact us at: info@durmusbaba.com"
+            else:
+                result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
+            
+            return result
+        else:
+            # No products found in this price range
+            if any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                # Turkish
+                return f"❓ Üzgünüm, {min_price}-{max_price} EUR fiyat aralığında ürün bulamadım. Lütfen farklı bir fiyat aralığı deneyin veya bizimle iletişime geçin: info@durmusbaba.com"
+            elif any(word in text for word in ['price', 'cost', 'how much']):
+                # English
+                return f"❓ I'm sorry, I couldn't find any products in the price range of {min_price}-{max_price} EUR. Please try a different price range or contact us at: info@durmusbaba.com"
+            else:
+                # Default to German
+                return f"❓ Es tut mir leid, ich konnte keine Produkte im Preisbereich von {min_price}-{max_price} EUR finden. Bitte versuchen Sie einen anderen Preisbereich oder kontaktieren Sie uns unter: info@durmusbaba.com"
+    
+    return None
+
+def extract_price_range(text):
+    """Extract price range from text."""
     import re
     
     # Define patterns for price range queries in different languages
@@ -589,8 +900,10 @@ def check_price_range_request(text):
                 # Determine if it's a min or max constraint
                 if any(keyword in text for keyword in ['unter', 'bis zu', 'weniger', 'under', 'up to', 'less than', 'altında', 'kadar', 'az']):
                     max_price = price
+                    min_price = 0  # Set a default minimum
                 elif any(keyword in text for keyword in ['über', 'mehr', 'over', 'more than', 'üzerinde', 'fazla']):
                     min_price = price
+                    max_price = 10000  # Set a default maximum
             else:
                 # Range patterns with two values
                 min_price = int(match.group(1))
@@ -598,48 +911,9 @@ def check_price_range_request(text):
             
             break
     
-    # If we found a price range, filter products
-    if min_price is not None or max_price is not None:
-        matching_products = []
-        
-        for product in PRODUCT_DATABASE:
-            price = product.get("price_eur", 0)
-            if isinstance(price, str):
-                price = float(price.replace('€', '').replace(',', '.').strip())
-            
-            # Apply min price filter if present
-            if min_price is not None and price < min_price:
-                continue
-                
-            # Apply max price filter if present
-            if max_price is not None and price > max_price:
-                continue
-                
-            matching_products.append(product)
-        
-        # Return results
-        if matching_products:
-            if len(matching_products) > 10:
-                # If too many matches, return a summary with the first 5
-                result = f"Ich habe {len(matching_products)} Produkte in diesem Preisbereich gefunden. Hier sind die ersten 5:"
-                for product in matching_products[:5]:
-                    status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR | {status_text} | {product.get('url', '')}"
-                return result
-            else:
-                # Return detailed information for up to 10 products
-                result = f"Ich habe {len(matching_products)} Produkte in diesem Preisbereich gefunden:"
-                for product in matching_products[:10]:
-                    status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR | {status_text} | {product.get('url', '')}"
-                return result
-        else:
-            if min_price is not None and max_price is not None:
-                return f"Ich konnte keine Produkte zwischen {min_price}€ und {max_price}€ finden."
-            elif min_price is not None:
-                return f"Ich konnte keine Produkte über {min_price}€ finden."
-            else:
-                return f"Ich konnte keine Produkte unter {max_price}€ finden."
+    # If we found a price range, return it
+    if min_price is not None and max_price is not None:
+        return min_price, max_price
     
     return None
 
