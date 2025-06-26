@@ -1,3 +1,6 @@
+# Environment variables
+.env
+
 # Python
 __pycache__/
 *.py[cod]
@@ -20,6 +23,10 @@ var/
 .installed.cfg
 *.egg
 
+# Temporary files
+tmp_service_account.json
+*.tmp
+
 # Virtual Environment
 venv/
 ENV/
@@ -30,6 +37,9 @@ ENV/
 *.swp
 *.swo
 
+# OS specific
+.DS_Store
+Thumbs.db
+
 # Sensitive Files
-service-account.json
-.env 
+service-account.json 

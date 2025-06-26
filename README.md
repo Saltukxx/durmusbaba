@@ -1,13 +1,14 @@
-# WhatsApp Dialogflow Bot
+# WhatsApp Gemini Bot
 
-Bu proje, WhatsApp API ve Google Dialogflow'u kullanarak akıllı bir chatbot oluşturmak için geliştirilmiştir. Bot, WhatsApp üzerinden gelen mesajları alır, Dialogflow ile işler ve yanıtları kullanıcıya geri gönderir.
+Bu proje, WhatsApp API ve Google Gemini AI'yi kullanarak akıllı bir chatbot oluşturmak için geliştirilmiştir. Bot, WhatsApp üzerinden gelen mesajları alır, Gemini AI ile işler ve yanıtları kullanıcıya geri gönderir.
 
 ## Özellikler
 
 - WhatsApp API entegrasyonu
-- Google Dialogflow NLP işleme
+- Google Gemini AI entegrasyonu
 - Otomatik mesaj yanıtlama
-- Güvenli kimlik doğrulama yönetimi
+- Kullanıcıya özel sohbet geçmişi
+- E-ticaret ürün bilgileri
 
 ## Kurulum
 
@@ -19,8 +20,7 @@ requests
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
-google-api-python-client
-google-cloud-dialogflow
+google-generativeai>=0.3.0
 python-dotenv
 ```
 
@@ -28,8 +28,8 @@ python-dotenv
 
 1. Repository'yi klonlayın:
 ```bash
-git clone https://github.com/kullanıcıadınız/whatsapp-dialogflow-bot.git
-cd whatsapp-dialogflow-bot
+git clone https://github.com/kullanıcıadınız/whatsapp-gemini-bot.git
+cd whatsapp-gemini-bot
 ```
 
 2. Gerekli paketleri yükleyin:
@@ -39,21 +39,16 @@ pip install -r requirements.txt
 
 3. `.env` dosyası oluşturun ve aşağıdaki değişkenleri ayarlayın:
 ```
-DIALOGFLOW_PROJECT_ID=your-project-id
-DIALOGFLOW_SESSION_ID=123456
-DIALOGFLOW_LANGUAGE_CODE=tr
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-pro
+LANGUAGE_CODE=tr
 META_ACCESS_TOKEN=your-meta-access-token
 META_PHONE_NUMBER_ID=your-phone-number-id
 WEBHOOK_VERIFY_TOKEN=your-webhook-token
 PORT=10000
 ```
 
-4. Google Cloud Service Account anahtarınızı `service-account.json` olarak kaydedin veya Base64 kodlanmış halini `.env` dosyasına ekleyin:
-```
-GOOGLE_APPLICATION_CREDENTIALS_BASE64=base64-encoded-credentials
-```
-
-5. Uygulamayı çalıştırın:
+4. Uygulamayı çalıştırın:
 ```bash
 python main.py
 ```
@@ -74,12 +69,23 @@ python main.py
 3. Webhook URL'nizi ayarlayın: `https://[your-render-url]/webhook`
 4. Verify Token'ı `.env` dosyasında belirttiğiniz `WEBHOOK_VERIFY_TOKEN` değeri ile aynı olacak şekilde ayarlayın
 
-## Güvenlik
+## Gemini API Kullanımı
 
-Bu projede güvenlik için aşağıdaki önlemler alınmıştır:
-- Service account kimlik bilgilerinin güvenli yönetimi
-- Hassas bilgilerin environment variables olarak saklanması
-- Geçici dosyaların otomatik temizlenmesi
+Google Gemini API'yi kullanmak için:
+1. [Google AI Studio](https://aistudio.google.com/) adresine gidin
+2. API key oluşturun
+3. Oluşturduğunuz API key'i `.env` dosyasında `GEMINI_API_KEY` değişkenine atayın
+
+## Test Etme
+
+Uygulamayı test etmek için:
+```bash
+python test_webhook.py
+```
+Bu script ile:
+1. Webhook'a test mesajları gönderebilir
+2. WhatsApp API'yi doğrudan test edebilir
+3. Gemini AI'yi doğrudan test edebilirsiniz
 
 ## Lisans
 
