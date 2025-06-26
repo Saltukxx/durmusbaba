@@ -8,6 +8,7 @@ import base64
 import traceback
 from dotenv import load_dotenv
 import google.generativeai as genai
+import re
 
 # Load environment variables from .env file
 load_dotenv()
@@ -68,6 +69,8 @@ def get_gemini_response(user_id, text):
             - Wir haben eine große Auswahl an Kompressoren verschiedener Marken und Modelle
             - Die Produktdatenbank enthält genaue Informationen zu Produktnamen und Preisen in Euro
             - Alle Preise sind in Euro (EUR) angegeben
+            - Wenn ein Benutzer nach einem bestimmten Produkt fragt, sollst du IMMER den genauen Preis aus der Datenbank angeben
+            - Wenn ein Benutzer nur den Produktnamen sendet, verstehe dies als Preisanfrage und gib den Preis zurück
             
             Kundenservice:
             - Bei Fragen zur Verfügbarkeit oder technischen Details können Kunden uns kontaktieren
@@ -93,6 +96,24 @@ def get_gemini_response(user_id, text):
                 {"role": "model", "parts": [system_prompt]}
             ])
         
+        # First check if the message is just a product name (direct product query)
+        exact_product = find_exact_product(text)
+        if exact_product:
+            # If it's an exact product name, return the price directly without calling Gemini
+            product_name = exact_product['product_name']
+            price = exact_product['price_eur']
+            
+            # Detect language and format response accordingly
+            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                # Turkish
+                return f"{product_name} fiyatı: {price} EUR"
+            elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
+                # English
+                return f"The price of {product_name} is {price} EUR"
+            else:
+                # Default to German
+                return f"Der Preis für {product_name} beträgt {price} EUR"
+        
         # Check if the message is a product query
         product_info = check_product_query(text)
         if product_info:
@@ -109,6 +130,57 @@ def get_gemini_response(user_id, text):
         traceback.print_exc()
         return f"Üzgünüm, bir hata oluştu: {str(e)}"
 
+def find_exact_product(text):
+    """Find a product by its exact name in the database."""
+    # Clean up the input text
+    cleaned_text = text.strip()
+    
+    # First try exact match
+    for product in PRODUCT_DATABASE:
+        if product['product_name'].lower() == cleaned_text.lower():
+            return product
+    
+    # If no exact match, try to find products where the name is contained in the query
+    # or the query contains the full product name
+    for product in PRODUCT_DATABASE:
+        product_name = product['product_name'].lower()
+        if product_name in cleaned_text.lower() or cleaned_text.lower() in product_name:
+            # Check if it's a substantial match (at least 80% of the product name)
+            if len(product_name) >= 5 and (
+                len(product_name) >= 0.8 * len(cleaned_text) or 
+                len(cleaned_text) >= 0.8 * len(product_name)
+            ):
+                return product
+    
+    # Extract potential model numbers from the text
+    # Look for patterns like "EMY 80 CLP", "NEK 6160 Z", etc.
+    potential_models = []
+    
+    # Pattern for model numbers like "EMY 80 CLP" or "NEK 6160 Z"
+    pattern1 = r'([A-Za-z]{2,4})\s+(\d+)\s*([A-Za-z]{0,4})'
+    matches = re.findall(pattern1, cleaned_text)
+    for match in matches:
+        model = ' '.join(match).strip()
+        if model:
+            potential_models.append(model)
+    
+    # If we found potential model numbers, search for them in the database
+    if potential_models:
+        for model in potential_models:
+            for product in PRODUCT_DATABASE:
+                if model.lower() in product['product_name'].lower():
+                    return product
+    
+    # If still no match, try to match individual words that might be model numbers
+    words = cleaned_text.split()
+    for word in words:
+        if len(word) >= 3 and any(c.isdigit() for c in word):
+            for product in PRODUCT_DATABASE:
+                if word in product['product_name']:
+                    return product
+    
+    return None
+
 def check_product_query(text):
     """Check if the user is asking about a specific product and return relevant information."""
     text_lower = text.lower()
@@ -124,12 +196,35 @@ def check_product_query(text):
     is_product_query = any(keyword in text_lower for keyword in product_keywords)
     
     if is_product_query:
-        # Search for product matches
+        # Check for category filtering requests
+        category_request = check_category_request(text_lower)
+        if category_request:
+            return category_request
+        
+        # Check for price range filtering
+        price_range_request = check_price_range_request(text_lower)
+        if price_range_request:
+            return price_range_request
+        
+        # Search for product matches by name
         matching_products = []
         for product in PRODUCT_DATABASE:
             product_name = product.get("product_name", "").lower()
-            if any(term.lower() in product_name for term in text_lower.split() if len(term) > 3):
-                matching_products.append(product)
+            
+            # Check if any significant word from the query is in the product name
+            for term in text_lower.split():
+                if len(term) > 3 and term in product_name:
+                    matching_products.append(product)
+                    break
+                    
+            # Also check if the product model number is in the query
+            # Many products have model numbers like "EMY 80 CLP" or "NEK 6160 Z"
+            words = product_name.split()
+            for word in words:
+                if len(word) >= 2 and any(c.isdigit() for c in word) and word in text_lower:
+                    if product not in matching_products:
+                        matching_products.append(product)
+                        break
         
         # If we found matching products, return the information
         if matching_products:
@@ -142,6 +237,177 @@ def check_product_query(text):
                 for product in matching_products[:5]:
                     result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
                 return result
+    
+    return None
+
+def check_category_request(text):
+    """Check if the user is asking for products from a specific category or brand."""
+    # Define common brands and categories
+    brands = {
+        "embraco": ["embraco"],
+        "bitzer": ["bitzer"],
+        "danfoss": ["danfoss"],
+        "secop": ["secop"],
+        "copeland": ["copeland"],
+        "tecumseh": ["tecumseh"]
+    }
+    
+    categories = {
+        "kompressor": ["kompressor", "compressor", "kompresör"],
+        "kältetechnik": ["kältetechnik", "refrigeration", "soğutma"],
+        "ersatzteile": ["ersatzteile", "spare parts", "yedek parça"],
+        "zubehör": ["zubehör", "accessories", "aksesuar"]
+    }
+    
+    # Check for brand filtering
+    brand_filter = None
+    for brand, keywords in brands.items():
+        if any(keyword in text for keyword in keywords):
+            brand_filter = brand
+            break
+    
+    # Check for category filtering
+    category_filter = None
+    for category, keywords in categories.items():
+        if any(keyword in text for keyword in keywords):
+            category_filter = category
+            break
+    
+    # Apply filters if any
+    if brand_filter or category_filter:
+        matching_products = []
+        
+        for product in PRODUCT_DATABASE:
+            product_name = product.get("product_name", "").lower()
+            
+            # Apply brand filter if present
+            if brand_filter and brand_filter not in product_name:
+                continue
+                
+            # Apply category filter if present
+            if category_filter and not any(keyword in product_name for keyword in categories.get(category_filter, [])):
+                continue
+                
+            matching_products.append(product)
+        
+        # Return results
+        if matching_products:
+            if len(matching_products) > 10:
+                # If too many matches, return a summary with the first 5
+                result = f"Ich habe {len(matching_products)} passende Produkte gefunden. Hier sind die ersten 5:"
+                for product in matching_products[:5]:
+                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
+                return result
+            else:
+                # Return detailed information for up to 10 products
+                result = f"Ich habe {len(matching_products)} passende Produkte gefunden:"
+                for product in matching_products[:10]:
+                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
+                return result
+        else:
+            if brand_filter and category_filter:
+                return f"Ich konnte keine {category_filter} Produkte von {brand_filter} finden."
+            elif brand_filter:
+                return f"Ich konnte keine Produkte von {brand_filter} finden."
+            else:
+                return f"Ich konnte keine {category_filter} Produkte finden."
+    
+    return None
+
+def check_price_range_request(text):
+    """Check if the user is asking for products in a specific price range."""
+    import re
+    
+    # Define patterns for price range queries in different languages
+    patterns = [
+        # German patterns
+        r'unter (\d+)[\s]?(?:€|euro)',  # unter 500€
+        r'bis zu (\d+)[\s]?(?:€|euro)',  # bis zu 500€
+        r'weniger als (\d+)[\s]?(?:€|euro)',  # weniger als 500€
+        r'über (\d+)[\s]?(?:€|euro)',  # über 500€
+        r'mehr als (\d+)[\s]?(?:€|euro)',  # mehr als 500€
+        r'zwischen (\d+) und (\d+)[\s]?(?:€|euro)',  # zwischen 500 und 1000€
+        r'von (\d+) bis (\d+)[\s]?(?:€|euro)',  # von 500 bis 1000€
+        
+        # English patterns
+        r'under (\d+)[\s]?(?:€|euro)',  # under 500€
+        r'up to (\d+)[\s]?(?:€|euro)',  # up to 500€
+        r'less than (\d+)[\s]?(?:€|euro)',  # less than 500€
+        r'over (\d+)[\s]?(?:€|euro)',  # over 500€
+        r'more than (\d+)[\s]?(?:€|euro)',  # more than 500€
+        r'between (\d+) and (\d+)[\s]?(?:€|euro)',  # between 500 and 1000€
+        r'from (\d+) to (\d+)[\s]?(?:€|euro)',  # from 500 to 1000€
+        
+        # Turkish patterns
+        r'(\d+)[\s]?(?:€|euro) altında',  # 500€ altında
+        r'(\d+)[\s]?(?:€|euro) kadar',  # 500€ kadar
+        r'(\d+)[\s]?(?:€|euro)\'dan az',  # 500€'dan az
+        r'(\d+)[\s]?(?:€|euro) üzerinde',  # 500€ üzerinde
+        r'(\d+)[\s]?(?:€|euro)\'dan fazla',  # 500€'dan fazla
+        r'(\d+) ve (\d+)[\s]?(?:€|euro) arasında',  # 500 ve 1000€ arasında
+    ]
+    
+    min_price = None
+    max_price = None
+    
+    # Check each pattern
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            if len(match.groups()) == 1:
+                # Single price value patterns
+                price = int(match.group(1))
+                
+                # Determine if it's a min or max constraint
+                if any(keyword in text for keyword in ['unter', 'bis zu', 'weniger', 'under', 'up to', 'less than', 'altında', 'kadar', 'az']):
+                    max_price = price
+                elif any(keyword in text for keyword in ['über', 'mehr', 'over', 'more than', 'üzerinde', 'fazla']):
+                    min_price = price
+            else:
+                # Range patterns with two values
+                min_price = int(match.group(1))
+                max_price = int(match.group(2))
+            
+            break
+    
+    # If we found a price range, filter products
+    if min_price is not None or max_price is not None:
+        matching_products = []
+        
+        for product in PRODUCT_DATABASE:
+            price = float(product.get("price_eur", "0").replace('€', '').replace(',', '.').strip())
+            
+            # Apply min price filter if present
+            if min_price is not None and price < min_price:
+                continue
+                
+            # Apply max price filter if present
+            if max_price is not None and price > max_price:
+                continue
+                
+            matching_products.append(product)
+        
+        # Return results
+        if matching_products:
+            if len(matching_products) > 10:
+                # If too many matches, return a summary with the first 5
+                result = f"Ich habe {len(matching_products)} Produkte in diesem Preisbereich gefunden. Hier sind die ersten 5:"
+                for product in matching_products[:5]:
+                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
+                return result
+            else:
+                # Return detailed information for up to 10 products
+                result = f"Ich habe {len(matching_products)} Produkte in diesem Preisbereich gefunden:"
+                for product in matching_products[:10]:
+                    result += f"\n- {product['product_name']}: {product['price_eur']} EUR"
+                return result
+        else:
+            if min_price is not None and max_price is not None:
+                return f"Ich konnte keine Produkte zwischen {min_price}€ und {max_price}€ finden."
+            elif min_price is not None:
+                return f"Ich konnte keine Produkte über {min_price}€ finden."
+            else:
+                return f"Ich konnte keine Produkte unter {max_price}€ finden."
     
     return None
 
