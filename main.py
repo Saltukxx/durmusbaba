@@ -959,6 +959,12 @@ def webhook():
             if "metadata" in value:
                 print("Metadata:", json.dumps(value["metadata"], indent=2))
                 print(f"Phone number ID from metadata: {value['metadata'].get('phone_number_id')}")
+                print(f"WhatsApp Business Account ID: {value['metadata'].get('phone_number_id')}")
+                print(f"Display phone number: {value['metadata'].get('display_phone_number')}")
+            else:
+                print("WARNING: No metadata found in the incoming message!")
+                print("Full value structure for debugging:")
+                print(json.dumps(value, indent=2))
             
             # Check if there are messages
             if "messages" in value and value["messages"]:
@@ -981,6 +987,10 @@ def webhook():
                     recipient_phone_id = value.get("metadata", {}).get("phone_number_id", PHONE_NUMBER_ID)
                     print(f"Using phone_number_id: {recipient_phone_id}")
                     
+                    # Debug info about phone IDs
+                    print(f"Default PHONE_NUMBER_ID from env: {PHONE_NUMBER_ID}")
+                    print(f"Extracted phone_number_id: {recipient_phone_id}")
+                    
                     # Send response back to WhatsApp using the correct phone number ID
                     url = f"https://graph.facebook.com/v18.0/{recipient_phone_id}/messages"
                     headers = {
@@ -994,6 +1004,8 @@ def webhook():
                         "text": {"body": response_text}
                     }
                     print(f"Sending response to WhatsApp API: {json.dumps(payload)}")
+                    print(f"Request URL: {url}")
+                    print(f"Request Headers: {headers}")
                     response = requests.post(url, headers=headers, json=payload)
                     print(f"WhatsApp API response: {response.status_code} - {response.text}")
                 else:
