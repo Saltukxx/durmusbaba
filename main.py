@@ -15,6 +15,7 @@ from conversation_context import conversation_context
 import time
 import threading
 from order_notification import handle_order_webhook, notify_new_order, check_for_new_orders
+from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -83,6 +84,11 @@ def get_gemini_response(user_id, text):
         # Get context summary and referenced entities
         context_summary = conversation_context.get_conversation_summary(user_id)
         referenced_entities = conversation_context.get_referenced_entities(user_id, text)
+        
+        # Check if this is a chat history request
+        if is_history_request(text):
+            print("Chat history request detected")
+            return handle_history_request(user_id, text)
         
         # Handle references to previous entities in the conversation
         if referenced_entities:
@@ -225,8 +231,21 @@ def get_gemini_response(user_id, text):
         if context_summary['mentioned_categories']:
             context_info += f"Recently mentioned categories: {', '.join(context_summary['mentioned_categories'])}\n"
         
-        # Get recent messages to provide context
-        recent_messages = conversation_context.get_recent_messages(user_id)
+        # Check if this message seems to be referring to previous conversation
+        is_context_reference = conversation_context.detect_context_reference(user_id, text)
+        
+        # Get recent messages to provide context - use more messages for better context
+        # If the message seems to be referring to previous conversation, include more history
+        message_count = 15 if is_context_reference else 10
+        recent_messages = conversation_context.get_recent_messages(user_id, count=message_count)
+        
+        # For very long conversations, include a summary instead of all messages
+        conversation_length = len(conversation_context.get_full_conversation_history(user_id))
+        if conversation_length > 20:  # If we have more than 20 messages in total
+            conversation_summary = conversation_context.summarize_conversation(user_id)
+            if conversation_summary:
+                context_info += conversation_summary + "\n"
+        
         if len(recent_messages) > 1:
             context_info += "Recent conversation:\n"
             for i, msg in enumerate(recent_messages[:-1]):  # Exclude the current message
@@ -1699,6 +1718,48 @@ def test_notification():
         print(f"Error sending test notification: {e}")
         traceback.print_exc()
         return f"Error: {str(e)}", 500
+
+# Check if this is a chat history request
+def is_history_request(text):
+    """Check if the message is requesting chat history"""
+    patterns = [
+        r'(?:show|get|view|display).+(?:history|chat|conversation)',
+        r'(?:what.+(?:talked|said|discussed))',
+        r'(?:previous.+(?:messages|conversation))',
+        r'(?:our.+(?:chat|conversation))',
+        r'(?:zeig|zeige).+(?:verlauf|chat|konversation)',  # German
+        r'(?:geçmiş|sohbet).+(?:göster|getir)'  # Turkish
+    ]
+    
+    return any(re.search(pattern, text.lower()) for pattern in patterns)
+
+# Format chat history for display
+def format_chat_history(messages):
+    """Format chat history for display to the user"""
+    if not messages:
+        return "Es gibt noch keine Chatverläufe."
+    
+    formatted = "Hier ist unser Gesprächsverlauf:\n\n"
+    
+    for i, msg in enumerate(messages):
+        # Format timestamp
+        timestamp = datetime.fromtimestamp(msg['timestamp']).strftime('%H:%M:%S')
+        role = "Sie" if msg['is_user'] else "Ich"
+        formatted += f"{timestamp} - {role}: {msg['text']}\n\n"
+    
+    return formatted
+
+# Handle chat history request
+def handle_history_request(user_id, text):
+    """Handle a request to view chat history"""
+    # Get full conversation history
+    full_history = conversation_context.get_full_conversation_history(user_id)
+    
+    # Remove the current request from history for display
+    display_history = full_history[:-1] if full_history else []
+    
+    # Format the history for display
+    return format_chat_history(display_history)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))

@@ -15,7 +15,7 @@ class ConversationContext:
         # Main storage for conversation contexts by user ID
         self.contexts = {}
         # Expiration time for contexts (in hours)
-        self.expiration_hours = 24
+        self.expiration_hours = 48  # Increased from 24 to 48 hours
     
     def get_context(self, user_id):
         """Get the conversation context for a user"""
@@ -62,9 +62,9 @@ class ConversationContext:
             'is_user': is_user
         })
         
-        # Keep only the last 10 messages
-        if len(context['messages']) > 10:
-            context['messages'] = context['messages'][-10:]
+        # Keep only the last 30 messages (increased from 10)
+        if len(context['messages']) > 30:
+            context['messages'] = context['messages'][-30:]
         
         # If it's a user message, extract entities and determine topic
         if is_user:
@@ -75,6 +75,11 @@ class ConversationContext:
         """Get the most recent messages in the conversation"""
         context = self.get_context(user_id)
         return context['messages'][-count:] if context['messages'] else []
+    
+    def get_full_conversation_history(self, user_id):
+        """Get the complete conversation history for a user"""
+        context = self.get_context(user_id)
+        return context['messages'] if context['messages'] else []
     
     def get_conversation_summary(self, user_id):
         """Generate a summary of the conversation context"""
@@ -298,6 +303,123 @@ class ConversationContext:
         
         for user_id in expired_ids:
             del self.contexts[user_id]
+
+    def detect_context_reference(self, user_id, message):
+        """
+        Detect if the message is referring to something from the conversation context
+        that isn't covered by the specific entity reference patterns.
+        
+        This handles more general references like "as I mentioned before" or
+        "regarding what we discussed earlier".
+        
+        Returns:
+            bool: True if the message appears to reference past conversation
+        """
+        # General reference patterns
+        general_reference_patterns = [
+            r'(?:as|like|what)\s+(?:i|we)\s+(?:said|mentioned|discussed|talked|spoke)\s+(?:before|earlier|previously)',
+            r'(?:regarding|about|concerning)\s+(?:what|the\s+thing)\s+(?:we|you)\s+(?:discussed|talked|mentioned)\s+(?:before|earlier|previously)',
+            r'(?:wie|was)\s+(?:ich|wir)\s+(?:gesagt|erwähnt|besprochen)\s+(?:habe|haben|vorhin|früher)',  # German
+            r'(?:bezüglich|über)\s+(?:was|das)\s+(?:wir|du|Sie)\s+(?:besprochen|erwähnt)\s+(?:haben|vorhin|früher)',  # German
+            r'(?:daha\s+önce|geçen)\s+(?:söylediğim|konuştuğumuz|bahsettiğim)\s+(?:gibi|şey)',  # Turkish
+            r'(?:zurück\s+zu|nochmal\s+zu)\s+(?:unserem|dem)\s+(?:gespräch|thema)',  # German: back to our conversation/topic
+            r'(?:let\'s|going)\s+(?:get|go)\s+(?:back|return)\s+(?:to|on)\s+(?:our|the)\s+(?:conversation|topic|discussion)',
+            r'(?:earlier|previous|last)\s+(?:conversation|chat|message)',
+            r'(?:vorherige|frühere|letzte)\s+(?:unterhaltung|nachricht|konversation)',  # German
+        ]
+        
+        # Check if any pattern matches
+        if any(re.search(pattern, message.lower()) for pattern in general_reference_patterns):
+            return True
+            
+        # Check for short responses that might need context
+        # These are typically short questions or statements that don't make sense without context
+        short_response_with_context_patterns = [
+            r'^(?:why|how|when|what|where|who)\s+(?:is|are|was|were|do|does|did|would|could|should|will)\s+(?:it|that|this|they|those|these)',
+            r'^(?:warum|wie|wann|was|wo|wer)\s+(?:ist|sind|war|waren|tut|macht|tat|würde|könnte|sollte|wird)\s+(?:es|das|dies|sie|jene|diese)',  # German
+            r'^(?:neden|nasıl|ne\s+zaman|ne|nerede|kim)\s+(?:dir|dır|midir|mıdır|oldu|yapıyor|yaptı|yapacak)\s+(?:o|bu|şu|onlar|bunlar)',  # Turkish
+            r'^(?:ja|nein|yes|no|evet|hayır)\s*[.?!]?$',  # Just yes/no answers
+            r'^(?:und|and|ve)\s+(?:dann|jetzt|now|then|sonra|şimdi)',  # And then/now
+            r'^(?:ich\s+verstehe|i\s+understand|anlıyorum)\s*[.?!]?$',  # I understand
+            r'^(?:das\s+ist|that\'s|it\'s|bu)\s+(?:gut|richtig|korrekt|good|right|correct|iyi|doğru)',  # That's good/right
+        ]
+        
+        # For short messages, check if they might need context
+        if len(message.split()) < 5:
+            if any(re.search(pattern, message.lower()) for pattern in short_response_with_context_patterns):
+                return True
+                
+        return False
+
+    def summarize_conversation(self, user_id):
+        """
+        Generate a summary of the conversation when it gets too long.
+        This helps maintain context without sending the entire conversation history.
+        
+        Args:
+            user_id (str): User identifier
+            
+        Returns:
+            str: A summary of the conversation
+        """
+        context = self.get_context(user_id)
+        messages = context['messages']
+        
+        # If we don't have enough messages, no need to summarize
+        if len(messages) < 10:
+            return ""
+            
+        # Create a summary of the conversation
+        summary = "Conversation Summary:\n"
+        
+        # Add the current topic
+        if context['current_topic']:
+            summary += f"- Current topic: {context['current_topic']}\n"
+            
+        # Add mentioned products
+        if context['entities']['products']:
+            product_names = [p['name'] for p in context['entities']['products'][-5:]]
+            summary += f"- Products discussed: {', '.join(product_names)}\n"
+            
+        # Add mentioned categories
+        if context['entities']['categories']:
+            summary += f"- Categories discussed: {', '.join(context['entities']['categories'][-3:])}\n"
+            
+        # Add mentioned orders
+        if context['entities']['orders']:
+            summary += f"- Orders mentioned: {', '.join(context['entities']['orders'][-3:])}\n"
+            
+        # Add mentioned features
+        if context['entities']['features']:
+            summary += f"- Product features mentioned: {', '.join(context['entities']['features'])}\n"
+            
+        # Add mentioned price ranges
+        if context['entities']['price_ranges']:
+            price_ranges = []
+            for price_range in context['entities']['price_ranges'][-2:]:
+                if len(price_range) == 2:
+                    if price_range[0] == 0:
+                        price_ranges.append(f"under {price_range[1]}€")
+                    else:
+                        price_ranges.append(f"between {price_range[0]}€ and {price_range[1]}€")
+            if price_ranges:
+                summary += f"- Price ranges mentioned: {', '.join(price_ranges)}\n"
+                
+        # Add key points from the last few messages
+        summary += "- Recent conversation points:\n"
+        
+        # Get the last 5 messages (excluding the current one)
+        recent_messages = messages[-6:-1] if len(messages) > 5 else messages[:-1]
+        
+        for msg in recent_messages:
+            role = "User" if msg['is_user'] else "Bot"
+            # Truncate long messages
+            text = msg['text']
+            if len(text) > 100:
+                text = text[:97] + "..."
+            summary += f"  * {role}: {text}\n"
+            
+        return summary
 
 # Create a singleton instance
 conversation_context = ConversationContext()
