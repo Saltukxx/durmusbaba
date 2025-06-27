@@ -10,6 +10,7 @@ import threading
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from woocommerce_client import woocommerce
+import traceback
 
 # Load environment variables from .env file
 load_dotenv()
@@ -163,26 +164,47 @@ def handle_order_webhook(data):
         bool: True if processed successfully, False otherwise
     """
     try:
+        logger.info(f"Received webhook data: {json.dumps(data)[:200]}...")
+        
         # Check if this is a new order
-        if data.get('status') in ['processing', 'pending']:
-            logger.info(f"New order received: #{data.get('id')}")
+        order_id = data.get('id')
+        order_status = data.get('status')
+        
+        if not order_id:
+            logger.error("Webhook data missing order ID")
+            return False
             
+        logger.info(f"Processing webhook for order #{order_id} with status {order_status}")
+        
+        # Only process new orders
+        if order_status in ['processing', 'pending']:
+            # Add to processed orders set to avoid duplicate notifications
+            global last_processed_orders
+            if order_id in last_processed_orders:
+                logger.info(f"Order #{order_id} already processed, skipping")
+                return True
+                
             # Get full order details from WooCommerce API
-            order_id = data.get('id')
+            logger.info(f"Fetching full details for order #{order_id}")
             order = woocommerce.get_order(order_id)
             
             if order:
+                # Add to processed orders set
+                last_processed_orders.add(order_id)
+                
                 # Send notifications
+                logger.info(f"Sending notifications for order #{order_id}")
                 return notify_new_order(order)
             else:
                 logger.error(f"Failed to get order details for order #{order_id}")
                 return False
         else:
-            logger.info(f"Ignoring webhook for order #{data.get('id')} with status {data.get('status')}")
+            logger.info(f"Ignoring webhook for order #{order_id} with status {order_status}")
             return True
             
     except Exception as e:
         logger.error(f"Error processing order webhook: {e}")
+        logger.error(traceback.format_exc())
         return False
 
 def check_for_new_orders():
@@ -192,26 +214,35 @@ def check_for_new_orders():
     global last_checked_time, last_processed_orders
     
     while True:
-        current_time = datetime.now()
-        if current_time - last_checked_time > timedelta(hours=1):
-            logger.info("Checking for new orders")
-            
-            # Get new orders from WooCommerce API
-            new_orders = woocommerce.get_orders(status='processing', after=last_checked_time)
-            
-            if new_orders:
-                for order in new_orders:
-                    if order['id'] not in last_processed_orders:
-                        logger.info(f"Processing new order #{order['id']}")
-                        notify_new_order(order)
-                        last_processed_orders.add(order['id'])
+        try:
+            current_time = datetime.now()
+            # Check every 5 minutes instead of every hour
+            if current_time - last_checked_time > timedelta(minutes=5):
+                logger.info("Checking for new orders")
+                
+                # Get new orders from WooCommerce API
+                new_orders = woocommerce.get_orders(status=['processing', 'pending'], after=last_checked_time)
+                
+                if new_orders:
+                    logger.info(f"Found {len(new_orders)} new orders")
+                    for order in new_orders:
+                        order_id = order.get('id')
+                        if order_id and order_id not in last_processed_orders:
+                            logger.info(f"Processing new order #{order_id}")
+                            notify_new_order(order)
+                            last_processed_orders.add(order_id)
+                else:
+                    logger.info("No new orders found")
+                
+                # Always update the last checked time
                 last_checked_time = current_time
-            else:
-                logger.info("No new orders found")
-            
-            time.sleep(60)  # Wait between checks
-        else:
-            time.sleep(10)  # Wait between checks if no new orders
+                
+            # Wait for 60 seconds before checking again
+            time.sleep(60)
+        except Exception as e:
+            logger.error(f"Error checking for new orders: {e}")
+            # Wait for 60 seconds before trying again
+            time.sleep(60)
 
 # For testing purposes
 if __name__ == "__main__":

@@ -1667,19 +1667,27 @@ def test_notification():
         if auth_token != VERIFY_TOKEN:
             return "Unauthorized", 401
             
-        # Get order ID from query parameters
-        order_id = request.args.get("order_id")
-        if not order_id:
-            return "Missing order_id parameter", 400
-            
-        print(f"Testing order notification for order #{order_id}")
+        # Get order ID from query parameters or use "latest" to get the most recent order
+        order_id = request.args.get("order_id", "latest")
         
-        # Get order details from WooCommerce API
-        order = woocommerce.get_order(order_id)
-        if not order:
-            return f"Order #{order_id} not found", 404
+        # If "latest", get the most recent order
+        if order_id == "latest":
+            print("Getting most recent order for test notification")
+            recent_orders = woocommerce.get_orders(limit=1)
+            if not recent_orders:
+                return "No orders found", 404
+            order = recent_orders[0]
+            order_id = order['id']
+        else:
+            # Get order details from WooCommerce API
+            print(f"Getting order #{order_id} for test notification")
+            order = woocommerce.get_order(order_id)
+            if not order:
+                return f"Order #{order_id} not found", 404
             
         # Send notifications
+        print(f"Sending test notification for order #{order_id}")
+        from order_notification import notify_new_order
         success = notify_new_order(order)
         
         if success:
