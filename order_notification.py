@@ -26,7 +26,9 @@ PHONE_NUMBER_ID = os.getenv("META_PHONE_NUMBER_ID")
 # Notification recipients - hardcoded for security
 NOTIFICATION_RECIPIENTS = [
     "+905492608080",  # Turkish number
-    "+4917839776121"  # German number
+    "+4917839776121",  # German number
+    "+905496607070",  # New Turkish number
+    "+905054087289"   # New Turkish number
 ]
 
 # Global variables for order tracking
