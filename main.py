@@ -377,45 +377,21 @@ def find_exact_product(text):
             # Clean up the input text
             cleaned_text = text.strip()
             
-            # Search for products with this name
-            products = woocommerce.search_products_by_name(cleaned_text)
+            # Use advanced product search
+            products = woocommerce.advanced_product_search(cleaned_text, limit=5)
             
             if products:
-                # Find the best match
-                best_match = None
-                best_match_score = 0
+                # Return the best match (first result from advanced search)
+                best_match = products[0]
                 
-                for product in products:
-                    product_name = product['name'].lower()
-                    query = cleaned_text.lower()
-                    
-                    # Check for exact match
-                    if product_name == query:
-                        # Create a compatible product object
-                        return {
-                            'product_name': product['name'],
-                            'price_eur': product['price'],
-                            'status': 'instock' if product['stock_status'] == 'instock' else 'outofstock',
-                            'url': product['permalink'],
-                            'sku': product.get('sku', '')
-                        }
-                    
-                    # Check if product name is in query or vice versa
-                    if product_name in query or query in product_name:
-                        score = len(product_name) / max(len(query), 1)
-                        if score > best_match_score:
-                            best_match = product
-                            best_match_score = score
-                
-                # If we found a good match
-                if best_match and best_match_score > 0.5:
-                    return {
-                        'product_name': best_match['name'],
-                        'price_eur': best_match['price'],
-                        'status': 'instock' if best_match['stock_status'] == 'instock' else 'outofstock',
-                        'url': best_match['permalink'],
-                        'sku': best_match.get('sku', '')
-                    }
+                # Create a compatible product object
+                return {
+                    'product_name': best_match['name'],
+                    'price_eur': best_match['price'],
+                    'status': 'instock' if best_match['stock_status'] == 'instock' else 'outofstock',
+                    'url': best_match['permalink'],
+                    'sku': best_match.get('sku', '')
+                }
             
             # If no match found in WooCommerce, fall back to local database
             print("No exact match found in WooCommerce, falling back to local database")

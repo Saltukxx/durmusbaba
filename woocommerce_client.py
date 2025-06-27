@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 from woocommerce import API
 from dotenv import load_dotenv
 import logging
+from fuzzywuzzy import fuzz
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,6 +21,7 @@ class WooCommerceClient:
         self.wcapi = None
         self.is_connected = False
         self.connect()
+        self.product_cache = {}  # Cache for product data
     
     def connect(self):
         """Establish connection to WooCommerce API."""
@@ -72,8 +75,7 @@ class WooCommerceClient:
         
         params = {
             "page": page,
-            "per_page": per_page,
-            "status": "publish"
+            "per_page": per_page
         }
         
         if search:
@@ -129,6 +131,173 @@ class WooCommerceClient:
             list: List of matching products or empty list if error
         """
         return self.get_products(search=name, per_page=5)
+    
+    def advanced_product_search(self, query, limit=5):
+        """
+        Advanced product search that handles model numbers and partial queries
+        
+        Args:
+            query (str): Search query
+            limit (int): Maximum number of results to return
+            
+        Returns:
+            list: List of matching products sorted by relevance
+        """
+        if not self.is_connected:
+            if not self.connect():
+                return []
+        
+        try:
+            # Clean up the query
+            query = query.strip().lower()
+            
+            # Extract potential model numbers from the query
+            model_numbers = self._extract_model_numbers(query)
+            
+            # Try direct search first
+            direct_results = self.get_products(search=query, per_page=20)
+            
+            # If we have model numbers, try searching for each one
+            model_results = []
+            if model_numbers:
+                for model in model_numbers:
+                    model_search = self.get_products(search=model, per_page=10)
+                    model_results.extend(model_search)
+            
+            # Combine results
+            all_results = direct_results + model_results
+            
+            # Remove duplicates
+            unique_results = {}
+            for product in all_results:
+                if product['id'] not in unique_results:
+                    unique_results[product['id']] = product
+            
+            # Score and sort results
+            scored_results = []
+            for product in unique_results.values():
+                score = self._calculate_relevance_score(product, query, model_numbers)
+                scored_results.append((score, product))
+            
+            # Sort by score (descending)
+            scored_results.sort(key=lambda x: x[0], reverse=True)
+            
+            # Return top results
+            return [product for _, product in scored_results[:limit]]
+        
+        except Exception as e:
+            logger.error(f"Error in advanced product search: {e}")
+            return []
+    
+    def _extract_model_numbers(self, text):
+        """
+        Extract potential model numbers from text
+        
+        Args:
+            text (str): Text to extract model numbers from
+            
+        Returns:
+            list: List of potential model numbers
+        """
+        model_numbers = []
+        
+        # Pattern for model numbers like "EMY 80 CLP", "NEK 6160 Z", "9238"
+        patterns = [
+            r'([A-Za-z]{2,4})\s*[-]?\s*(\d+)\s*([A-Za-z0-9]{0,6})',  # EMY 80 CLP
+            r'([A-Za-z]{2,4})\s*[-]?\s*(\d+[.]\d+)\s*([A-Za-z0-9]{0,6})',  # FF 8.5 HBK
+            r'(\d{4,})',  # 9238
+            r'([A-Za-z]{1,3})(\d{2,})',  # NJ9238
+            r'([A-Za-z]{2,4})[-]?(\d+)',  # DCB-31
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, text)
+            for match in matches:
+                if isinstance(match, tuple):
+                    # Join the parts for multi-part matches
+                    model = ''.join(match).strip()
+                    if model:
+                        model_numbers.append(model)
+                        
+                        # Also add variations with and without spaces
+                        if len(match) > 1:
+                            # Add with spaces
+                            spaced_model = ' '.join(part for part in match if part).strip()
+                            if spaced_model and spaced_model != model:
+                                model_numbers.append(spaced_model)
+                else:
+                    # Single part match
+                    model_numbers.append(match)
+        
+        # Add individual words that might be model numbers
+        words = text.split()
+        for word in words:
+            # If it contains both letters and numbers, it might be a model number
+            if (len(word) >= 3 and 
+                any(c.isdigit() for c in word) and 
+                any(c.isalpha() for c in word)):
+                model_numbers.append(word)
+            # If it's just a number with 4+ digits, it might be a model number
+            elif word.isdigit() and len(word) >= 4:
+                model_numbers.append(word)
+        
+        # Remove duplicates
+        return list(set(model_numbers))
+    
+    def _calculate_relevance_score(self, product, query, model_numbers):
+        """
+        Calculate relevance score for a product based on the query
+        
+        Args:
+            product (dict): Product data
+            query (str): Original search query
+            model_numbers (list): Extracted model numbers from the query
+            
+        Returns:
+            float: Relevance score (higher is better)
+        """
+        score = 0
+        
+        # Get product text to search in
+        product_name = product.get('name', '').lower()
+        product_sku = product.get('sku', '').lower()
+        product_desc = product.get('short_description', '').lower()
+        
+        # Direct name match is best
+        name_ratio = fuzz.partial_ratio(query, product_name)
+        score += name_ratio * 2  # Weight name matches more heavily
+        
+        # SKU match is also very good
+        if product_sku:
+            sku_ratio = fuzz.partial_ratio(query, product_sku)
+            score += sku_ratio * 1.5
+        
+        # Description match
+        if product_desc:
+            desc_ratio = fuzz.partial_ratio(query, product_desc)
+            score += desc_ratio * 0.5
+        
+        # Model number match
+        for model in model_numbers:
+            # Check if model appears in product name
+            if model.lower() in product_name:
+                score += 100  # Strong bonus for model number match
+            
+            # Check for fuzzy model match
+            model_ratio = fuzz.partial_ratio(model.lower(), product_name)
+            score += model_ratio
+            
+            # Check SKU for model match
+            if product_sku and model.lower() in product_sku:
+                score += 75
+        
+        # Brand match bonuses
+        brands = ['embraco', 'danfoss', 'bitzer', 'secop', 'copeland', 'tecumseh']
+        for brand in brands:
+            if brand in query and brand in product_name:
+                score += 50  # Bonus for matching brand
+        
+        return score
     
     def get_order(self, order_id):
         """
@@ -269,11 +438,20 @@ if __name__ == "__main__":
     if test_connection():
         print("✅ Successfully connected to WooCommerce API")
         
-        # Get some sample data
-        client = woocommerce
-        products = client.get_products(per_page=5)
-        print(f"Found {len(products)} products")
-        for product in products:
+        # Test the advanced search
+        query = "embraco 9238"
+        print(f"\nTesting advanced search for: '{query}'")
+        results = woocommerce.advanced_product_search(query)
+        print(f"Found {len(results)} results:")
+        for product in results:
+            print(f"- {product['name']} (${product['price']})")
+            
+        # Test with just a model number
+        query = "9238"
+        print(f"\nTesting advanced search for: '{query}'")
+        results = woocommerce.advanced_product_search(query)
+        print(f"Found {len(results)} results:")
+        for product in results:
             print(f"- {product['name']} (${product['price']})")
     else:
         print("❌ Failed to connect to WooCommerce API") 
