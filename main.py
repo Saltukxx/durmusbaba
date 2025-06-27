@@ -505,14 +505,20 @@ def check_product_query(text, user_id=None):
         r'(?:embraco|danfoss|bitzer)\s+[a-z0-9\s\-\.]{2,10}',  # Brand + model
         r'[a-z]{2,4}\s*\d{2,5}(?:\s*[a-z]{0,5})?',  # Model patterns like "EMY 80" or "NJ 9238"
         r'dcb\d{2,3}',  # DCB models
-        r'ff\s*\d+\.?\d*'  # FF models
+        r'ff\s*\d+\.?\d*',  # FF models
+        r'\b\d{4,5}\b'  # Standalone numeric models like "9236"
     ]
     
-    # Extract potential product models from the text
-    potential_products = []
-    for pattern in product_patterns:
-        matches = re.findall(pattern, text.lower())
-        potential_products.extend([match.strip() for match in matches])
+    # Check if this is just a numeric model number (like "9236")
+    if text.strip().isdigit() and len(text.strip()) >= 3:
+        print(f"Detected standalone numeric model: {text.strip()}")
+        potential_products = [text.strip()]
+    else:
+        # Extract potential product models from the text
+        potential_products = []
+        for pattern in product_patterns:
+            matches = re.findall(pattern, text.lower())
+            potential_products.extend([match.strip() for match in matches])
     
     print(f"Potential products found in text: {potential_products}")
     
@@ -523,6 +529,14 @@ def check_product_query(text, user_id=None):
             potential_products.append(referenced_entities['product']['name'])
             print(f"Using referenced product from context: {potential_products}")
     
+    # Extract brand from query if present
+    brands = ['embraco', 'bitzer', 'danfoss', 'secop', 'copeland', 'tecumseh', 'dcb', 'ebm', 'ebmpapst', 'york', 'drc']
+    identified_brand = None
+    for brand in brands:
+        if brand in text.lower():
+            identified_brand = brand
+            break
+    
     # If we have potential products, search for them
     if potential_products:
         # First try WooCommerce if available
@@ -532,6 +546,10 @@ def check_product_query(text, user_id=None):
                 for product_name in potential_products:
                     # Clean up the product name for search
                     search_term = re.sub(r'\s+', ' ', product_name).strip()
+                    
+                    # If we have a brand identified, combine it with the search term
+                    if identified_brand and identified_brand not in search_term:
+                        search_term = f"{identified_brand} {search_term}"
                     
                     # Search for the product
                     products = woocommerce.search_products(search_term)
@@ -565,14 +583,48 @@ def check_product_query(text, user_id=None):
             # Clean up the product name for search
             search_term = re.sub(r'\s+', ' ', product_name).strip()
             
+            # If we have a brand identified, combine it with the search term for numeric-only queries
+            if identified_brand and search_term.isdigit():
+                combined_search_term = f"{identified_brand} {search_term}"
+                print(f"Searching for combined term: {combined_search_term}")
+                
+                # Try exact match with combined term
+                for product in PRODUCT_DB:
+                    product_lower = product['product_name'].lower()
+                    if identified_brand in product_lower and search_term in product_lower:
+                        # Update context with found product
+                        if context:
+                            context['current_topic'] = 'product_info'
+                            product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+                            if not any(p['name'] == product['product_name'] for p in context['entities']['products']):
+                                context['entities']['products'].append(product_entity)
+                        
+                        # Format the response based on language
+                        return format_product_response(product, user_id)
+            
             # Try exact match first
             for product in PRODUCT_DB:
-                if search_term.lower() in product['product_name'].lower():
+                product_lower = product['product_name'].lower()
+                
+                # For numeric model numbers, check if they appear anywhere in the product name
+                if search_term.isdigit():
+                    if search_term in product_lower.replace(" ", "").replace("-", ""):
+                        # Update context with found product
+                        if context:
+                            context['current_topic'] = 'product_info'
+                            product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+                            if not any(p['name'] == product['product_name'] for p in context['entities']['products']):
+                                context['entities']['products'].append(product_entity)
+                        
+                        # Format the response based on language
+                        return format_product_response(product, user_id)
+                # For regular searches
+                elif search_term.lower() in product_lower:
                     # Update context with found product
                     if context:
                         context['current_topic'] = 'product_info'
-                        product_entity = {'name': product_name, 'mentioned_at': time.time()}
-                        if not any(p['name'] == product_name for p in context['entities']['products']):
+                        product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+                        if not any(p['name'] == product['product_name'] for p in context['entities']['products']):
                             context['entities']['products'].append(product_entity)
                     
                     # Format the response based on language
@@ -630,16 +682,45 @@ def find_similar_products(text):
     
     matching_products = []
     
-    # Special handling for numeric-only queries (like "9238")
-    if text.strip().isdigit() and len(text.strip()) >= 4:
+    # Extract brand and model number from the query
+    brands = ['embraco', 'bitzer', 'danfoss', 'secop', 'copeland', 'tecumseh', 'dcb', 'ebm', 'ebmpapst', 'york', 'drc']
+    identified_brand = None
+    model_number = None
+    
+    # Check if we have a brand in the query
+    for brand in brands:
+        if brand in text_lower:
+            identified_brand = brand
+            # Extract the rest as potential model number
+            parts = text_lower.split()
+            for part in parts:
+                if brand not in part and any(c.isdigit() for c in part):
+                    model_number = part
+                    break
+            break
+    
+    # If we have both brand and model number, prioritize this search
+    if identified_brand and model_number:
+        print(f"Searching for brand: {identified_brand}, model: {model_number}")
+        for product in PRODUCT_DB:
+            product_name = product['product_name'].lower()
+            if identified_brand in product_name and model_number in product_name:
+                matching_products.append(product)
+        
+        if matching_products:
+            print(f"Found {len(matching_products)} products matching brand {identified_brand} and model {model_number}")
+            return matching_products
+    
+    # Special handling for numeric-only queries (like "9236")
+    if text.strip().isdigit() and len(text.strip()) >= 3:
         numeric_query = text.strip()
         print(f"Numeric search in similar products for: {numeric_query}")
         
         # First pass: look for exact numeric matches
         for product in PRODUCT_DB:
-            product_name = product['product_name']
+            product_name = product['product_name'].lower()
             # Check if this exact number appears in the product name
-            if numeric_query in product_name:
+            if numeric_query in product_name.replace(" ", "").replace("-", ""):
                 matching_products.append(product)
         
         # If we found matches, return them
@@ -664,15 +745,22 @@ def find_similar_products(text):
     model_patterns = [
         r'([A-Za-z]{2,4})\s*[-]?\s*(\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "EMY 80 CLP", "DCB31"
         r'([A-Za-z]{2,4})\s*[-]?\s*(\d+[.]\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "FF 8.5 HBK"
+        r'(\d{3,5})',  # Matches numeric model numbers like "9236"
     ]
     
     for pattern in model_patterns:
         matches = re.findall(pattern, text, re.IGNORECASE)
         for match in matches:
-            model_parts = [part for part in match if part]
-            model = ''.join(model_parts).strip()
-            if model and model not in potential_terms:
-                potential_terms.append(model)
+            if isinstance(match, tuple):
+                model_parts = [part for part in match if part]
+                model = ''.join(model_parts).strip()
+                if model and model not in potential_terms:
+                    potential_terms.append(model)
+            else:
+                # Single part match (like "9236")
+                model = match.strip()
+                if model and model not in potential_terms:
+                    potential_terms.append(model)
     
     print(f"Potential terms for similarity search: {potential_terms}")
     
@@ -693,15 +781,6 @@ def find_similar_products(text):
     # 3. If we have too many matches, try to refine based on brand or category
     if len(matching_products) > 10:
         # Check if we can identify a brand in the query
-        brands = ['embraco', 'bitzer', 'danfoss', 'secop', 'copeland', 'tecumseh', 'dcb', 'ebm', 'ebmpapst', 'york', 'drc']
-        identified_brand = None
-        
-        for brand in brands:
-            if brand in text_lower:
-                identified_brand = brand
-                break
-        
-        # If we identified a brand, filter the results
         if identified_brand:
             filtered_products = []
             for product in matching_products:
@@ -711,6 +790,12 @@ def find_similar_products(text):
             # If we have filtered products, use them instead
             if filtered_products:
                 matching_products = filtered_products
+    
+    # 4. If we have a brand but no matches yet, return all products from that brand
+    if not matching_products and identified_brand:
+        for product in PRODUCT_DB:
+            if identified_brand in product['product_name'].lower():
+                matching_products.append(product)
     
     return matching_products
 
