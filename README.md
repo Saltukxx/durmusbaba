@@ -8,6 +8,7 @@ Bu proje, WhatsApp API ve Google Gemini AI'yi kullanarak akıllı bir chatbot ol
 - Google Gemini AI entegrasyonu
 - WooCommerce entegrasyonu (ürün ve sipariş sorgulama)
 - Otomatik mesaj yanıtlama
+- Gelişmiş sohbet bağlamı yönetimi
 - Kullanıcıya özel sohbet geçmişi
 - E-ticaret ürün bilgileri
 - Sipariş takibi
@@ -102,6 +103,28 @@ WooCommerce entegrasyonu için:
    WC_STORE_URL=https://durmusbaba.de
    ```
 
+## Gelişmiş Sohbet Bağlamı Yönetimi
+
+Bot, kullanıcı ile sohbet sırasında bağlamı akıllıca takip etmek için gelişmiş bir bağlam yönetim sistemi kullanır:
+
+1. **Varlık Takibi**: Konuşma sırasında geçen ürünler, kategoriler, fiyat aralıkları ve siparişler otomatik olarak tanınır ve takip edilir.
+
+2. **Bağlamsal Referanslar**: Bot, kullanıcının "bu ürün" veya "bu kategori" gibi referanslarını anlayabilir ve doğru bilgiyi sağlayabilir.
+
+3. **Konu Takibi**: Konuşmanın hangi konuda olduğu (ürün bilgisi, sipariş durumu, satış sorgusu, destek) otomatik olarak tespit edilir.
+
+4. **Çok Dilli Referans Algılama**: Almanca, İngilizce ve Türkçe dillerinde referanslar algılanabilir:
+   - "Dieses Produkt" / "This product" / "Bu ürün"
+   - "In dieser Kategorie" / "In this category" / "Bu kategoride"
+   - "Diese Bestellung" / "This order" / "Bu sipariş"
+
+5. **Otomatik Varlık Çıkarımı**: Mesajlardan ürün modelleri, kategoriler, fiyat aralıkları ve sipariş numaraları otomatik olarak çıkarılır.
+
+Örnek kullanım:
+- "Haben Sie Embraco NJ 9238?" ardından "Wie ist der Preis für dieses Produkt?"
+- "Zeigen Sie mir Bitzer Kompressoren" ardından "Gibt es in dieser Kategorie etwas unter 500 Euro?"
+- "Wo ist meine Bestellung #12345?" ardından "Wann wird diese Bestellung geliefert?"
+
 ## Satış Asistanı Özellikleri
 
 Bot, aşağıdaki satış asistanı özelliklerini sunmaktadır:
@@ -134,12 +157,18 @@ Satış asistanını test etmek için:
 python test_sales_assistant.py
 ```
 
+Sohbet bağlamı yönetimini test etmek için:
+```bash
+python test_conversation_context.py
+```
+
 Bu scriptler ile:
 1. Webhook'a test mesajları gönderebilir
 2. WhatsApp API'yi doğrudan test edebilir
 3. Gemini AI'yi doğrudan test edebilirsiniz
 4. WooCommerce ürün ve sipariş sorgulama özelliklerini test edebilirsiniz
 5. Satış asistanı özelliklerini test edebilirsiniz
+6. Sohbet bağlamı yönetimini test edebilirsiniz
 
 ## Lisans
 

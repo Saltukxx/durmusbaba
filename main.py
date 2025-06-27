@@ -11,6 +11,8 @@ import google.generativeai as genai
 import re
 from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
+from conversation_context import conversation_context
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -36,8 +38,8 @@ else:
 # Add these global variables after CHAT_HISTORY declaration
 CHAT_HISTORY = {}  # Store chat history for different users
 
-# Conversation context tracking
-USER_CONTEXT = {}  # Store context for different users: last query type, last products found, etc.
+# Conversation context tracking - DEPRECATED, using conversation_context module instead
+# USER_CONTEXT = {}  # Store context for different users: last query type, last products found, etc.
 
 ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN", "EAA3oBtMMm1MBO2niZA7bevRovOyIS479wXtOg0C9pWztSvnPHJIuWpsrO6fCvB6DGcDH5LMZCqaMwGSmpXJIMPlNZCSZBbjmp7gOGZBl8iZBpMSzS6B1NgfBtwU2cVJBGOrARd9VF5VpQpi7vW5itTOPyUZCPgiXwXYZClX5O6q44kCd7zvw8hrGRzyltfiOhykywvqFsimKXdB4uFFUEt49UaZBSp6bkHEw7stAeUKIF")
 # Default phone number ID, but we'll use the one from the incoming message
@@ -73,15 +75,35 @@ PRODUCT_DB = load_product_db()
 def get_gemini_response(user_id, text):
     print(f"Getting Gemini response for text: '{text}'")
     try:
-        # Initialize user context if not exists
-        if user_id not in USER_CONTEXT:
-            USER_CONTEXT[user_id] = {
-                'last_query_type': None,
-                'last_products': [],
-                'last_category': None,
-                'last_price_range': None,
-                'product_page': 0
-            }
+        # Update conversation context with the new message
+        conversation_context.update_context(user_id, text)
+        
+        # Get context summary and referenced entities
+        context_summary = conversation_context.get_conversation_summary(user_id)
+        referenced_entities = conversation_context.get_referenced_entities(user_id, text)
+        
+        # Handle references to previous entities in the conversation
+        if referenced_entities:
+            if 'product' in referenced_entities:
+                product_name = referenced_entities['product']['name']
+                print(f"Referenced product detected: {product_name}")
+                # Find the product in the database
+                exact_product = find_exact_product(product_name)
+                if exact_product:
+                    # Return product information
+                    return format_product_response(exact_product, user_id)
+            
+            if 'category' in referenced_entities:
+                category = referenced_entities['category']
+                print(f"Referenced category detected: {category}")
+                # Return products from this category
+                return check_category_request(category, user_id)
+            
+            if 'order' in referenced_entities:
+                order_number = referenced_entities['order']
+                print(f"Referenced order detected: {order_number}")
+                # Return order information
+                return handle_order_query(f"order {order_number}", user_id)
         
         # Initialize or get existing chat session
         if user_id not in CHAT_HISTORY:
@@ -153,68 +175,21 @@ def get_gemini_response(user_id, text):
         
         # Check if this is an order-related query
         if is_order_query(text):
+            context = conversation_context.get_context(user_id)
+            context['current_topic'] = 'order_status'
             return handle_order_query(text, user_id)
         
         # Check if this is a sales inquiry (product recommendations, offers, etc.)
         if is_sales_inquiry(text):
-            USER_CONTEXT[user_id]['last_query_type'] = 'sales'
+            context = conversation_context.get_context(user_id)
+            context['current_topic'] = 'sales_inquiry'
             return handle_sales_inquiry(text, user_id)
         
         # First check if the message is just a product name (direct product query)
         exact_product = find_exact_product(text)
         if exact_product:
             # If it's an exact product name, return the price directly without calling Gemini
-            product_name = exact_product['product_name']
-            price = exact_product['price_eur']
-            url = exact_product.get('url', '')
-            status = exact_product.get('status', '')
-            
-            # Update user context
-            USER_CONTEXT[user_id]['last_query_type'] = 'exact_product'
-            USER_CONTEXT[user_id]['last_products'] = [exact_product]
-            
-            # Format status message
-            status_message = ""
-            if status == "instock":
-                status_message = "auf Lager"
-            elif status == "outofstock":
-                status_message = "nicht auf Lager"
-                
-            # Detect language and format response accordingly
-            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
-                # Turkish
-                response = f"📦 {product_name} fiyatı: {price} EUR\n"
-                if status == "instock":
-                    response += f"✅ Durum: {status_message}\n"
-                    response += f"🚚 Teslimat süresi: 3-5 iş günü\n"
-                else:
-                    response += f"⚠️ Durum: {status_message}\n"
-                    response += f"📧 Özel sipariş için lütfen bizimle iletişime geçin: info@durmusbaba.com veya +4915228474571\n"
-                response += f"🔗 Ürün linki: {url}"
-                return response
-            elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
-                # English
-                status_text = "in stock" if status == "instock" else "out of stock"
-                response = f"📦 The price of {product_name} is {price} EUR\n"
-                if status == "instock":
-                    response += f"✅ Status: {status_text}\n"
-                    response += f"🚚 Delivery time: 3-5 business days\n"
-                else:
-                    response += f"⚠️ Status: {status_text}\n"
-                    response += f"📧 For special orders, please contact us at: info@durmusbaba.com or +4915228474571\n"
-                response += f"🔗 Product link: {url}"
-                return response
-            else:
-                # Default to German
-                response = f"📦 Der Preis für {product_name} beträgt {price} EUR\n"
-                if status == "instock":
-                    response += f"✅ Status: {status_message}\n"
-                    response += f"🚚 Lieferzeit: 3-5 Werktage\n"
-                else:
-                    response += f"⚠️ Status: {status_message}\n"
-                    response += f"📧 Für Sonderbestellungen kontaktieren Sie uns bitte unter: info@durmusbaba.com oder +4915228474571\n"
-                response += f"🔗 Produktlink: {url}"
-                return response
+            return format_product_response(exact_product, user_id)
         
         # Check if the message is a product query
         product_info = check_product_query(text, user_id)
@@ -228,17 +203,45 @@ def get_gemini_response(user_id, text):
         
         # Check if this is a contact information request
         if is_contact_request(text):
-            USER_CONTEXT[user_id]['last_query_type'] = 'contact'
+            context = conversation_context.get_context(user_id)
+            context['current_topic'] = 'contact'
             return generate_contact_info_response(text)
         
         # Check if this is a delivery time request
         if is_delivery_request(text):
-            USER_CONTEXT[user_id]['last_query_type'] = 'delivery'
+            context = conversation_context.get_context(user_id)
+            context['current_topic'] = 'delivery'
             return generate_delivery_info_response(text)
         
         # For non-product queries, get response from Gemini
-        response = CHAT_HISTORY[user_id].send_message(text)
+        # Add conversation context to help Gemini understand the context
+        context_info = ""
+        if context_summary['current_topic']:
+            context_info += f"Current topic: {context_summary['current_topic']}\n"
+        if context_summary['mentioned_products']:
+            context_info += f"Recently mentioned products: {', '.join(context_summary['mentioned_products'])}\n"
+        if context_summary['mentioned_categories']:
+            context_info += f"Recently mentioned categories: {', '.join(context_summary['mentioned_categories'])}\n"
+        
+        # Get recent messages to provide context
+        recent_messages = conversation_context.get_recent_messages(user_id)
+        if len(recent_messages) > 1:
+            context_info += "Recent conversation:\n"
+            for i, msg in enumerate(recent_messages[:-1]):  # Exclude the current message
+                role = "User" if msg['is_user'] else "Bot"
+                context_info += f"{role}: {msg['text']}\n"
+        
+        # Add context information to the message if available
+        if context_info:
+            enhanced_text = f"{text}\n\n[Context information (not visible to user): {context_info}]"
+        else:
+            enhanced_text = text
+            
+        response = CHAT_HISTORY[user_id].send_message(enhanced_text)
         response_text = response.text
+        
+        # Update conversation context with the bot's response
+        conversation_context.update_context(user_id, response_text, is_user=False)
         
         # Check if the response contains template placeholders
         placeholder_patterns = [
@@ -248,30 +251,86 @@ def get_gemini_response(user_id, text):
             r'\[\s*[Pp]reis[^]]*\]',   # [Preis]
             r'\[\s*[Pp]rice[^]]*\]',   # [Price]
             r'\[\s*[Vv]erfügbarkeit[^]]*\]', # [Verfügbarkeit]
-            r'\[\s*[Ss]tatus[^]]*\]',  # [Status]
-            r'\[\s*[Ll]ink[^]]*\]'     # [Link]
         ]
         
-        has_placeholders = any(re.search(pattern, response_text) for pattern in placeholder_patterns)
+        for pattern in placeholder_patterns:
+            if re.search(pattern, response_text):
+                print(f"Warning: Response contains template placeholder: {pattern}")
+                return "Es tut mir leid, aber ich konnte keine genauen Informationen zu Ihrer Anfrage finden. Bitte kontaktieren Sie uns direkt unter info@durmusbaba.com oder +4915228474571 für weitere Unterstützung."
         
-        if has_placeholders:
-            # If the response contains placeholders, return a generic response
-            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
-                # Turkish
-                return "❓ Üzgünüm, bu ürün hakkında bilgi bulamadım. Lütfen ürün adını kontrol edin veya başka bir ürün sorun.\n\n📧 Yardıma ihtiyacınız varsa, lütfen bizimle iletişime geçin: info@durmusbaba.com veya +4915228474571"
-            elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
-                # English
-                return "❓ I'm sorry, I couldn't find information about this product. Please check the product name or ask about a different product.\n\n📧 If you need assistance, please contact us at: info@durmusbaba.com or +4915228474571"
-            else:
-                # Default to German
-                return "❓ Es tut mir leid, ich konnte keine Informationen zu diesem Produkt finden. Bitte überprüfen Sie den Produktnamen oder fragen Sie nach einem anderen Produkt.\n\n📧 Wenn Sie Hilfe benötigen, kontaktieren Sie uns bitte unter: info@durmusbaba.com oder +4915228474571"
+        # Remove any context information that might have leaked into the response
+        response_text = re.sub(r'\[Context information \(not visible to user\): .*?\]', '', response_text, flags=re.DOTALL)
         
-        print(f"Gemini response: {response_text}")
         return response_text
+    
     except Exception as e:
         print(f"Error in get_gemini_response: {e}")
         traceback.print_exc()
-        return f"Üzgünüm, bir hata oluştu: {str(e)}"
+        return "Es tut mir leid, aber es gab ein Problem bei der Verarbeitung Ihrer Anfrage. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie uns direkt unter info@durmusbaba.com."
+
+# New function to format product responses consistently
+def format_product_response(product, user_id):
+    """Format product information response based on the detected language"""
+    product_name = product['product_name']
+    price = product['price_eur']
+    url = product.get('url', '')
+    status = product.get('status', '')
+    
+    # Update conversation context
+    context = conversation_context.get_context(user_id)
+    context['current_topic'] = 'product_info'
+    
+    # Add product to entities if not already there
+    product_entity = {'name': product_name, 'mentioned_at': time.time()}
+    if not any(p['name'] == product_name for p in context['entities']['products']):
+        context['entities']['products'].append(product_entity)
+    
+    # Format status message
+    status_message = ""
+    if status == "instock":
+        status_message = "auf Lager"
+    elif status == "outofstock":
+        status_message = "nicht auf Lager"
+    
+    # Get recent messages to detect language
+    recent_messages = conversation_context.get_recent_messages(user_id)
+    text = recent_messages[-1]['text'] if recent_messages else ""
+    
+    # Detect language and format response accordingly
+    if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+        # Turkish
+        response = f"📦 {product_name} fiyatı: {price} EUR\n"
+        if status == "instock":
+            response += f"✅ Durum: {status_message}\n"
+            response += f"🚚 Teslimat süresi: 3-5 iş günü\n"
+        else:
+            response += f"⚠️ Durum: {status_message}\n"
+            response += f"📧 Özel sipariş için lütfen bizimle iletişime geçin: info@durmusbaba.com veya +4915228474571\n"
+        response += f"🔗 Ürün linki: {url}"
+        return response
+    elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
+        # English
+        status_text = "in stock" if status == "instock" else "out of stock"
+        response = f"📦 The price of {product_name} is {price} EUR\n"
+        if status == "instock":
+            response += f"✅ Status: {status_text}\n"
+            response += f"🚚 Delivery time: 3-5 business days\n"
+        else:
+            response += f"⚠️ Status: {status_text}\n"
+            response += f"📧 For special orders, please contact us at: info@durmusbaba.com or +4915228474571\n"
+        response += f"🔗 Product link: {url}"
+        return response
+    else:
+        # Default to German
+        response = f"📦 Der Preis für {product_name} beträgt {price} EUR\n"
+        if status == "instock":
+            response += f"✅ Status: {status_message}\n"
+            response += f"🚚 Lieferzeit: 3-5 Werktage\n"
+        else:
+            response += f"⚠️ Status: {status_message}\n"
+            response += f"📧 Für Sonderbestellungen kontaktieren Sie uns bitte unter: info@durmusbaba.com oder +4915228474571\n"
+        response += f"🔗 Produktlink: {url}"
+        return response
 
 def is_contact_request(text):
     """Check if the message is asking for contact information."""
@@ -433,186 +492,133 @@ def find_exact_product(text):
     return None
 
 def check_product_query(text, user_id=None):
-    """Check if the user is asking about a specific product and return relevant information."""
-    text_lower = text.lower()
+    """Check if the message is a product query and return product information if found."""
+    print(f"Checking product query: '{text}'")
     
-    # List of keywords that might indicate a product query
-    product_keywords = [
-        # Price-related keywords
-        "preis", "price", "fiyat", "kosten", "cost", "euro", "€", "eur",
-        # Product-related keywords
-        "kompressor", "compressor", "kompresör", "produkt", "product", "ürün", 
-        "modell", "model", "typ", "type", "artikel", "item",
-        # Brand names
-        "embraco", "bitzer", "danfoss", "secop", "copeland", "tecumseh", 
-        "dcb", "ebm", "ebmpapst", "york", "drc",
-        # Product categories
-        "kältetechnik", "cooling", "soğutma", "kühlsystem", "kühlung", 
-        "refrigeration", "soğutucu", "kühlschrank", "fridge", "freezer"
+    # Get context for this user
+    context = conversation_context.get_context(user_id) if user_id else None
+    
+    # Check for product model numbers in the text
+    product_patterns = [
+        r'(?:embraco|danfoss|bitzer)\s+[a-z0-9\s\-\.]{2,10}',  # Brand + model
+        r'[a-z]{2,4}\s*\d{2,5}(?:\s*[a-z]{0,5})?',  # Model patterns like "EMY 80" or "NJ 9238"
+        r'dcb\d{2,3}',  # DCB models
+        r'ff\s*\d+\.?\d*'  # FF models
     ]
     
-    # Check if the message contains any product keywords
-    is_product_query = any(keyword in text_lower for keyword in product_keywords)
+    # Extract potential product models from the text
+    potential_products = []
+    for pattern in product_patterns:
+        matches = re.findall(pattern, text.lower())
+        potential_products.extend([match.strip() for match in matches])
     
-    # Special handling for queries that might be product names but don't contain keywords
-    if not is_product_query:
-        # Check for pure numeric queries (like "9238")
-        if text_lower.strip().isdigit() and len(text_lower.strip()) >= 4:
-            is_product_query = True
-            
-        # Check for alphanumeric combinations that might be product codes
-        words = text_lower.split()
-        for word in words:
-            # Look for patterns like "DCB31", "EMY80", "NEK6160Z" - alphanumeric combinations
-            if (len(word) >= 3 and 
-                any(c.isdigit() for c in word) and 
-                any(c.isalpha() for c in word)):
-                is_product_query = True
-                break
-                
-        # Check for standalone numbers that might be product codes
-        if not is_product_query and len(words) <= 3:
-            # Short queries with numbers might be product codes
-            if any(any(c.isdigit() for c in word) for word in words):
-                is_product_query = True
+    print(f"Potential products found in text: {potential_products}")
     
-    if is_product_query:
-        # First try direct product lookup for the query
-        direct_product = find_exact_product(text)
-        if direct_product:
-            # Store in user context if user_id is provided
-            if user_id and user_id in USER_CONTEXT:
-                USER_CONTEXT[user_id]['last_query_type'] = 'exact_product'
-                USER_CONTEXT[user_id]['last_products'] = [direct_product]
-                USER_CONTEXT[user_id]['product_page'] = 0
-            
-            status_text = "auf Lager" if direct_product.get('status') == "instock" else "nicht auf Lager"
-            status_emoji = "✅" if direct_product.get('status') == "instock" else "⚠️"
-            
-            # Detect language and format response
-            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
-                # Turkish
-                response = f"📦 Ürün Bilgileri:\n\n"
-                response += f"🔍 {direct_product['product_name']}\n"
-                response += f"💰 Fiyat: {direct_product['price_eur']} EUR\n"
-                response += f"{status_emoji} Durum: {status_text}\n"
-                if direct_product.get('status') != "instock":
-                    response += f"📧 Özel sipariş için lütfen bizimle iletişime geçin: info@durmusbaba.com\n"
-                response += f"🚚 Teslimat süresi: 3-5 iş günü\n"
-                response += f"🔗 Ürün linki: {direct_product.get('url', '')}"
-                return response
-            elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
-                # English
-                response = f"📦 Product Information:\n\n"
-                response += f"🔍 {direct_product['product_name']}\n"
-                response += f"💰 Price: {direct_product['price_eur']} EUR\n"
-                response += f"{status_emoji} Status: {status_text}\n"
-                if direct_product.get('status') != "instock":
-                    response += f"📧 For special orders, please contact us at: info@durmusbaba.com\n"
-                response += f"🚚 Delivery time: 3-5 business days\n"
-                response += f"🔗 Product link: {direct_product.get('url', '')}"
-                return response
-            else:
-                # Default to German
-                response = f"📦 Produktinformation:\n\n"
-                response += f"🔍 {direct_product['product_name']}\n"
-                response += f"💰 Preis: {direct_product['price_eur']} EUR\n"
-                response += f"{status_emoji} Status: {status_text}\n"
-                if direct_product.get('status') != "instock":
-                    response += f"📧 Für Sonderbestellungen kontaktieren Sie uns bitte unter: info@durmusbaba.com\n"
-                response += f"🚚 Lieferzeit: 3-5 Werktage\n"
-                response += f"🔗 Produktlink: {direct_product.get('url', '')}"
-                return response
-        
-        # Check for category filtering requests
-        category_request = check_category_request(text_lower, user_id)
-        if category_request:
-            return category_request
-        
-        # Check for price range filtering
-        price_range_request = check_price_range_request(text_lower, user_id)
-        if price_range_request:
-            return price_range_request
-        
-        # If we get here, try to find similar products based on partial matches
-        matching_products = find_similar_products(text)
-        
-        # If we found matching products, return the information
-        if matching_products:
-            # Store in user context if user_id is provided
-            if user_id and user_id in USER_CONTEXT:
-                USER_CONTEXT[user_id]['last_query_type'] = 'similar_products'
-                USER_CONTEXT[user_id]['last_products'] = matching_products
-                USER_CONTEXT[user_id]['product_page'] = 0
-            
-            # Detect language
-            is_turkish = any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
-            is_english = any(word in text.lower() for word in ['price', 'cost', 'how much', 'product', 'compressor'])
-            
-            if len(matching_products) > 5:
-                # If too many matches, return a summary
-                if is_turkish:
-                    result = f"🔍 {len(matching_products)} adet eşleşen ürün buldum. İşte ilk 5 tanesi:\n\n"
-                elif is_english:
-                    result = f"🔍 I found {len(matching_products)} matching products. Here are the first 5:\n\n"
-                else:
-                    result = f"🔍 Ich habe {len(matching_products)} passende Produkte gefunden. Hier sind die ersten 5:\n\n"
-            else:
-                # Return detailed information for up to 5 products
-                if is_turkish:
-                    result = f"🔍 {len(matching_products)} adet eşleşen ürün buldum:\n\n"
-                elif is_english:
-                    result = f"🔍 I found {len(matching_products)} matching products:\n\n"
-                else:
-                    result = f"🔍 Ich habe {len(matching_products)} passende Produkte gefunden:\n\n"
-            
-            # Add product information
-            for i, product in enumerate(matching_products[:5]):
-                status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-                if is_turkish:
-                    status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
-                elif is_english:
-                    status_text = "in stock" if product.get('status') == "instock" else "out of stock"
-                
-                status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
-                result += f"{i+1}. 📦 {product['product_name']}\n"
-                result += f"   💰 {product['price_eur']} EUR | {status_emoji} {status_text}\n"
-                result += f"   🔗 {product.get('url', '')}\n\n"
-            
-            # Add message about more products if available
-            if len(matching_products) > 5:
-                if is_turkish:
-                    result += f"... ve {len(matching_products) - 5} ürün daha. Daha fazla görmek için 'daha fazla göster' yazabilirsiniz.\n\n"
-                elif is_english:
-                    result += f"... and {len(matching_products) - 5} more products. You can type 'show more' to see additional products.\n\n"
-                else:
-                    result += f"... und {len(matching_products) - 5} weitere Produkte. Sie können 'mehr zeigen' eingeben, um weitere Produkte zu sehen.\n\n"
-            
-            # Add contact information for further assistance
-            if is_turkish:
-                result += "📞 Daha fazla yardıma ihtiyacınız varsa, lütfen bizimle iletişime geçin: info@durmusbaba.com"
-            elif is_english:
-                result += "📞 If you need further assistance, please contact us at: info@durmusbaba.com"
-            else:
-                result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
-                
-            return result
-        else:
-            # No matching products found
-            if is_contact_request(text):
-                return generate_contact_info_response(text)
-            
-            # Detect language for no results message
-            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör']):
-                # Turkish
-                return "❓ Üzgünüm, aradığınız ürünü bulamadım. Lütfen ürün adını kontrol edin veya başka bir ürün sorun.\n\n📧 Yardıma ihtiyacınız varsa, lütfen bizimle iletişime geçin: info@durmusbaba.com veya +4915228474571"
-            elif any(word in text.lower() for word in ['price', 'cost', 'how much', 'product', 'compressor']):
-                # English
-                return "❓ I'm sorry, I couldn't find the product you're looking for. Please check the product name or ask about a different product.\n\n📧 If you need assistance, please contact us at: info@durmusbaba.com or +4915228474571"
-            else:
-                # Default to German
-                return "❓ Es tut mir leid, ich konnte das gesuchte Produkt nicht finden. Bitte überprüfen Sie den Produktnamen oder fragen Sie nach einem anderen Produkt.\n\n📧 Wenn Sie Hilfe benötigen, kontaktieren Sie uns bitte unter: info@durmusbaba.com oder +4915228474571"
+    # If no products found in text, check if we have referenced products in context
+    if not potential_products and context and context['entities']['products']:
+        referenced_entities = conversation_context.get_referenced_entities(user_id, text)
+        if 'product' in referenced_entities:
+            potential_products.append(referenced_entities['product']['name'])
+            print(f"Using referenced product from context: {potential_products}")
     
+    # If we have potential products, search for them
+    if potential_products:
+        # First try WooCommerce if available
+        if USE_WOOCOMMERCE:
+            try:
+                # Try to find products in WooCommerce
+                for product_name in potential_products:
+                    # Clean up the product name for search
+                    search_term = re.sub(r'\s+', ' ', product_name).strip()
+                    
+                    # Search for the product
+                    products = woocommerce.search_products(search_term)
+                    
+                    if products:
+                        # Found products, format the response
+                        product = products[0]  # Take the first match
+                        
+                        # Update context with found product
+                        if context:
+                            context['current_topic'] = 'product_info'
+                            product_entity = {'name': product_name, 'mentioned_at': time.time()}
+                            if not any(p['name'] == product_name for p in context['entities']['products']):
+                                context['entities']['products'].append(product_entity)
+                        
+                        # Format the response based on language
+                        return format_product_response({
+                            'product_name': product['name'],
+                            'price_eur': product['price'],
+                            'url': product['permalink'],
+                            'status': 'instock' if product['in_stock'] else 'outofstock'
+                        }, user_id)
+                
+                # If we get here, no products were found in WooCommerce
+                print("No products found in WooCommerce")
+            except Exception as e:
+                print(f"Error searching WooCommerce: {e}")
+        
+        # If WooCommerce search failed or is not available, try local database
+        for product_name in potential_products:
+            # Clean up the product name for search
+            search_term = re.sub(r'\s+', ' ', product_name).strip()
+            
+            # Try exact match first
+            for product in PRODUCT_DB:
+                if search_term.lower() in product['product_name'].lower():
+                    # Update context with found product
+                    if context:
+                        context['current_topic'] = 'product_info'
+                        product_entity = {'name': product_name, 'mentioned_at': time.time()}
+                        if not any(p['name'] == product_name for p in context['entities']['products']):
+                            context['entities']['products'].append(product_entity)
+                    
+                    # Format the response based on language
+                    return format_product_response(product, user_id)
+            
+            # If no exact match, try fuzzy matching
+            similar_products = find_similar_products(search_term)
+            if similar_products:
+                # Update context with found products
+                if context:
+                    context['current_topic'] = 'product_info'
+                    context['entities']['products'] = []
+                    for product in similar_products[:3]:  # Store top 3 matches
+                        product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+                        context['entities']['products'].append(product_entity)
+                
+                # Format a response with multiple products
+                if len(similar_products) == 1:
+                    # Single product found
+                    return format_product_response(similar_products[0], user_id)
+                else:
+                    # Multiple products found
+                    products_list = ""
+                    for i, product in enumerate(similar_products[:5]):  # Show top 5 matches
+                        products_list += f"{i+1}. {product['product_name']} - {product['price_eur']} EUR\n"
+                    
+                    # Detect language and format response accordingly
+                    if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                        # Turkish
+                        return f"📋 Aradığınız ürün için birkaç sonuç buldum:\n\n{products_list}\n🔍 Daha fazla bilgi için ürün numarasını yazabilirsiniz."
+                    elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
+                        # English
+                        return f"📋 I found several results for your query:\n\n{products_list}\n🔍 You can type the product number for more information."
+                    else:
+                        # Default to German
+                        return f"📋 Ich habe mehrere Ergebnisse für Ihre Anfrage gefunden:\n\n{products_list}\n🔍 Sie können die Produktnummer für weitere Informationen eingeben."
+    
+    # Check if this is a category request
+    category_result = check_category_request(text, user_id)
+    if category_result:
+        return category_result
+    
+    # Check if this is a price range request
+    price_range_result = check_price_range_request(text, user_id)
+    if price_range_result:
+        return price_range_result
+    
+    # No product information found
     return None
 
 def find_similar_products(text):
@@ -722,9 +728,12 @@ def check_category_request(text, user_id=None):
         "york": ["york"]
     }
     
+    # Get context for this user
+    context = conversation_context.get_context(user_id) if user_id else None
+    
     # Check if the text contains any category keywords
     for category, keywords in categories.items():
-        if any(keyword in text for keyword in keywords):
+        if any(keyword in text.lower() for keyword in keywords):
             # Find products in this category
             matching_products = []
             for product in PRODUCT_DB:
@@ -733,16 +742,19 @@ def check_category_request(text, user_id=None):
                     matching_products.append(product)
             
             if matching_products:
-                # Store search results in user context if user_id is provided
-                if user_id and user_id in USER_CONTEXT:
-                    USER_CONTEXT[user_id]['last_query_type'] = 'category'
-                    USER_CONTEXT[user_id]['last_category'] = category
-                    USER_CONTEXT[user_id]['last_products'] = matching_products
-                    USER_CONTEXT[user_id]['product_page'] = 0
+                # Store search results in conversation context if user_id is provided
+                if context:
+                    context['current_topic'] = 'category_search'
+                    # Add category to entities if not already there
+                    if category not in context['entities']['categories']:
+                        context['entities']['categories'].append(category)
+                    
+                    # Update product page
+                    context['product_page'] = 0
                 
                 # Detect language
-                is_turkish = any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
-                is_english = any(word in text for word in ['price', 'cost', 'how much', 'product', 'compressor'])
+                is_turkish = any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
+                is_english = any(word in text.lower() for word in ['price', 'cost', 'how much', 'product', 'compressor'])
                 
                 # Format the response based on language
                 if is_turkish:
@@ -754,6 +766,12 @@ def check_category_request(text, user_id=None):
                 
                 # Show up to 5 products
                 for i, product in enumerate(matching_products[:5]):
+                    # Add product to entities in context
+                    if context:
+                        product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+                        if not any(p['name'] == product_entity['name'] for p in context['entities']['products']):
+                            context['entities']['products'].append(product_entity)
+                    
                     status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
                     if is_turkish:
                         status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
@@ -785,20 +803,33 @@ def check_category_request(text, user_id=None):
                 return result
             else:
                 # No products found in this category
-                if any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
                     # Turkish
                     return f"❓ Üzgünüm, {category} kategorisinde ürün bulamadım. Lütfen başka bir kategori deneyin veya bizimle iletişime geçin: info@durmusbaba.com"
-                elif any(word in text for word in ['price', 'cost', 'how much']):
+                elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
                     # English
                     return f"❓ I'm sorry, I couldn't find any products in the {category} category. Please try another category or contact us at: info@durmusbaba.com"
                 else:
                     # Default to German
                     return f"❓ Es tut mir leid, ich konnte keine Produkte in der Kategorie {category} finden. Bitte versuchen Sie eine andere Kategorie oder kontaktieren Sie uns unter: info@durmusbaba.com"
     
+    # Check if there's a referenced category in the conversation context
+    if not any(any(keyword in text.lower() for keyword in keywords) for category, keywords in categories.items()):
+        if context and context['entities']['categories']:
+            referenced_entities = conversation_context.get_referenced_entities(user_id, text)
+            if 'category' in referenced_entities:
+                category = referenced_entities['category']
+                print(f"Found referenced category: {category}")
+                # Recursively call this function with the category name
+                return check_category_request(f"show products in {category}", user_id)
+    
     return None
 
 def check_price_range_request(text, user_id=None):
     """Check if the user is asking for products in a specific price range."""
+    # Get context for this user
+    context = conversation_context.get_context(user_id) if user_id else None
+    
     # Try to extract price range from the text
     price_range = extract_price_range(text)
     if price_range:
@@ -815,16 +846,17 @@ def check_price_range_request(text, user_id=None):
                 continue
         
         if matching_products:
-            # Store search results in user context if user_id is provided
-            if user_id and user_id in USER_CONTEXT:
-                USER_CONTEXT[user_id]['last_query_type'] = 'price_range'
-                USER_CONTEXT[user_id]['last_price_range'] = (min_price, max_price)
-                USER_CONTEXT[user_id]['last_products'] = matching_products
-                USER_CONTEXT[user_id]['product_page'] = 0
+            # Store search results in conversation context if user_id is provided
+            if context:
+                context['current_topic'] = 'price_search'
+                # Add price range to entities
+                context['entities']['price_ranges'].append((min_price, max_price))
+                # Update product page
+                context['product_page'] = 0
             
             # Detect language
-            is_turkish = any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
-            is_english = any(word in text for word in ['price', 'cost', 'how much', 'product', 'compressor'])
+            is_turkish = any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar', 'ürün', 'kompresör'])
+            is_english = any(word in text.lower() for word in ['price', 'cost', 'how much', 'product', 'compressor'])
             
             # Format the response based on language
             if is_turkish:
@@ -839,6 +871,12 @@ def check_price_range_request(text, user_id=None):
             
             # Show up to 5 products
             for i, product in enumerate(matching_products[:5]):
+                # Add product to entities in context
+                if context:
+                    product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+                    if not any(p['name'] == product_entity['name'] for p in context['entities']['products']):
+                        context['entities']['products'].append(product_entity)
+                
                 status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
                 if is_turkish:
                     status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
@@ -870,15 +908,24 @@ def check_price_range_request(text, user_id=None):
             return result
         else:
             # No products found in this price range
-            if any(word in text for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+            if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
                 # Turkish
                 return f"❓ Üzgünüm, {min_price}-{max_price} EUR fiyat aralığında ürün bulamadım. Lütfen farklı bir fiyat aralığı deneyin veya bizimle iletişime geçin: info@durmusbaba.com"
-            elif any(word in text for word in ['price', 'cost', 'how much']):
+            elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
                 # English
                 return f"❓ I'm sorry, I couldn't find any products in the price range of {min_price}-{max_price} EUR. Please try a different price range or contact us at: info@durmusbaba.com"
             else:
                 # Default to German
                 return f"❓ Es tut mir leid, ich konnte keine Produkte im Preisbereich von {min_price}-{max_price} EUR finden. Bitte versuchen Sie einen anderen Preisbereich oder kontaktieren Sie uns unter: info@durmusbaba.com"
+    
+    # Check if there's a referenced price range in the conversation context
+    elif context and context['entities']['price_ranges']:
+        referenced_entities = conversation_context.get_referenced_entities(user_id, text)
+        if 'price_range' in referenced_entities or any(word in text.lower() for word in ['price range', 'preisbereich', 'fiyat aralığı']):
+            # Use the most recent price range
+            min_price, max_price = context['entities']['price_ranges'][-1]
+            # Recursively call this function with the price range
+            return check_price_range_request(f"show products between {min_price} and {max_price} EUR", user_id)
     
     return None
 
@@ -959,8 +1006,11 @@ def is_more_products_request(text):
 
 def handle_more_products_request(user_id, text):
     """Handle requests to show more products from a previous search."""
-    if user_id not in USER_CONTEXT:
-        # No context available
+    # Get context for this user
+    context = conversation_context.get_context(user_id) if user_id else None
+    
+    if not context or not context['entities']['products']:
+        # No context available or no products in context
         if any(word in text.lower() for word in ['daha', 'fazla', 'devam']):
             # Turkish
             return "❓ Üzgünüm, şu anda gösterilecek daha fazla ürün yok. Lütfen yeni bir arama yapın."
@@ -971,84 +1021,175 @@ def handle_more_products_request(user_id, text):
             # Default to German
             return "❓ Es tut mir leid, es gibt derzeit keine weiteren Produkte zum Anzeigen. Bitte versuchen Sie eine neue Suche."
     
-    context = USER_CONTEXT[user_id]
+    # Increment the product page
+    if 'product_page' not in context:
+        context['product_page'] = 0
+    context['product_page'] += 1
     
-    # Check if we have products from a previous search
-    if context['last_query_type'] in ['category', 'price_range', 'similar_products'] and context['last_products']:
-        # Update the page number
-        context['product_page'] += 1
-        start_idx = context['product_page'] * 5
+    # Get the current topic
+    current_topic = context['current_topic']
+    
+    # Determine which products to show based on the current topic
+    products_to_show = []
+    
+    if current_topic == 'category_search' and context['entities']['categories']:
+        # Get products for the most recent category
+        category = context['entities']['categories'][-1]
         
-        # Check if we have more products to show
-        if start_idx >= len(context['last_products']):
-            if any(word in text.lower() for word in ['daha', 'fazla', 'devam']):
-                # Turkish
-                return "❓ Üzgünüm, gösterilecek başka ürün kalmadı. Lütfen yeni bir arama yapın."
-            elif any(word in text.lower() for word in ['more', 'next', 'continue']):
-                # English
-                return "❓ I'm sorry, there are no more products to show. Please try a new search."
-            else:
-                # Default to German
-                return "❓ Es tut mir leid, es gibt keine weiteren Produkte zum Anzeigen. Bitte versuchen Sie eine neue Suche."
+        # Define keywords for the category
+        category_keywords = {
+            "embraco": ["embraco", "embrac"],
+            "bitzer": ["bitzer", "bitze"],
+            "danfoss": ["danfoss", "danfo"],
+            "secop": ["secop", "seco"],
+            "copeland": ["copeland", "copel"],
+            "tecumseh": ["tecumseh", "tecum"],
+            "dcb": ["dcb"],
+            "ebm": ["ebm", "ebmpapst", "papst"],
+            "drc": ["drc"],
+            "york": ["york"]
+        }
         
-        # Get the next batch of products
-        products_to_show = context['last_products'][start_idx:start_idx + 5]
+        # Find the keywords for this category
+        keywords = []
+        for cat, kw in category_keywords.items():
+            if cat.lower() in category.lower():
+                keywords = kw
+                break
         
-        # Detect language from the request
-        is_turkish = any(word in text.lower() for word in ['daha', 'fazla', 'devam', 'diğer', 'başka'])
-        is_english = any(word in text.lower() for word in ['more', 'show', 'list', 'next', 'continue'])
+        # Find products in this category
+        all_products = []
+        for product in PRODUCT_DB:
+            product_name = product.get('product_name', '').lower()
+            if any(keyword in product_name for keyword in keywords):
+                all_products.append(product)
         
-        # Format the response based on language
-        if is_turkish:
-            result = f"🔍 İşte {len(context['last_products'])} üründen {start_idx + 1}-{min(start_idx + 5, len(context['last_products']))} arası ürünler:\n\n"
-        elif is_english:
-            result = f"🔍 Here are products {start_idx + 1}-{min(start_idx + 5, len(context['last_products']))} of {len(context['last_products'])}:\n\n"
+        # Get the current page of products
+        start_idx = (context['product_page'] - 1) * 5
+        if start_idx < len(all_products):
+            products_to_show = all_products[start_idx:start_idx + 5]
+            total_products = len(all_products)
         else:
-            result = f"🔍 Hier sind Produkte {start_idx + 1}-{min(start_idx + 5, len(context['last_products']))} von {len(context['last_products'])}:\n\n"
+            # Reset to the first page if we've gone too far
+            context['product_page'] = 1
+            products_to_show = all_products[:5]
+            total_products = len(all_products)
+    
+    elif current_topic == 'price_search' and context['entities']['price_ranges']:
+        # Get products for the most recent price range
+        min_price, max_price = context['entities']['price_ranges'][-1]
         
-        # Add product information
-        for i, product in enumerate(products_to_show):
-            status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-            if is_turkish:
-                status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
-            elif is_english:
-                status_text = "in stock" if product.get('status') == "instock" else "out of stock"
-            
-            status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
-            result += f"{start_idx + i + 1}. 📦 {product['product_name']}\n"
-            result += f"   💰 {product['price_eur']} EUR | {status_emoji} {status_text}\n"
-            result += f"   🔗 {product.get('url', '')}\n\n"
+        # Find products in this price range
+        all_products = []
+        for product in PRODUCT_DB:
+            try:
+                price = float(product.get('price_eur', '0').replace('€', '').replace(',', '.').strip())
+                if min_price <= price <= max_price:
+                    all_products.append(product)
+            except (ValueError, TypeError):
+                continue
         
-        # Add message about more products if available
-        remaining = len(context['last_products']) - (start_idx + len(products_to_show))
-        if remaining > 0:
-            if is_turkish:
-                result += f"... ve {remaining} ürün daha. Daha fazla görmek için 'daha fazla göster' yazabilirsiniz.\n\n"
-            elif is_english:
-                result += f"... and {remaining} more products. You can type 'show more' to see additional products.\n\n"
-            else:
-                result += f"... und {remaining} weitere Produkte. Sie können 'mehr zeigen' eingeben, um weitere Produkte zu sehen.\n\n"
+        # Sort products by price
+        all_products.sort(key=lambda x: float(x.get('price_eur', '0').replace('€', '').replace(',', '.').strip()))
         
-        # Add contact information
-        if is_turkish:
-            result += "📞 Daha fazla bilgi için bizimle iletişime geçin: info@durmusbaba.com"
-        elif is_english:
-            result += "📞 For more information, please contact us at: info@durmusbaba.com"
+        # Get the current page of products
+        start_idx = (context['product_page'] - 1) * 5
+        if start_idx < len(all_products):
+            products_to_show = all_products[start_idx:start_idx + 5]
+            total_products = len(all_products)
         else:
-            result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
-        
-        return result
+            # Reset to the first page if we've gone too far
+            context['product_page'] = 1
+            products_to_show = all_products[:5]
+            total_products = len(all_products)
+    
     else:
-        # No relevant products in context
+        # Just show the next 5 products from the entities
+        all_products = [{'product_name': p['name'], 'price_eur': '?', 'status': '', 'url': ''} for p in context['entities']['products']]
+        
+        # Try to find full product info for each product
+        for i, product in enumerate(all_products):
+            for db_product in PRODUCT_DB:
+                if product['product_name'].lower() in db_product['product_name'].lower():
+                    all_products[i] = db_product
+                    break
+        
+        # Get the current page of products
+        start_idx = (context['product_page'] - 1) * 5
+        if start_idx < len(all_products):
+            products_to_show = all_products[start_idx:start_idx + 5]
+            total_products = len(all_products)
+        else:
+            # Reset to the first page if we've gone too far
+            context['product_page'] = 1
+            products_to_show = all_products[:5]
+            total_products = len(all_products)
+    
+    # If we have no products to show, return an error message
+    if not products_to_show:
         if any(word in text.lower() for word in ['daha', 'fazla', 'devam']):
             # Turkish
-            return "❓ Üzgünüm, önceki bir arama bulunamadı. Lütfen bir ürün veya kategori hakkında soru sorun."
+            return "❓ Üzgünüm, gösterilecek başka ürün kalmadı. Lütfen yeni bir arama yapın."
         elif any(word in text.lower() for word in ['more', 'next', 'continue']):
             # English
-            return "❓ I'm sorry, I couldn't find a previous search. Please ask about a product or category."
+            return "❓ I'm sorry, there are no more products to show. Please try a new search."
         else:
             # Default to German
-            return "❓ Es tut mir leid, ich konnte keine vorherige Suche finden. Bitte fragen Sie nach einem Produkt oder einer Kategorie."
+            return "❓ Es tut mir leid, es gibt keine weiteren Produkte zum Anzeigen. Bitte versuchen Sie eine neue Suche."
+    
+    # Calculate the current range of products being shown
+    start_idx = (context['product_page'] - 1) * 5
+    end_idx = start_idx + len(products_to_show)
+    
+    # Detect language from the request
+    is_turkish = any(word in text.lower() for word in ['daha', 'fazla', 'devam', 'diğer', 'başka'])
+    is_english = any(word in text.lower() for word in ['more', 'show', 'list', 'next', 'continue'])
+    
+    # Format the response based on language
+    if is_turkish:
+        result = f"🔍 İşte {total_products} üründen {start_idx + 1}-{end_idx} arası ürünler:\n\n"
+    elif is_english:
+        result = f"🔍 Here are products {start_idx + 1}-{end_idx} of {total_products}:\n\n"
+    else:
+        result = f"🔍 Hier sind Produkte {start_idx + 1}-{end_idx} von {total_products}:\n\n"
+    
+    # Add product information
+    for i, product in enumerate(products_to_show):
+        # Add product to entities in context
+        product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+        if not any(p['name'] == product_entity['name'] for p in context['entities']['products']):
+            context['entities']['products'].append(product_entity)
+        
+        status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
+        if is_turkish:
+            status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
+        elif is_english:
+            status_text = "in stock" if product.get('status') == "instock" else "out of stock"
+        
+        status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
+        result += f"{start_idx + i + 1}. 📦 {product['product_name']}\n"
+        result += f"   💰 {product.get('price_eur', '?')} EUR | {status_emoji} {status_text}\n"
+        result += f"   🔗 {product.get('url', '')}\n\n"
+    
+    # Add message about more products if available
+    remaining = total_products - end_idx
+    if remaining > 0:
+        if is_turkish:
+            result += f"... ve {remaining} ürün daha. Daha fazla görmek için 'daha fazla göster' yazabilirsiniz.\n\n"
+        elif is_english:
+            result += f"... and {remaining} more products. You can type 'show more' to see additional products.\n\n"
+        else:
+            result += f"... und {remaining} weitere Produkte. Sie können 'mehr zeigen' eingeben, um weitere Produkte zu sehen.\n\n"
+    
+    # Add contact information
+    if is_turkish:
+        result += "📞 Daha fazla bilgi için bizimle iletişime geçin: info@durmusbaba.com"
+    elif is_english:
+        result += "📞 For more information, please contact us at: info@durmusbaba.com"
+    else:
+        result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
+    
+    return result
 
 def is_order_query(text):
     """Check if the message is asking about an order."""
@@ -1177,17 +1318,30 @@ def format_order_info(order, show_all_link=False, total_orders=1):
 
 def handle_order_query(text, user_id):
     """Handle order-related queries."""
-    # Update user context
-    if user_id not in USER_CONTEXT:
-        USER_CONTEXT[user_id] = {}
+    # Get context for this user
+    context = conversation_context.get_context(user_id) if user_id else None
     
-    USER_CONTEXT[user_id]['last_query_type'] = 'order'
+    # Update conversation context
+    if context:
+        context['current_topic'] = 'order_status'
+    
+    # Check for referenced orders in the conversation context
+    if context and context['entities']['orders']:
+        referenced_entities = conversation_context.get_referenced_entities(user_id, text)
+        if 'order' in referenced_entities:
+            order_id = referenced_entities['order']
+            print(f"Using referenced order from context: {order_id}")
+            return get_order_status(order_id=order_id)
     
     # Extract order number if present
     order_id = extract_order_number(text)
     
     if order_id:
         # If we have an order ID, look it up directly
+        # Add order to context
+        if context and order_id not in context['entities']['orders']:
+            context['entities']['orders'].append(order_id)
+        
         return get_order_status(order_id=order_id)
     else:
         # If no order ID, try to look up by phone number
