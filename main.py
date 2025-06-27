@@ -13,6 +13,8 @@ from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 from conversation_context import conversation_context
 import time
+import threading
+from order_notification import handle_order_webhook, notify_new_order, check_for_new_orders
 
 # Load environment variables from .env file
 load_dotenv()
@@ -1415,9 +1417,10 @@ def webhook():
                     print(f"Response from Gemini: {response_text}")
                     
                     # Log user context for debugging
-                    if sender in USER_CONTEXT:
-                        print(f"User context: {json.dumps({k: v for k, v in USER_CONTEXT[sender].items() if k != 'last_products'})}")
-                        print(f"Products in context: {len(USER_CONTEXT[sender].get('last_products', []))}")
+                    user_context = conversation_context.get_context(sender)
+                    if user_context:
+                        print(f"User context: {json.dumps({k: v for k, v in user_context.items() if k != 'entities'})}")
+                        print(f"Entities in context: {json.dumps(user_context.get('entities', {}))}")
                     
                     # Extract the phone number ID from the incoming message
                     recipient_phone_id = value.get("metadata", {}).get("phone_number_id", PHONE_NUMBER_ID)
@@ -1460,7 +1463,79 @@ def webhook():
 
     return "ok", 200
 
+@app.route("/woocommerce-webhook", methods=["POST"])
+def woocommerce_webhook():
+    """Handle WooCommerce webhooks for new orders"""
+    try:
+        print("Received WooCommerce webhook")
+        
+        # Get the webhook data
+        data = request.get_json()
+        print(f"WooCommerce webhook data: {json.dumps(data, indent=2)}")
+        
+        # Check if this is an order-related webhook
+        if data and 'id' in data and 'status' in data:
+            print(f"Processing order webhook: Order #{data['id']} with status {data['status']}")
+            
+            # Handle the order webhook (send notifications)
+            success = handle_order_webhook(data)
+            
+            if success:
+                print(f"Successfully processed order webhook for order #{data['id']}")
+                return "OK", 200
+            else:
+                print(f"Failed to process order webhook for order #{data['id']}")
+                return "Failed to process webhook", 500
+        else:
+            print("Not an order webhook or missing required data")
+            return "Invalid webhook data", 400
+            
+    except Exception as e:
+        print(f"Error processing WooCommerce webhook: {e}")
+        traceback.print_exc()
+        return "Error", 500
+
+@app.route("/test-notification", methods=["GET"])
+def test_notification():
+    """Test route to manually trigger order notifications"""
+    try:
+        # Check for authorization token
+        auth_token = request.args.get("token")
+        if auth_token != VERIFY_TOKEN:
+            return "Unauthorized", 401
+            
+        # Get order ID from query parameters
+        order_id = request.args.get("order_id")
+        if not order_id:
+            return "Missing order_id parameter", 400
+            
+        print(f"Testing order notification for order #{order_id}")
+        
+        # Get order details from WooCommerce API
+        order = woocommerce.get_order(order_id)
+        if not order:
+            return f"Order #{order_id} not found", 404
+            
+        # Send notifications
+        success = notify_new_order(order)
+        
+        if success:
+            return f"Successfully sent test notification for order #{order_id}", 200
+        else:
+            return f"Failed to send test notification for order #{order_id}", 500
+            
+    except Exception as e:
+        print(f"Error sending test notification: {e}")
+        traceback.print_exc()
+        return f"Error: {str(e)}", 500
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))
     print(f"Starting server on port {port}")
+    
+    # Start the order checking thread
+    print("Starting order notification background thread")
+    order_check_thread = threading.Thread(target=check_for_new_orders, daemon=True)
+    order_check_thread.start()
+    
     app.run(host="0.0.0.0", port=port)

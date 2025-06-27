@@ -1,6 +1,35 @@
-# WhatsApp Gemini Bot
+# WhatsApp Dialogflow Bot
 
-Bu proje, WhatsApp API ve Google Gemini AI'yi kullanarak akıllı bir chatbot oluşturmak için geliştirilmiştir. Bot, WhatsApp üzerinden gelen mesajları alır, Gemini AI ile işler ve yanıtları kullanıcıya geri gönderir.
+A WhatsApp bot that integrates with Dialogflow and WooCommerce for durmusbaba.de.
+
+## Features
+
+- WhatsApp integration using Meta Cloud API
+- Dialogflow integration for natural language processing
+- WooCommerce integration for product and order information
+- Product search and recommendation
+- Order status queries
+- Automatic order notifications via WhatsApp
+
+## Order Notification System
+
+The system automatically sends WhatsApp notifications to specified phone numbers when new orders are received. See [Order Notification Setup Guide](order_notification_setup.md) for details.
+
+## Setup
+
+1. Clone this repository
+2. Create a `.env` file with your credentials (see `.env.example`)
+3. Install dependencies: `pip install -r requirements.txt`
+4. Run the application: `python main.py`
+
+## Environment Variables
+
+See `.env.example` for required environment variables.
+
+## Webhook Configuration
+
+- WhatsApp webhook: `/webhook`
+- WooCommerce webhook: `/woocommerce-webhook`
 
 ## Özellikler
 

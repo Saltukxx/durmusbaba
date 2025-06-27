@@ -403,6 +403,41 @@ class WooCommerceClient:
             logger.error(f"Error getting customer orders: {str(e)}")
             return []
     
+    def get_orders(self, status=None, after=None):
+        """
+        Get orders with filters
+        
+        Args:
+            status (str): Filter by order status (e.g., 'processing', 'completed')
+            after (datetime): Get orders after this date/time
+            
+        Returns:
+            list: List of orders or empty list if error
+        """
+        if not self.is_connected:
+            if not self.connect():
+                return []
+        
+        try:
+            params = {"per_page": 20}
+            
+            if status:
+                params["status"] = status
+                
+            if after:
+                # Format datetime to ISO 8601
+                params["after"] = after.strftime("%Y-%m-%dT%H:%M:%S")
+            
+            response = self.wcapi.get("orders", params=params)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Failed to get orders: {response.status_code} - {response.text}")
+                return []
+        except Exception as e:
+            logger.error(f"Error getting orders: {str(e)}")
+            return []
+    
     def get_product_categories(self):
         """
         Get all product categories
