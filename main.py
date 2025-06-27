@@ -500,6 +500,23 @@ def check_product_query(text, user_id=None):
     # Get context for this user
     context = conversation_context.get_context(user_id) if user_id else None
     
+    # Extract brand and model number from the query
+    brands = ['embraco', 'bitzer', 'danfoss', 'secop', 'copeland', 'tecumseh', 'dcb', 'ebm', 'ebmpapst', 'york', 'drc']
+    identified_brand = None
+    model_number = None
+    
+    # Check if we have a brand in the query
+    for brand in brands:
+        if brand in text.lower():
+            identified_brand = brand
+            # Extract the rest as potential model number
+            parts = text.lower().split()
+            for part in parts:
+                if brand not in part and any(c.isdigit() for c in part):
+                    model_number = part
+                    break
+            break
+    
     # Check for product model numbers in the text
     product_patterns = [
         r'(?:embraco|danfoss|bitzer)\s+[a-z0-9\s\-\.]{2,10}',  # Brand + model
@@ -528,14 +545,6 @@ def check_product_query(text, user_id=None):
         if 'product' in referenced_entities:
             potential_products.append(referenced_entities['product']['name'])
             print(f"Using referenced product from context: {potential_products}")
-    
-    # Extract brand from query if present
-    brands = ['embraco', 'bitzer', 'danfoss', 'secop', 'copeland', 'tecumseh', 'dcb', 'ebm', 'ebmpapst', 'york', 'drc']
-    identified_brand = None
-    for brand in brands:
-        if brand in text.lower():
-            identified_brand = brand
-            break
     
     # If we have potential products, search for them
     if potential_products:
@@ -651,16 +660,42 @@ def check_product_query(text, user_id=None):
                     for i, product in enumerate(similar_products[:5]):  # Show top 5 matches
                         products_list += f"{i+1}. {product['product_name']} - {product['price_eur']} EUR\n"
                     
+                    # Check if this was a search for a specific model number that wasn't found exactly
+                    is_model_search = False
+                    searched_model = None
+                    
+                    # Check if the search was for a numeric model
+                    if text.strip().isdigit() and len(text.strip()) >= 3:
+                        is_model_search = True
+                        searched_model = text.strip()
+                    # Check if the search was for a brand + model number
+                    elif identified_brand and model_number:
+                        is_model_search = True
+                        searched_model = model_number
+                    
                     # Detect language and format response accordingly
-                    if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
-                        # Turkish
-                        return f"📋 Aradığınız ürün için birkaç sonuç buldum:\n\n{products_list}\n🔍 Daha fazla bilgi için ürün numarasını yazabilirsiniz."
-                    elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
-                        # English
-                        return f"📋 I found several results for your query:\n\n{products_list}\n🔍 You can type the product number for more information."
+                    if is_model_search and searched_model:
+                        # Format a "Did you mean" response
+                        if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                            # Turkish
+                            return f"❓ \"{searched_model}\" modeli bulunamadı. Bunları mı demek istediniz?\n\n{products_list}\n🔍 Daha fazla bilgi için ürün numarasını yazabilirsiniz."
+                        elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
+                            # English
+                            return f"❓ Model \"{searched_model}\" not found. Did you mean one of these?\n\n{products_list}\n🔍 You can type the product number for more information."
+                        else:
+                            # Default to German
+                            return f"❓ Modell \"{searched_model}\" wurde nicht gefunden. Meinten Sie eines davon?\n\n{products_list}\n🔍 Sie können die Produktnummer für weitere Informationen eingeben."
                     else:
-                        # Default to German
-                        return f"📋 Ich habe mehrere Ergebnisse für Ihre Anfrage gefunden:\n\n{products_list}\n🔍 Sie können die Produktnummer für weitere Informationen eingeben."
+                        # Regular multiple results response
+                        if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
+                            # Turkish
+                            return f"📋 Aradığınız ürün için birkaç sonuç buldum:\n\n{products_list}\n🔍 Daha fazla bilgi için ürün numarasını yazabilirsiniz."
+                        elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
+                            # English
+                            return f"📋 I found several results for your query:\n\n{products_list}\n🔍 You can type the product number for more information."
+                        else:
+                            # Default to German
+                            return f"📋 Ich habe mehrere Ergebnisse für Ihre Anfrage gefunden:\n\n{products_list}\n🔍 Sie können die Produktnummer für weitere Informationen eingeben."
     
     # Check if this is a category request
     category_result = check_category_request(text, user_id)
@@ -707,6 +742,29 @@ def find_similar_products(text):
             if identified_brand in product_name and model_number in product_name:
                 matching_products.append(product)
         
+        # If no exact match found, try to find similar model numbers
+        if not matching_products:
+            print(f"No exact match found for {model_number}, looking for similar models")
+            # Get the numeric part of the model number
+            numeric_part = ''.join(filter(str.isdigit, model_number))
+            if numeric_part and len(numeric_part) >= 3:
+                # Find products with similar numeric parts
+                similar_models = []
+                for product in PRODUCT_DB:
+                    product_name = product['product_name'].lower()
+                    if identified_brand in product_name:
+                        # Extract all numeric sequences from the product name
+                        product_numbers = re.findall(r'\d+', product_name)
+                        for num in product_numbers:
+                            # Check if the numeric part is similar (first 3 digits match)
+                            if len(num) >= 3 and num[:3] == numeric_part[:3]:
+                                similar_models.append(product)
+                                break
+                
+                if similar_models:
+                    print(f"Found {len(similar_models)} products with similar model numbers")
+                    return similar_models
+        
         if matching_products:
             print(f"Found {len(matching_products)} products matching brand {identified_brand} and model {model_number}")
             return matching_products
@@ -727,6 +785,26 @@ def find_similar_products(text):
         if matching_products:
             print(f"Found {len(matching_products)} products with exact numeric match for {numeric_query}")
             return matching_products
+        
+        # If no exact match, try to find similar model numbers
+        print(f"No exact match found for {numeric_query}, looking for similar models")
+        similar_models = []
+        
+        # Try to find products with similar numeric parts (first 3 digits match)
+        if len(numeric_query) >= 3:
+            for product in PRODUCT_DB:
+                product_name = product['product_name'].lower()
+                # Extract all numeric sequences from the product name
+                product_numbers = re.findall(r'\d+', product_name)
+                for num in product_numbers:
+                    # Check if the numeric part is similar (first 3 digits match)
+                    if len(num) >= 3 and num[:3] == numeric_query[:3]:
+                        similar_models.append(product)
+                        break
+            
+            if similar_models:
+                print(f"Found {len(similar_models)} products with similar model numbers")
+                return similar_models
     
     # 1. Extract potential model numbers or significant terms
     potential_terms = []
