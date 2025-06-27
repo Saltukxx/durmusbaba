@@ -9,6 +9,8 @@ import traceback
 from dotenv import load_dotenv
 import google.generativeai as genai
 import re
+from woocommerce_client import woocommerce
+from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 
 # Load environment variables from .env file
 load_dotenv()
@@ -41,6 +43,18 @@ ACCESS_TOKEN = os.getenv("META_ACCESS_TOKEN", "EAA3oBtMMm1MBO2niZA7bevRovOyIS479
 # Default phone number ID, but we'll use the one from the incoming message
 PHONE_NUMBER_ID = os.getenv("META_PHONE_NUMBER_ID", "725422520644608")
 VERIFY_TOKEN = os.getenv("WEBHOOK_VERIFY_TOKEN", "whatsapptoken")
+
+# Initialize WooCommerce connection
+USE_WOOCOMMERCE = True
+try:
+    if woocommerce.is_connected:
+        print("✅ WooCommerce API connected successfully")
+    else:
+        print("⚠️ WooCommerce API connection failed, falling back to local product database")
+        USE_WOOCOMMERCE = False
+except Exception as e:
+    print(f"⚠️ Error initializing WooCommerce API: {e}")
+    USE_WOOCOMMERCE = False
 
 def load_product_db():
     """Load product database from JSON file."""
@@ -136,6 +150,15 @@ def get_gemini_response(user_id, text):
         # Check if this is a follow-up request for more products
         if is_more_products_request(text):
             return handle_more_products_request(user_id, text)
+        
+        # Check if this is an order-related query
+        if is_order_query(text):
+            return handle_order_query(text, user_id)
+        
+        # Check if this is a sales inquiry (product recommendations, offers, etc.)
+        if is_sales_inquiry(text):
+            USER_CONTEXT[user_id]['last_query_type'] = 'sales'
+            return handle_sales_inquiry(text, user_id)
         
         # First check if the message is just a product name (direct product query)
         exact_product = find_exact_product(text)
@@ -347,158 +370,90 @@ Do you have any other questions? 😊"""
 Haben Sie weitere Fragen? 😊"""
 
 def find_exact_product(text):
-    """Find a product by its exact name or a close match in the database."""
+    """Find a product by its exact name in the database."""
+    # Use WooCommerce API if available
+    if USE_WOOCOMMERCE and woocommerce.is_connected:
+        try:
+            # Clean up the input text
+            cleaned_text = text.strip()
+            
+            # Search for products with this name
+            products = woocommerce.search_products_by_name(cleaned_text)
+            
+            if products:
+                # Find the best match
+                best_match = None
+                best_match_score = 0
+                
+                for product in products:
+                    product_name = product['name'].lower()
+                    query = cleaned_text.lower()
+                    
+                    # Check for exact match
+                    if product_name == query:
+                        # Create a compatible product object
+                        return {
+                            'product_name': product['name'],
+                            'price_eur': product['price'],
+                            'status': 'instock' if product['stock_status'] == 'instock' else 'outofstock',
+                            'url': product['permalink'],
+                            'sku': product.get('sku', '')
+                        }
+                    
+                    # Check if product name is in query or vice versa
+                    if product_name in query or query in product_name:
+                        score = len(product_name) / max(len(query), 1)
+                        if score > best_match_score:
+                            best_match = product
+                            best_match_score = score
+                
+                # If we found a good match
+                if best_match and best_match_score > 0.5:
+                    return {
+                        'product_name': best_match['name'],
+                        'price_eur': best_match['price'],
+                        'status': 'instock' if best_match['stock_status'] == 'instock' else 'outofstock',
+                        'url': best_match['permalink'],
+                        'sku': best_match.get('sku', '')
+                    }
+            
+            # If no match found in WooCommerce, fall back to local database
+            print("No exact match found in WooCommerce, falling back to local database")
+        except Exception as e:
+            print(f"Error searching WooCommerce products: {e}")
+            traceback.print_exc()
+            # Fall back to local database
+    
+    # Use local database as fallback
     # Clean up the input text
     cleaned_text = text.strip()
-    print(f"Looking for product matching: '{cleaned_text}'")
     
-    # Normalize the query: remove spaces, convert to lowercase
-    query_normalized = cleaned_text.lower().replace(" ", "").replace("-", "")
-    
-    # 1. First try exact match (case-insensitive)
+    # First try exact match
     for product in PRODUCT_DB:
         if product['product_name'].lower() == cleaned_text.lower():
-            print("Found exact match!")
             return product
     
-    # 2. Try with normalized names (remove spaces, hyphens)
+    # If no exact match, try to find products where the name is contained in the query
+    # or the query contains the full product name
     for product in PRODUCT_DB:
-        product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
-        if product_normalized == query_normalized:
-            print(f"Found match after normalization! (removed spaces/hyphens)")
-            return product
-    
-    # 3. Check if query is fully contained in product name or vice versa
-    # This helps with queries like "DCB31" matching "DCB31 - Dijital"
-    for product in PRODUCT_DB:
-        product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
-        if query_normalized in product_normalized or product_normalized in query_normalized:
-            # Ensure it's a substantial match (to avoid matching just "DCB" to all DCB products)
-            if len(query_normalized) >= 4 and len(product_normalized) >= 4:
-                print(f"Found containment match! Query contained in product or vice versa")
+        product_name = product['product_name'].lower()
+        if product_name in cleaned_text.lower() or cleaned_text.lower() in product_name:
+            # Check if it's a substantial match (at least 80% of the product name)
+            if len(product_name) >= 5 and (
+                len(product_name) >= 0.8 * len(cleaned_text) or 
+                len(cleaned_text) >= 0.8 * len(product_name)
+            ):
                 return product
     
-    # 4. Try to extract and match model numbers
-    # Many products have model numbers like "EMY 80 CLP", "NEK 6160 Z", "DCB31", etc.
-    model_patterns = [
-        r'([A-Za-z]{2,4})\s*[-]?\s*(\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "EMY 80 CLP", "DCB31", etc.
-        r'([A-Za-z]{2,4})\s*[-]?\s*(\d+[.]\d+)\s*([A-Za-z0-9]{0,6})',  # Matches "FF 8.5 HBK"
-        r'([A-Za-z]{1,4})\s*[-]?\s*(\d+[A-Za-z]{0,2})\s*[-]?\s*(\d*[A-Za-z0-9]{0,6})'  # Matches "NJ 6220 Z", "S4G-12,2Y"
-    ]
-    
-    potential_models = []
-    
-    # Extract potential model numbers using multiple patterns
-    for pattern in model_patterns:
-        matches = re.findall(pattern, cleaned_text, re.IGNORECASE)
-        for match in matches:
-            # Create variations of the model with and without spaces/hyphens
-            model_parts = [part for part in match if part]
-            
-            # Add joined version (no spaces)
-            model_no_spaces = ''.join(model_parts).strip()
-            if model_no_spaces and len(model_no_spaces) >= 3:
-                potential_models.append(model_no_spaces)
-            
-            # Add spaced version
-            model_with_spaces = ' '.join(model_parts).strip()
-            if model_with_spaces and model_with_spaces != model_no_spaces:
-                potential_models.append(model_with_spaces)
-                
-            # Add hyphenated version
-            model_with_hyphens = '-'.join(model_parts).strip()
-            if model_with_hyphens and model_with_hyphens != model_no_spaces and model_with_hyphens != model_with_spaces:
-                potential_models.append(model_with_hyphens)
-    
-    # Also add the original query and its variations
+    # If still no match, try to match product model numbers
+    # Many products have model numbers like "EMY 80 CLP" or "NEK 6160 Z"
     words = cleaned_text.split()
     for word in words:
-        if len(word) >= 3 and (any(c.isdigit() for c in word) or any(c.isupper() for c in word)):
-            potential_models.append(word)
-    
-    # Ensure we have unique models
-    potential_models = list(set(potential_models))
-    print(f"Potential models extracted: {potential_models}")
-    
-    # Search for these models in the product database
-    if potential_models:
-        for model in potential_models:
-            model_normalized = model.lower().replace(" ", "").replace("-", "")
+        if len(word) >= 3 and any(c.isdigit() for c in word):
             for product in PRODUCT_DB:
-                product_name = product['product_name']
-                product_normalized = product_name.lower().replace(" ", "").replace("-", "")
-                
-                # Check if model is in product name (normalized comparison)
-                if model_normalized in product_normalized:
-                    # For short models (like "DCB"), ensure it's a substantial match
-                    if len(model_normalized) <= 3:
-                        # For short models, check if it's followed by numbers in the product
-                        model_position = product_normalized.find(model_normalized)
-                        if model_position + len(model_normalized) < len(product_normalized):
-                            next_char = product_normalized[model_position + len(model_normalized)]
-                            if next_char.isdigit():
-                                print(f"Found match by model number (short): {model} in {product_name}")
-                                return product
-                    else:
-                        print(f"Found match by model number: {model} in {product_name}")
-                        return product
-    
-    # 5. Try to match individual words that might be model numbers or significant parts
-    words = cleaned_text.split()
-    for word in words:
-        word_normalized = word.lower().replace("-", "")
-        if len(word_normalized) >= 2:
-            # Skip common words that aren't likely to be model numbers
-            if word_normalized in ['preis', 'price', 'cost', 'fiyat', 'für', 'for', 'the', 'der', 'die', 'das', 'wie', 'viel', 'how', 'much', 'was', 'kostet', 'ist']:
-                continue
-                
-            print(f"Checking word: {word}")
-            
-            # Special handling for numeric-only queries (like "9238")
-            if word.isdigit() and len(word) >= 4:
-                print(f"Numeric search for: {word}")
-                exact_numeric_matches = []
-                
-                for product in PRODUCT_DB:
-                    product_name = product['product_name']
-                    # Check if this exact number appears in the product name
-                    if word in product_name:
-                        exact_numeric_matches.append(product)
-                
-                # If we found exact numeric matches, return the first one
-                if exact_numeric_matches:
-                    print(f"Found exact numeric match: {exact_numeric_matches[0]['product_name']}")
-                    return exact_numeric_matches[0]
-            
-            for product in PRODUCT_DB:
-                product_normalized = product['product_name'].lower().replace(" ", "").replace("-", "")
-                
-                # For model numbers, they should be exact matches or at boundaries
-                if (word_normalized in product_normalized and 
-                    (any(c.isdigit() for c in word_normalized) or len(word_normalized) >= 4)):
-                    print(f"Found match by significant word: {word} in {product['product_name']}")
+                if word in product['product_name']:
                     return product
     
-    # 6. For queries with multiple words, try to match based on brand + model pattern
-    if len(words) >= 2:
-        # Common brand names
-        brands = ['embraco', 'danfoss', 'bitzer', 'dcb', 'ebm', 'ebmpapst', 'york']
-        
-        # Check if first word is a brand and second might be a model
-        if words[0].lower() in brands and len(words) > 1:
-            brand = words[0].lower()
-            rest = ' '.join(words[1:])
-            
-            for product in PRODUCT_DB:
-                if brand in product['product_name'].lower():
-                    # Check if any part of the rest matches in the product name
-                    rest_parts = rest.split()
-                    for part in rest_parts:
-                        if len(part) >= 2 and part.lower() in product['product_name'].lower():
-                            print(f"Found match by brand + model pattern: {brand} + {part}")
-                            return product
-    
-    print("No match found")
     return None
 
 def check_product_query(text, user_id=None):
@@ -663,7 +618,7 @@ def check_product_query(text, user_id=None):
             elif is_english:
                 result += "📞 If you need further assistance, please contact us at: info@durmusbaba.com"
             else:
-                result += "📞 Wenn Sie weitere Hilfe benötigen, kontaktieren Sie uns bitte unter: info@durmusbaba.com"
+                result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
                 
             return result
         else:
@@ -1118,6 +1073,151 @@ def handle_more_products_request(user_id, text):
         else:
             # Default to German
             return "❓ Es tut mir leid, ich konnte keine vorherige Suche finden. Bitte fragen Sie nach einem Produkt oder einer Kategorie."
+
+def is_order_query(text):
+    """Check if the message is asking about an order."""
+    order_keywords = {
+        'german': ['bestellung', 'auftrag', 'bestellnummer', 'bestellt', 'lieferung', 'versand', 'sendung', 'paket', 'order'],
+        'english': ['order', 'purchase', 'delivery', 'shipping', 'package', 'tracking', 'bought', 'ordered'],
+        'turkish': ['sipariş', 'teslimat', 'kargo', 'paket', 'takip', 'satın aldım', 'sipariş ettim', 'sipariş durumu']
+    }
+    
+    text_lower = text.lower()
+    
+    # Check for order number patterns
+    order_number_pattern = r'\b\d{4,}\b'  # 4 or more digits
+    if re.search(order_number_pattern, text_lower):
+        # If we have digits that could be an order number, check for order keywords
+        for language, keywords in order_keywords.items():
+            if any(keyword in text_lower for keyword in keywords):
+                return True
+    
+    # Check for explicit order status requests
+    for language, keywords in order_keywords.items():
+        # If two or more order keywords are present, it's likely an order query
+        keyword_count = sum(1 for keyword in keywords if keyword in text_lower)
+        if keyword_count >= 2:
+            return True
+    
+    return False
+
+def extract_order_number(text):
+    """Extract potential order numbers from text."""
+    # Look for patterns like "#1234" or "order 1234" or just "1234" if it's 4+ digits
+    patterns = [
+        r'#(\d{4,})',  # #1234
+        r'order\s+(\d{4,})',  # order 1234
+        r'bestellung\s+(\d{4,})',  # bestellung 1234
+        r'auftrag\s+(\d{4,})',  # auftrag 1234
+        r'sipariş\s+(\d{4,})',  # sipariş 1234
+        r'\b(\d{4,})\b'  # any 4+ digit number
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    
+    return None
+
+def get_order_status(order_id=None, phone=None):
+    """Get order status from WooCommerce."""
+    if not USE_WOOCOMMERCE or not woocommerce.is_connected:
+        return "❌ Sorry, order lookup is currently unavailable."
+    
+    try:
+        if order_id:
+            # Try to get order by ID
+            order = woocommerce.get_order(order_id)
+            if order:
+                return format_order_info(order)
+        
+        if phone:
+            # Try to find orders by phone number
+            orders = woocommerce.get_customer_orders(phone=phone)
+            if orders:
+                # Return the most recent order
+                return format_order_info(orders[0], show_all_link=True, total_orders=len(orders))
+        
+        return "❌ No order found with the provided information."
+    except Exception as e:
+        print(f"Error getting order status: {e}")
+        traceback.print_exc()
+        return "❌ Sorry, there was an error looking up your order."
+
+def format_order_info(order, show_all_link=False, total_orders=1):
+    """Format order information for display."""
+    try:
+        order_id = order['id']
+        order_status = order['status']
+        order_date = order['date_created'].split('T')[0]  # Just get the date part
+        order_total = f"{order['total']} {order['currency']}"
+        
+        # Map WooCommerce status to user-friendly status
+        status_map = {
+            'pending': '⏳ Pending',
+            'processing': '🔄 Processing',
+            'on-hold': '⏸️ On Hold',
+            'completed': '✅ Completed',
+            'cancelled': '❌ Cancelled',
+            'refunded': '💰 Refunded',
+            'failed': '❌ Failed',
+            'trash': '🗑️ Deleted'
+        }
+        
+        friendly_status = status_map.get(order_status, f'📋 {order_status.capitalize()}')
+        
+        # Get shipping info if available
+        shipping_info = ""
+        if 'shipping' in order and order['shipping']:
+            shipping = order['shipping']
+            shipping_info = f"\n📦 Shipping Address: {shipping.get('first_name', '')} {shipping.get('last_name', '')}, {shipping.get('address_1', '')}, {shipping.get('city', '')}, {shipping.get('country', '')}"
+        
+        # Get line items
+        items_info = "\n📝 Items:"
+        for item in order['line_items']:
+            items_info += f"\n  - {item['name']} x{item['quantity']} ({item['total']} {order['currency']})"
+        
+        # Additional info for multiple orders
+        additional_info = ""
+        if show_all_link and total_orders > 1:
+            additional_info = f"\n\n📚 You have {total_orders} orders in total. To check other orders, please provide the specific order number."
+        
+        response = (
+            f"🛒 Order #{order_id}\n"
+            f"📅 Date: {order_date}\n"
+            f"🔹 Status: {friendly_status}\n"
+            f"💶 Total: {order_total}"
+            f"{shipping_info}"
+            f"{items_info}"
+            f"{additional_info}"
+        )
+        
+        return response
+    except Exception as e:
+        print(f"Error formatting order info: {e}")
+        traceback.print_exc()
+        return "❌ Sorry, there was an error formatting your order information."
+
+def handle_order_query(text, user_id):
+    """Handle order-related queries."""
+    # Update user context
+    if user_id not in USER_CONTEXT:
+        USER_CONTEXT[user_id] = {}
+    
+    USER_CONTEXT[user_id]['last_query_type'] = 'order'
+    
+    # Extract order number if present
+    order_id = extract_order_number(text)
+    
+    if order_id:
+        # If we have an order ID, look it up directly
+        return get_order_status(order_id=order_id)
+    else:
+        # If no order ID, try to look up by phone number
+        # Extract the phone number from the WhatsApp ID (format: 491234567890:12)
+        phone = user_id.split(':')[0] if ':' in user_id else user_id
+        return get_order_status(phone=phone)
 
 @app.route("/", methods=["GET"])
 def home():

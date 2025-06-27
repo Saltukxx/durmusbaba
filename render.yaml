@@ -18,4 +18,10 @@ services:
       - key: WEBHOOK_VERIFY_TOKEN
         sync: false
       - key: PORT
-        value: 10000 
+        value: 10000
+      - key: WC_CONSUMER_KEY
+        sync: false
+      - key: WC_CONSUMER_SECRET
+        sync: false
+      - key: WC_STORE_URL
+        value: https://durmusbaba.de 
