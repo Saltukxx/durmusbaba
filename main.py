@@ -552,7 +552,7 @@ def check_product_query(text, user_id=None):
                         search_term = f"{identified_brand} {search_term}"
                     
                     # Search for the product
-                    products = woocommerce.search_products(search_term)
+                    products = woocommerce.advanced_product_search(search_term)
                     
                     if products:
                         # Found products, format the response
