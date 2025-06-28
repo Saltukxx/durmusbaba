@@ -1727,8 +1727,8 @@ def get_media_url(media_id, phone_number_id):
         str: URL of the media file or None if error
     """
     try:
-        # Get media URL from WhatsApp API
-        url = f"https://graph.facebook.com/v18.0/{phone_number_id}/media/{media_id}"
+        # Get media URL from WhatsApp API - use the correct endpoint format
+        url = f"https://graph.facebook.com/v18.0/{media_id}"
         headers = {
             "Authorization": f"Bearer {ACCESS_TOKEN}"
         }
