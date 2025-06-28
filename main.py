@@ -1618,14 +1618,55 @@ def webhook():
                             print("No image ID found in message")
                             response_text = "I received your image but couldn't process it. Could you please try sending it again?"
                         else:
+                            print(f"Processing image with ID: {image_id}")
                             # Get image URL using the Media API
                             image_url = get_media_url(image_id, recipient_phone_id)
+                            
                             if not image_url:
                                 print("Failed to get image URL")
                                 response_text = "I received your image but couldn't download it. Could you please try sending it again?"
                             else:
-                                # Process the image with Gemini Vision
-                                response_text = process_image_with_gemini(image_url, sender)
+                                # Download the image
+                                try:
+                                    # Create temp directory if it doesn't exist
+                                    temp_dir = os.path.join(os.getcwd(), "temp")
+                                    os.makedirs(temp_dir, exist_ok=True)
+                                    
+                                    # Create a unique filename
+                                    image_path = os.path.join(temp_dir, f"whatsapp_image_{image_id}.jpg")
+                                    
+                                    # Download the image
+                                    download_headers = {
+                                        "Authorization": f"Bearer {ACCESS_TOKEN}"
+                                    }
+                                    
+                                    print(f"Downloading image from URL to {image_path}")
+                                    image_response = requests.get(image_url, headers=download_headers)
+                                    
+                                    if image_response.status_code != 200:
+                                        print(f"Failed to download image: {image_response.status_code}")
+                                        response_text = "I received your image but couldn't download it. Could you please try sending it again?"
+                                    else:
+                                        # Save the image to a file
+                                        with open(image_path, 'wb') as f:
+                                            f.write(image_response.content)
+                                        
+                                        print(f"Image downloaded successfully to {image_path}")
+                                        
+                                        # Process the image with Gemini Vision using local file path
+                                        print(f"Processing image with Gemini Vision")
+                                        response_text = process_image_with_gemini(f"file://{image_path}", sender)
+                                        
+                                        # Clean up the temporary file
+                                        try:
+                                            os.remove(image_path)
+                                            print(f"Removed temporary image file: {image_path}")
+                                        except Exception as e:
+                                            print(f"Error removing temporary file: {e}")
+                                except Exception as e:
+                                    print(f"Error downloading or processing image: {e}")
+                                    traceback.print_exc()
+                                    response_text = "I had trouble processing your image. Could you please try sending it again or describe what you're looking for?"
                     else:
                         # Unsupported message type
                         print(f"Unsupported message type: {message_type}")
@@ -1687,11 +1728,12 @@ def get_media_url(media_id, phone_number_id):
     """
     try:
         # Get media URL from WhatsApp API
-        url = f"https://graph.facebook.com/v18.0/{media_id}"
+        url = f"https://graph.facebook.com/v18.0/{phone_number_id}/media/{media_id}"
         headers = {
             "Authorization": f"Bearer {ACCESS_TOKEN}"
         }
         
+        print(f"Getting media URL from: {url}")
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
             print(f"Failed to get media URL: {response.status_code} - {response.text}")
@@ -1704,9 +1746,7 @@ def get_media_url(media_id, phone_number_id):
         
         # Get the actual media file
         media_url = media_data["url"]
-        download_headers = {
-            "Authorization": f"Bearer {ACCESS_TOKEN}"
-        }
+        print(f"Got media URL: {media_url}")
         
         return media_url
         
@@ -1831,41 +1871,52 @@ def handle_history_request(user_id, text):
     # Format the history for display
     return format_chat_history(display_history)
 
-def process_image_with_gemini(image_url, user_id):
+def process_image_with_gemini(image_path, user_id):
     """
     Process an image with Gemini Vision API to identify products
     
     Args:
-        image_url (str): URL of the image to process
+        image_path (str): Path or URL of the image to process
         user_id (str): User ID for conversation context
         
     Returns:
         str: Gemini's response about the image
     """
     try:
-        print(f"Processing image with Gemini Vision: {image_url}")
-        
-        # Download the image
-        response = requests.get(image_url)
-        if response.status_code != 200:
-            print(f"Failed to download image: {response.status_code}")
-            return "Sorry, I couldn't download the image to analyze it."
-        
-        image_data = response.content
+        print(f"Processing image with Gemini Vision: {image_path}")
         
         # Convert to PIL Image for better compatibility
         try:
             from PIL import Image
             import io
-            image = Image.open(io.BytesIO(image_data))
+            
+            # Check if it's a local file path
+            if image_path.startswith("file://"):
+                local_path = image_path.replace("file://", "")
+                print(f"Loading image from local path: {local_path}")
+                image = Image.open(local_path)
+            else:
+                # It's a URL, download the image
+                print(f"Downloading image from URL: {image_path}")
+                response = requests.get(image_path)
+                if response.status_code != 200:
+                    print(f"Failed to download image: {response.status_code}")
+                    return "Sorry, I couldn't download the image to analyze it."
+                
+                image_data = response.content
+                image = Image.open(io.BytesIO(image_data))
             
             # Convert to RGB if needed
             if image.mode != "RGB":
                 print(f"Converting image from {image.mode} to RGB")
                 image = image.convert("RGB")
                 
+            print(f"Image dimensions: {image.size}")
+            print(f"Image format: {image.format}")
+                
         except Exception as e:
             print(f"Error processing image with PIL: {e}")
+            traceback.print_exc()
             return "Sorry, I encountered an error while processing the image. Could you please describe what you're looking for instead?"
         
         # Configure Gemini Vision model (using the updated model)
@@ -2376,7 +2427,69 @@ def search_products_from_vision(vision_response):
         traceback.print_exc()
         return []
 
-
+def download_whatsapp_image(image_id):
+    """
+    Download an image from WhatsApp API
+    
+    Args:
+        image_id (str): The image ID from WhatsApp
+        
+    Returns:
+        str: Path to the downloaded image or None if failed
+    """
+    try:
+        # Get access token from environment
+        access_token = os.getenv("META_ACCESS_TOKEN")
+        phone_number_id = os.getenv("META_PHONE_NUMBER_ID")
+        
+        # Set up the request URL
+        url = f"https://graph.facebook.com/v18.0/{phone_number_id}/media/{image_id}"
+        
+        # Set up headers with authentication
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        # Get the media URL
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            print(f"Failed to get media URL: {response.status_code} - {response.text}")
+            return None
+            
+        # Extract the media URL from the response
+        media_data = response.json()
+        if 'url' not in media_data:
+            print(f"No URL in media response: {media_data}")
+            return None
+            
+        media_url = media_data['url']
+        
+        # Download the actual media file
+        media_response = requests.get(media_url, headers=headers)
+        
+        if media_response.status_code != 200:
+            print(f"Failed to download media: {media_response.status_code}")
+            return None
+            
+        # Create a temporary file to store the image
+        temp_dir = os.path.join(os.getcwd(), "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Create a unique filename
+        filename = os.path.join(temp_dir, f"whatsapp_image_{image_id}.jpg")
+        
+        # Write the image data to the file
+        with open(filename, 'wb') as f:
+            f.write(media_response.content)
+            
+        print(f"Image downloaded successfully to {filename}")
+        return filename
+        
+    except Exception as e:
+        print(f"Error downloading WhatsApp image: {e}")
+        traceback.print_exc()
+        return None
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))
