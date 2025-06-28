@@ -80,8 +80,8 @@ def test_gemini_vision(image_path_or_url=None):
             print(f"Warning: Could not analyze image details: {e}")
         
         # Initialize the vision model
-        print("Initializing Gemini Pro Vision model...")
-        vision_model = genai.GenerativeModel('gemini-pro-vision')
+        print("Initializing Gemini 2.5 Flash model...")
+        vision_model = genai.GenerativeModel('gemini-2.5-flash')
         
         # Prepare the prompt for product identification
         prompt = """

@@ -53,8 +53,8 @@ def test_gemini_vision_with_pil(image_path=None):
                 image = image.convert("RGB")
             
             # Initialize the vision model (using the new recommended model)
-            print("Initializing Gemini 1.5 Flash model...")
-            vision_model = genai.GenerativeModel('gemini-1.5-flash')
+            print("Initializing Gemini 2.5 Flash model...")
+            vision_model = genai.GenerativeModel('gemini-2.5-flash')
             
             # Prepare the prompt for product identification
             prompt = """

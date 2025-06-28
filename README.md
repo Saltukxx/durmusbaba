@@ -92,7 +92,7 @@ pip install -r requirements.txt
 3. `.env` dosyası oluşturun ve aşağıdaki değişkenleri ayarlayın:
 ```
 GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-pro
+GEMINI_MODEL=gemini-2.5-flash
 LANGUAGE_CODE=tr
 META_ACCESS_TOKEN=your-meta-access-token
 META_PHONE_NUMBER_ID=your-phone-number-id

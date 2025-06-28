@@ -143,7 +143,7 @@ To configure the Snap-to-Shop feature:
 1. **API Keys**: Set your Gemini API key in the environment variables
    ```
    GEMINI_API_KEY=your_api_key_here
-   GEMINI_MODEL=gemini-1.5-flash
+   GEMINI_MODEL=gemini-2.5-flash
    ```
 
 2. **Product Database**: Ensure your WooCommerce integration is properly configured

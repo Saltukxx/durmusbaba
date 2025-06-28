@@ -114,7 +114,7 @@ def test_gemini_direct():
     import google.generativeai as genai
     
     gemini_api_key = os.getenv("GEMINI_API_KEY")
-    gemini_model = os.getenv("GEMINI_MODEL", "gemini-pro")
+    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     
     if not gemini_api_key:
         print("ERROR: GEMINI_API_KEY not found in .env file")

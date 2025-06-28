@@ -24,7 +24,7 @@ app = Flask(__name__)
 
 # Configuration from environment variables
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 LANGUAGE_CODE = os.getenv("LANGUAGE_CODE", "de")
 
 # Debug environment variables
@@ -1919,8 +1919,8 @@ def process_image_with_gemini(image_path, user_id):
             traceback.print_exc()
             return "Sorry, I encountered an error while processing the image. Could you please describe what you're looking for instead?"
         
-        # Configure Gemini Vision model (using the updated model)
-        vision_model = genai.GenerativeModel('gemini-1.5-flash')
+        # Configure Gemini Vision model (using Gemini 2.5 Flash)
+        vision_model = genai.GenerativeModel('gemini-2.5-flash')
         
         # Prepare the prompt for product identification
         prompt = """

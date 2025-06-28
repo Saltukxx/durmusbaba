@@ -38,8 +38,8 @@ def test_gemini_vision_with_url():
         print(f"Image size: {len(image_data) / 1024:.2f} KB")
         
         # Initialize the vision model
-        print("Initializing Gemini Pro Vision model...")
-        vision_model = genai.GenerativeModel('gemini-pro-vision')
+        print("Initializing Gemini 2.5 Flash model...")
+        vision_model = genai.GenerativeModel('gemini-2.5-flash')
         
         # Prepare the prompt for product identification
         prompt = """

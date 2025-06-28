@@ -33,7 +33,7 @@ def check_gemini_models():
             print(f"- {model_name}")
             
             # Check if this is the vision model
-            if "gemini-1.5-flash" in model_name:
+            if "gemini-2.5-flash" in model_name:
                 vision_model_found = True
                 print(f"✅ Found vision model: {model_name}")
                 
@@ -55,7 +55,7 @@ def check_gemini_models():
                     return False
         
         if not vision_model_found:
-            print("❌ gemini-1.5-flash model not found in available models")
+            print("❌ gemini-2.5-flash model not found in available models")
             return False
             
     except Exception as e:

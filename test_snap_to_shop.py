@@ -75,7 +75,7 @@ def test_snap_to_shop_flow(image_path=None):
                 image = image.convert("RGB")
             
             # Configure Gemini Vision model
-            vision_model = genai.GenerativeModel('gemini-1.5-flash')
+            vision_model = genai.GenerativeModel('gemini-2.5-flash')
             
             # Prepare the prompt for product identification
             prompt = """
