@@ -2129,6 +2129,356 @@ def download_whatsapp_image(image_id):
         traceback.print_exc()
         return None
 
+# Check if this is a chat history request
+def is_history_request(text):
+    """Check if the message is requesting chat history"""
+    patterns = [
+        r'(?:show|get|view|display).+(?:history|chat|conversation)',
+        r'(?:what.+(?:talked|said|discussed))',
+        r'(?:previous.+(?:messages|conversation))',
+        r'(?:our.+(?:chat|conversation))',
+        r'(?:zeig|zeige).+(?:verlauf|chat|konversation)',  # German
+        r'(?:geçmiş|sohbet).+(?:göster|getir)'  # Turkish
+    ]
+    
+    return any(re.search(pattern, text.lower()) for pattern in patterns)
+
+# Format chat history for display
+def format_chat_history(messages):
+    """Format chat history for display to the user"""
+    if not messages:
+        return "Es gibt noch keine Chatverläufe."
+    
+    formatted = "Hier ist unser Gesprächsverlauf:\n\n"
+    
+    for i, msg in enumerate(messages):
+        # Format timestamp
+        timestamp = datetime.fromtimestamp(msg['timestamp']).strftime('%H:%M:%S')
+        role = "Sie" if msg['is_user'] else "Ich"
+        formatted += f"{timestamp} - {role}: {msg['text']}\n\n"
+    
+    return formatted
+
+# Handle chat history request
+def handle_history_request(user_id, text):
+    """Handle a request to view chat history"""
+    # Get full conversation history
+    full_history = conversation_context.get_full_conversation_history(user_id)
+    
+    # Remove the current request from history for display
+    display_history = full_history[:-1] if full_history else []
+    
+    # Format the history for display
+    return format_chat_history(display_history)
+
+def extract_price_range(text):
+    """Extract price range from text."""
+    import re
+    
+    # Define patterns for price range queries in different languages
+    patterns = [
+        # German patterns
+        r'unter (\d+)[\s]?(?:€|euro)',  # unter 500€
+        r'bis zu (\d+)[\s]?(?:€|euro)',  # bis zu 500€
+        r'weniger als (\d+)[\s]?(?:€|euro)',  # weniger als 500€
+        r'über (\d+)[\s]?(?:€|euro)',  # über 500€
+        r'mehr als (\d+)[\s]?(?:€|euro)',  # mehr als 500€
+        r'zwischen (\d+) und (\d+)[\s]?(?:€|euro)',  # zwischen 500 und 1000€
+        r'von (\d+) bis (\d+)[\s]?(?:€|euro)',  # von 500 bis 1000€
+        
+        # English patterns
+        r'under (\d+)[\s]?(?:€|euro)',  # under 500€
+        r'up to (\d+)[\s]?(?:€|euro)',  # up to 500€
+        r'less than (\d+)[\s]?(?:€|euro)',  # less than 500€
+        r'over (\d+)[\s]?(?:€|euro)',  # over 500€
+        r'more than (\d+)[\s]?(?:€|euro)',  # more than 500€
+        r'between (\d+) and (\d+)[\s]?(?:€|euro)',  # between 500 and 1000€
+        r'from (\d+) to (\d+)[\s]?(?:€|euro)',  # from 500 to 1000€
+        
+        # Turkish patterns
+        r'(\d+)[\s]?(?:€|euro) altında',  # 500€ altında
+        r'(\d+)[\s]?(?:€|euro) kadar',  # 500€ kadar
+        r'(\d+)[\s]?(?:€|euro)\'dan az',  # 500€'dan az
+        r'(\d+)[\s]?(?:€|euro) üzerinde',  # 500€ üzerinde
+        r'(\d+)[\s]?(?:€|euro)\'dan fazla',  # 500€'dan fazla
+        r'(\d+) ve (\d+)[\s]?(?:€|euro) arasında',  # 500 ve 1000€ arasında
+    ]
+    
+    min_price = None
+    max_price = None
+    
+    # Check each pattern
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            if len(match.groups()) == 1:
+                # Single price value patterns
+                price = int(match.group(1))
+                
+                # Determine if it's a min or max constraint
+                if any(keyword in text for keyword in ['unter', 'bis zu', 'weniger', 'under', 'up to', 'less than', 'altında', 'kadar', 'az']):
+                    max_price = price
+                    min_price = 0  # Set a default minimum
+                elif any(keyword in text for keyword in ['über', 'mehr', 'over', 'more than', 'üzerinde', 'fazla']):
+                    min_price = price
+                    max_price = 10000  # Set a default maximum
+            else:
+                # Range patterns with two values
+                min_price = int(match.group(1))
+                max_price = int(match.group(2))
+            
+            break
+    
+    # If we found a price range, return it
+    if min_price is not None and max_price is not None:
+        return min_price, max_price
+    
+    return None
+
+def is_more_products_request(text):
+    """Check if the user is asking to see more products from a previous search."""
+    text_lower = text.lower()
+    more_patterns = [
+        'mehr', 'weitere', 'zeig mehr', 'zeige mehr', 'mehr produkte', 'weitere produkte',  # German
+        'more', 'show more', 'list more', 'next', 'continue', 'more products',  # English
+        'daha', 'daha fazla', 'devam', 'diğer', 'başka', 'sonraki'  # Turkish
+    ]
+    
+    return any(pattern in text_lower for pattern in more_patterns)
+
+def handle_more_products_request(user_id, text):
+    """Handle requests to show more products from a previous search."""
+    # Get context for this user
+    context = conversation_context.get_context(user_id) if user_id else None
+    
+    if not context or not context['entities']['products']:
+        # No context available or no products in context
+        if any(word in text.lower() for word in ['daha', 'fazla', 'devam']):
+            # Turkish
+            return "❓ Üzgünüm, şu anda gösterilecek daha fazla ürün yok. Lütfen yeni bir arama yapın."
+        elif any(word in text.lower() for word in ['more', 'next', 'continue']):
+            # English
+            return "❓ I'm sorry, there are no more products to show at the moment. Please try a new search."
+        else:
+            # Default to German
+            return "❓ Es tut mir leid, es gibt derzeit keine weiteren Produkte zum Anzeigen. Bitte versuchen Sie eine neue Suche."
+    
+    # Increment the product page
+    if 'product_page' not in context:
+        context['product_page'] = 0
+    context['product_page'] += 1
+    
+    # Get the current topic
+    current_topic = context['current_topic']
+    
+    # Determine which products to show based on the current topic
+    products_to_show = []
+    
+    if current_topic == 'category_search' and context['entities']['categories']:
+        # Get products for the most recent category
+        category = context['entities']['categories'][-1]
+        
+        # Define keywords for the category
+        category_keywords = {
+            "embraco": ["embraco", "embrac"],
+            "bitzer": ["bitzer", "bitze"],
+            "danfoss": ["danfoss", "danfo"],
+            "secop": ["secop", "seco"],
+            "copeland": ["copeland", "copel"],
+            "tecumseh": ["tecumseh", "tecum"],
+            "dcb": ["dcb"],
+            "ebm": ["ebm", "ebmpapst", "papst"],
+            "drc": ["drc"],
+            "york": ["york"]
+        }
+        
+        # Find the keywords for this category
+        keywords = []
+        for cat, kw in category_keywords.items():
+            if cat.lower() in category.lower():
+                keywords = kw
+                break
+        
+        # Find products in this category
+        all_products = []
+        for product in PRODUCT_DB:
+            product_name = product.get('product_name', '').lower()
+            if any(keyword in product_name for keyword in keywords):
+                all_products.append(product)
+        
+        # Get the current page of products
+        start_idx = (context['product_page'] - 1) * 5
+        if start_idx < len(all_products):
+            products_to_show = all_products[start_idx:start_idx + 5]
+            total_products = len(all_products)
+        else:
+            # Reset to the first page if we've gone too far
+            context['product_page'] = 1
+            products_to_show = all_products[:5]
+            total_products = len(all_products)
+    
+    elif current_topic == 'price_search' and context['entities']['price_ranges']:
+        # Get products for the most recent price range
+        min_price, max_price = context['entities']['price_ranges'][-1]
+        
+        # Find products in this price range
+        all_products = []
+        for product in PRODUCT_DB:
+            try:
+                price = float(product.get('price_eur', '0').replace('€', '').replace(',', '.').strip())
+                if min_price <= price <= max_price:
+                    all_products.append(product)
+            except (ValueError, TypeError):
+                continue
+        
+        # Sort products by price
+        all_products.sort(key=lambda x: float(x.get('price_eur', '0').replace('€', '').replace(',', '.').strip()))
+        
+        # Get the current page of products
+        start_idx = (context['product_page'] - 1) * 5
+        if start_idx < len(all_products):
+            products_to_show = all_products[start_idx:start_idx + 5]
+            total_products = len(all_products)
+        else:
+            # Reset to the first page if we've gone too far
+            context['product_page'] = 1
+            products_to_show = all_products[:5]
+            total_products = len(all_products)
+    
+    else:
+        # Just show the next 5 products from the entities
+        all_products = [{'product_name': p['name'], 'price_eur': '?', 'status': '', 'url': ''} for p in context['entities']['products']]
+        
+        # Try to find full product info for each product
+        for i, product in enumerate(all_products):
+            for db_product in PRODUCT_DB:
+                if product['product_name'].lower() in db_product['product_name'].lower():
+                    all_products[i] = db_product
+                    break
+        
+        # Get the current page of products
+        start_idx = (context['product_page'] - 1) * 5
+        if start_idx < len(all_products):
+            products_to_show = all_products[start_idx:start_idx + 5]
+            total_products = len(all_products)
+        else:
+            # Reset to the first page if we've gone too far
+            context['product_page'] = 1
+            products_to_show = all_products[:5]
+            total_products = len(all_products)
+    
+    # If we have no products to show, return an error message
+    if not products_to_show:
+        if any(word in text.lower() for word in ['daha', 'fazla', 'devam']):
+            # Turkish
+            return "❓ Üzgünüm, gösterilecek başka ürün kalmadı. Lütfen yeni bir arama yapın."
+        elif any(word in text.lower() for word in ['more', 'next', 'continue']):
+            # English
+            return "❓ I'm sorry, there are no more products to show. Please try a new search."
+        else:
+            # Default to German
+            return "❓ Es tut mir leid, es gibt keine weiteren Produkte zum Anzeigen. Bitte versuchen Sie eine neue Suche."
+    
+    # Calculate the current range of products being shown
+    start_idx = (context['product_page'] - 1) * 5
+    end_idx = start_idx + len(products_to_show)
+    
+    # Detect language from the request
+    is_turkish = any(word in text.lower() for word in ['daha', 'fazla', 'devam', 'diğer', 'başka'])
+    is_english = any(word in text.lower() for word in ['more', 'show', 'list', 'next', 'continue'])
+    
+    # Format the response based on language
+    if is_turkish:
+        result = f"🔍 İşte {total_products} üründen {start_idx + 1}-{end_idx} arası ürünler:\n\n"
+    elif is_english:
+        result = f"🔍 Here are products {start_idx + 1}-{end_idx} of {total_products}:\n\n"
+    else:
+        result = f"🔍 Hier sind Produkte {start_idx + 1}-{end_idx} von {total_products}:\n\n"
+    
+    # Add product information
+    for i, product in enumerate(products_to_show):
+        # Add product to entities in context
+        product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
+        if not any(p['name'] == product_entity['name'] for p in context['entities']['products']):
+            context['entities']['products'].append(product_entity)
+        
+        status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
+        if is_turkish:
+            status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
+        elif is_english:
+            status_text = "in stock" if product.get('status') == "instock" else "out of stock"
+        
+        status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
+        result += f"{start_idx + i + 1}. 📦 {product['product_name']}\n"
+        result += f"   💰 {product.get('price_eur', '?')} EUR | {status_emoji} {status_text}\n"
+        result += f"   🔗 {product.get('url', '')}\n\n"
+    
+    # Add message about more products if available
+    remaining = total_products - end_idx
+    if remaining > 0:
+        if is_turkish:
+            result += f"... ve {remaining} ürün daha. Daha fazla görmek için 'daha fazla göster' yazabilirsiniz.\n\n"
+        elif is_english:
+            result += f"... and {remaining} more products. You can type 'show more' to see additional products.\n\n"
+        else:
+            result += f"... und {remaining} weitere Produkte. Sie können 'mehr zeigen' eingeben, um weitere Produkte zu sehen.\n\n"
+    
+    # Add contact information
+    if is_turkish:
+        result += "📞 Daha fazla bilgi için bizimle iletişime geçin: info@durmusbaba.com"
+    elif is_english:
+        result += "📞 For more information, please contact us at: info@durmusbaba.com"
+    else:
+        result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
+    
+    return result
+
+def is_order_query(text):
+    """Check if the message is asking about an order."""
+    order_keywords = {
+        'german': ['bestellung', 'auftrag', 'bestellnummer', 'bestellt', 'lieferung', 'versand', 'sendung', 'paket', 'order'],
+        'english': ['order', 'purchase', 'delivery', 'shipping', 'package', 'tracking', 'bought', 'ordered'],
+        'turkish': ['sipariş', 'teslimat', 'kargo', 'paket', 'takip', 'satın aldım', 'sipariş ettim', 'sipariş durumu']
+    }
+    
+    text_lower = text.lower()
+    
+    # Check for order number patterns
+    order_number_pattern = r'\b\d{4,}\b'  # 4 or more digits
+    if re.search(order_number_pattern, text_lower):
+        # If we have digits that could be an order number, check for order keywords
+        for language, keywords in order_keywords.items():
+            if any(keyword in text_lower for keyword in keywords):
+                return True
+    
+    # Check for explicit order status requests
+    for language, keywords in order_keywords.items():
+        # If two or more order keywords are present, it's likely an order query
+        keyword_count = sum(1 for keyword in keywords if keyword in text_lower)
+        if keyword_count >= 2:
+            return True
+    
+    return False
+
+def extract_order_number(text):
+    """Extract potential order numbers from text."""
+    # Look for patterns like "#1234" or "order 1234" or just "1234" if it's 4+ digits
+    patterns = [
+        r'#(\d{4,})',  # #1234
+        r'order\s+(\d{4,})',  # order 1234
+        r'bestellung\s+(\d{4,})',  # bestellung 1234
+        r'auftrag\s+(\d{4,})',  # auftrag 1234
+        r'sipariş\s+(\d{4,})',  # sipariş 1234
+        r'\b(\d{4,})\b'  # any 4+ digit number
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    
+    return None
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))
     print(f"Starting server on port {port}")
