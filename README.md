@@ -10,10 +10,23 @@ A WhatsApp bot that integrates with Dialogflow and WooCommerce for durmusbaba.de
 - Product search and recommendation
 - Order status queries
 - Automatic order notifications via WhatsApp
+- **Snap-to-Shop**: Image recognition for product search (send a photo to find matching products)
 
 ## Order Notification System
 
 The system automatically sends WhatsApp notifications to specified phone numbers when new orders are received. See [Order Notification Setup Guide](order_notification_setup.md) for details.
+
+## Snap-to-Shop Feature
+
+The Snap-to-Shop feature allows customers to send product images via WhatsApp. The bot uses Gemini Vision AI to analyze the image and find matching products in your inventory. This makes it easier for customers to find products without knowing exact names or model numbers.
+
+Key capabilities:
+- Product identification from images (type, brand, model)
+- Feature extraction and matching
+- Intelligent product search based on image analysis
+- Formatted responses with product details and links
+
+For detailed information, see the [Snap-to-Shop Guide](snap_to_shop_guide.md).
 
 ## Setup
 
@@ -46,6 +59,7 @@ See `.env.example` for required environment variables.
   - Kategori navigasyonu
   - Müşteri ihtiyaçlarına göre ürün eşleştirme
   - Çok dilli destek (Almanca, İngilizce, Türkçe)
+- Snap-to-Shop: Görüntü tanıma ile ürün arama (müşteriler fotoğraf göndererek ürün bulabilir)
 
 ## Kurulum
 

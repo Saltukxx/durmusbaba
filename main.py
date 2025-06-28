@@ -24,7 +24,7 @@ app = Flask(__name__)
 
 # Configuration from environment variables
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-lite")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 LANGUAGE_CODE = os.getenv("LANGUAGE_CODE", "de")
 
 # Debug environment variables
@@ -1589,24 +1589,53 @@ def webhook():
                 sender = msg["from"]
                 print(f"Message from sender: {sender}")
                 
-                # Check if this is a text message
-                if "text" in msg and "body" in msg["text"]:
-                    message_text = msg["text"]["body"]
-                    print(f"Message text: {message_text}")
+                # Extract the phone number ID from the incoming message
+                recipient_phone_id = value.get("metadata", {}).get("phone_number_id", PHONE_NUMBER_ID)
+                print(f"Using phone_number_id: {recipient_phone_id}")
+                
+                # Check message type
+                if "type" in msg:
+                    message_type = msg["type"]
+                    print(f"Message type: {message_type}")
                     
-                    # Get response from Gemini AI
-                    response_text = get_gemini_response(sender, message_text)
-                    print(f"Response from Gemini: {response_text}")
+                    # Handle different message types
+                    if message_type == "text" and "text" in msg and "body" in msg["text"]:
+                        # Handle text messages
+                        message_text = msg["text"]["body"]
+                        print(f"Message text: {message_text}")
+                        
+                        # Get response from Gemini AI
+                        response_text = get_gemini_response(sender, message_text)
+                        print(f"Response from Gemini: {response_text}")
+                    
+                    elif message_type == "image" and "image" in msg:
+                        # Handle image messages
+                        print("Received image message")
+                        
+                        # Get image ID
+                        image_id = msg["image"].get("id")
+                        if not image_id:
+                            print("No image ID found in message")
+                            response_text = "I received your image but couldn't process it. Could you please try sending it again?"
+                        else:
+                            # Get image URL using the Media API
+                            image_url = get_media_url(image_id, recipient_phone_id)
+                            if not image_url:
+                                print("Failed to get image URL")
+                                response_text = "I received your image but couldn't download it. Could you please try sending it again?"
+                            else:
+                                # Process the image with Gemini Vision
+                                response_text = process_image_with_gemini(image_url, sender)
+                    else:
+                        # Unsupported message type
+                        print(f"Unsupported message type: {message_type}")
+                        response_text = "I received your message but I can only process text and images at the moment."
                     
                     # Log user context for debugging
                     user_context = conversation_context.get_context(sender)
                     if user_context:
                         print(f"User context: {json.dumps({k: v for k, v in user_context.items() if k != 'entities'})}")
                         print(f"Entities in context: {json.dumps(user_context.get('entities', {}))}")
-                    
-                    # Extract the phone number ID from the incoming message
-                    recipient_phone_id = value.get("metadata", {}).get("phone_number_id", PHONE_NUMBER_ID)
-                    print(f"Using phone_number_id: {recipient_phone_id}")
                     
                     # Debug info about phone IDs
                     print(f"Default PHONE_NUMBER_ID from env: {PHONE_NUMBER_ID}")
@@ -1630,7 +1659,7 @@ def webhook():
                     response = requests.post(url, headers=headers, json=payload)
                     print(f"WhatsApp API response: {response.status_code} - {response.text}")
                 else:
-                    print("Received message is not a text message or text structure is different than expected")
+                    print("Message type not specified in the message")
                     print("Full message structure:", json.dumps(msg, indent=2))
             else:
                 print("No messages in the request or messages structure is different than expected")
@@ -1644,6 +1673,47 @@ def webhook():
         traceback.print_exc()
 
     return "ok", 200
+
+def get_media_url(media_id, phone_number_id):
+    """
+    Get the URL of a media file from WhatsApp API
+    
+    Args:
+        media_id (str): ID of the media file
+        phone_number_id (str): Phone number ID
+        
+    Returns:
+        str: URL of the media file or None if error
+    """
+    try:
+        # Get media URL from WhatsApp API
+        url = f"https://graph.facebook.com/v18.0/{media_id}"
+        headers = {
+            "Authorization": f"Bearer {ACCESS_TOKEN}"
+        }
+        
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            print(f"Failed to get media URL: {response.status_code} - {response.text}")
+            return None
+        
+        media_data = response.json()
+        if "url" not in media_data:
+            print(f"No URL found in media data: {media_data}")
+            return None
+        
+        # Get the actual media file
+        media_url = media_data["url"]
+        download_headers = {
+            "Authorization": f"Bearer {ACCESS_TOKEN}"
+        }
+        
+        return media_url
+        
+    except Exception as e:
+        print(f"Error getting media URL: {e}")
+        traceback.print_exc()
+        return None
 
 @app.route("/woocommerce-webhook", methods=["POST"])
 def woocommerce_webhook():
@@ -1760,6 +1830,553 @@ def handle_history_request(user_id, text):
     
     # Format the history for display
     return format_chat_history(display_history)
+
+def process_image_with_gemini(image_url, user_id):
+    """
+    Process an image with Gemini Vision API to identify products
+    
+    Args:
+        image_url (str): URL of the image to process
+        user_id (str): User ID for conversation context
+        
+    Returns:
+        str: Gemini's response about the image
+    """
+    try:
+        print(f"Processing image with Gemini Vision: {image_url}")
+        
+        # Download the image
+        response = requests.get(image_url)
+        if response.status_code != 200:
+            print(f"Failed to download image: {response.status_code}")
+            return "Sorry, I couldn't download the image to analyze it."
+        
+        image_data = response.content
+        
+        # Convert to PIL Image for better compatibility
+        try:
+            from PIL import Image
+            import io
+            image = Image.open(io.BytesIO(image_data))
+            
+            # Convert to RGB if needed
+            if image.mode != "RGB":
+                print(f"Converting image from {image.mode} to RGB")
+                image = image.convert("RGB")
+                
+        except Exception as e:
+            print(f"Error processing image with PIL: {e}")
+            return "Sorry, I encountered an error while processing the image. Could you please describe what you're looking for instead?"
+        
+        # Configure Gemini Vision model (using the updated model)
+        vision_model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Prepare the prompt for product identification
+        prompt = """
+        Identify the product in this image in detail. 
+        Focus on:
+        1. Product type (e.g., refrigeration compressor, cooling system, etc.)
+        2. Brand name if visible
+        3. Model/style name or number if visible
+        4. Key features visible in the image
+        5. Technical specifications if visible
+        
+        If this appears to be a screenshot of a product search or website, extract the product information from the text visible in the image.
+        
+        Provide the information in a structured format that can be used for product search.
+        """
+        
+        # Process the image with Gemini Vision
+        response = vision_model.generate_content([prompt, image])
+        
+        # Get the text response
+        vision_response = response.text
+        print(f"Gemini Vision response: {vision_response}")
+        
+        # Update conversation context
+        conversation_context.update_context(user_id, f"[Image sent: {vision_response}]")
+        
+        # Search for matching products
+        product_matches = search_products_from_vision(vision_response)
+        
+        if product_matches:
+            # Format the response with product matches
+            return format_vision_product_response(vision_response, product_matches, user_id)
+        else:
+            # No matches found, return the vision analysis with a message
+            return f"I analyzed your image and found: \n\n{vision_response}\n\nI couldn't find exact matches in our inventory. Would you like to search for something specific?"
+            
+    except Exception as e:
+        print(f"Error processing image with Gemini Vision: {e}")
+        traceback.print_exc()
+        return "Sorry, I encountered an error while analyzing the image. Could you please describe what you're looking for instead?"
+
+def format_vision_product_response(vision_analysis, products, user_id):
+    """
+    Format the response with product matches from vision analysis
+    
+    Args:
+        vision_analysis (str): Gemini Vision's analysis of the image
+        products (list): List of matching products
+        user_id (str): User ID for conversation context
+        
+    Returns:
+        str: Formatted response with product matches
+    """
+    try:
+        # Update user context with found products
+        context = conversation_context.get_context(user_id)
+        if 'last_products' not in context:
+            context['last_products'] = []
+        
+        # Store the products in context
+        context['last_products'] = products
+        context['current_topic'] = 'product_search'
+        context['last_search_page'] = 1
+        
+        # Extract key information from vision analysis
+        product_type = "product"
+        brand_name = ""
+        
+        # Try to extract product type
+        product_type_match = re.search(r'product type[:\s]*(.*?)(?:\n|$)', vision_analysis, re.IGNORECASE)
+        if product_type_match:
+            product_type_raw = product_type_match.group(1).strip()
+            # Clean up product type
+            product_type = re.sub(r'\*\*|\*|not visible|unknown', '', product_type_raw, flags=re.IGNORECASE).strip()
+        
+        # If no product type found, look for it in the text
+        if not product_type or product_type.lower() == "product":
+            # Check for common product types
+            product_types = ["thermostat", "controller", "temperature controller", "compressor", 
+                            "refrigeration controller", "digital controller", "valve", "expansion valve"]
+            for p_type in product_types:
+                if p_type.lower() in vision_analysis.lower():
+                    product_type = p_type
+                    break
+        
+        # Try to extract brand name
+        brand_match = re.search(r'brand name[:\s]*(.*?)(?:\n|$)', vision_analysis, re.IGNORECASE)
+        if not brand_match:
+            brand_match = re.search(r'brand[:\s]*(.*?)(?:\n|$)', vision_analysis, re.IGNORECASE)
+            
+        if brand_match:
+            brand_raw = brand_match.group(1).strip()
+            # Check if the brand is not visible
+            if re.search(r'not visible|unknown|none', brand_raw, re.IGNORECASE):
+                brand_name = ""
+            else:
+                # Clean up brand name
+                brand_name = re.sub(r'\*\*|\*', '', brand_raw).strip()
+        
+        # Check for common brand names directly in the text
+        if not brand_name or brand_name.lower() in ["", "not", "none"]:
+            common_brands = ["DRC", "Embraco", "Danfoss", "Bitzer", "Copeland", "Tecumseh", "Aspera"]
+            for brand in common_brands:
+                if brand.lower() in vision_analysis.lower():
+                    brand_name = brand
+                    break
+        
+        # Format the response
+        if brand_name and brand_name.lower() not in ["not", "none", ""]:
+            response = f"I analyzed your image and identified it as a {brand_name} {product_type}.\n\n"
+        else:
+            response = f"I analyzed your image and identified it as a {product_type}.\n\n"
+        
+        # Add a summary of the analysis
+        summary = extract_summary_from_vision(vision_analysis)
+        if summary:
+            response += f"{summary}\n\n"
+        
+        # Add matching products section
+        if products:
+            # Determine if we're showing brand-specific products or category recommendations
+            if brand_name and brand_name.lower() not in ["not", "none", ""]:
+                response += f"Here are some matching {brand_name} products from our inventory:\n\n"
+            else:
+                response += f"Here are some {product_type} products from our inventory that might match your needs:\n\n"
+            
+            for i, product in enumerate(products, 1):
+                # Format product information
+                if isinstance(product, dict):
+                    # WooCommerce product format
+                    name = product.get('name', 'Unknown Product')
+                    price = product.get('price', 'Price not available')
+                    link = product.get('permalink', '')
+                    stock_status = product.get('stock_status', 'instock')
+                    
+                    # Format price with currency
+                    if price and price != 'Price not available':
+                        price = f"{price} €"
+                    
+                    # Format stock status
+                    stock_text = "✅ In Stock" if stock_status == 'instock' else "⚠️ Out of Stock"
+                    
+                    response += f"{i}. *{name}*\n"
+                    response += f"   Price: {price}\n"
+                    response += f"   {stock_text}\n"
+                    
+                    # Add short description if available
+                    if 'short_description' in product and product['short_description']:
+                        # Clean HTML tags
+                        short_desc = re.sub(r'<.*?>', '', product['short_description'])
+                        if short_desc:
+                            # Limit to 100 characters
+                            if len(short_desc) > 100:
+                                short_desc = short_desc[:97] + "..."
+                            response += f"   {short_desc}\n"
+                    
+                    if link:
+                        response += f"   [View Product]({link})\n"
+                else:
+                    # Local product database format
+                    response += f"{i}. *{product['name']}*\n"
+                    response += f"   Price: {product['price']} €\n"
+                    response += f"   ✅ In Stock\n"
+                
+                response += "\n"
+            
+            # Add follow-up suggestions
+            if brand_name and brand_name.lower() not in ["not", "none", ""]:
+                response += "Would you like more information about any of these products? You can ask for details about a specific product by number or name."
+            else:
+                response += f"These are some {product_type} options from our inventory. Would you like more information about any specific product or would you like to see more options?"
+        else:
+            # No matches found
+            response += "I couldn't find exact matches in our inventory, but I can help you find similar products.\n\n"
+            
+            # Suggest search terms based on what we know
+            if brand_name and brand_name.lower() not in ["not", "none", ""]:
+                # If we have a brand name, suggest searching for that brand
+                response += f"Would you like to search for other {brand_name} products or similar {product_type}s?"
+            elif "temperature controller" in product_type.lower() or "controller" in product_type.lower():
+                # If it's a temperature controller, suggest specific controllers
+                response += f"Would you like to see our selection of temperature controllers or digital thermostats? We carry brands like Danfoss and DRC."
+            elif "thermostat" in product_type.lower():
+                # If it's a thermostat, suggest thermostat products
+                response += f"Would you like to see our selection of digital thermostats and temperature controllers? We have various models for different applications."
+            elif "compressor" in product_type.lower():
+                # If it's a compressor, suggest compressor brands
+                response += f"Would you like to see our selection of compressors from brands like Embraco, Danfoss, or Bitzer? We have various models for different refrigeration needs."
+            elif "valve" in product_type.lower():
+                # If it's a valve, suggest valve types
+                response += f"Would you like to see our selection of refrigeration valves? We carry expansion valves, solenoid valves, and other types from brands like Danfoss."
+            else:
+                # Generic suggestion
+                response += f"Would you like to search for similar {product_type}s or browse our catalog? We carry products from top brands like Danfoss, Embraco, and Bitzer."
+        
+        return response
+        
+    except Exception as e:
+        print(f"Error formatting vision product response: {e}")
+        traceback.print_exc()
+        return "I found some products that might match what you're looking for, but I'm having trouble formatting the details. Could you please describe what you're looking for?"
+
+def extract_summary_from_vision(vision_analysis):
+    """
+    Extract a concise summary from the vision analysis
+    
+    Args:
+        vision_analysis (str): Gemini Vision's analysis of the image
+        
+    Returns:
+        str: Concise summary of the product
+    """
+    try:
+        # Extract key features section
+        features_match = re.search(r'key features(.*?)(?:technical specifications|\d\.|$)', vision_analysis, re.IGNORECASE | re.DOTALL)
+        if features_match:
+            features_text = features_match.group(1).strip()
+            # Clean up the text
+            features_text = re.sub(r'\*\*|\*', '', features_text)  # Remove markdown
+            features_text = re.sub(r'\n+', '\n', features_text)    # Remove extra newlines
+            
+            # Limit to a reasonable length
+            if len(features_text) > 200:
+                sentences = re.split(r'[.!?]', features_text)
+                summary = ""
+                for sentence in sentences:
+                    if len(summary) + len(sentence) < 200:
+                        if sentence.strip():
+                            summary += sentence.strip() + ". "
+                    else:
+                        break
+                return summary.strip()
+            return features_text
+        
+        # If no features section, extract the first paragraph
+        paragraphs = vision_analysis.split('\n\n')
+        for paragraph in paragraphs:
+            if paragraph and not paragraph.startswith('#') and len(paragraph) > 20:
+                # Clean up the text
+                paragraph = re.sub(r'\*\*|\*', '', paragraph)  # Remove markdown
+                
+                # Limit to a reasonable length
+                if len(paragraph) > 200:
+                    return paragraph[:197] + "..."
+                return paragraph
+                
+        return ""
+    except Exception as e:
+        print(f"Error extracting summary from vision: {e}")
+        return ""
+
+def search_products_from_vision(vision_response):
+    """
+    Search for products based on Gemini Vision's analysis
+    
+    Args:
+        vision_response (str): Gemini Vision's analysis of the image
+        
+    Returns:
+        list: List of matching products
+    """
+    try:
+        print(f"Searching products based on vision analysis")
+        
+        # Extract key terms from the vision response
+        # Focus on brand names, model numbers, and product types
+        
+        # Look for product type mentions
+        product_type_patterns = [
+            r'product type[:\s]*(.*?)(?:\n|$)',
+            r'type[:\s]*(.*?)(?:\n|$)',
+            r'identified as[:\s]*(.*?)(?:\n|$)'
+        ]
+        
+        product_types = []
+        for pattern in product_type_patterns:
+            matches = re.findall(pattern, vision_response, re.IGNORECASE)
+            product_types.extend(matches)
+            
+        # Extract specific product types we're interested in
+        specific_types = ["compressor", "refrigeration", "cooling", "hvac", "air conditioner", "freezer", 
+                         "controller", "temperature controller", "digital controller", "thermostat",
+                         "valve", "expansion valve", "solenoid valve", "condenser", "evaporator"]
+        
+        found_types = []
+        for p_type in specific_types:
+            if p_type.lower() in vision_response.lower():
+                found_types.append(p_type)
+                
+        # Add any found product types from patterns
+        for p_type in product_types:
+            # Clean up the product type
+            cleaned_type = re.sub(r'\*\*|\*|not visible|unknown', '', p_type, flags=re.IGNORECASE).strip()
+            if cleaned_type:
+                found_types.append(cleaned_type)
+        
+        # Look for brand names
+        brand_patterns = [
+            r'brand[:\s]*(.*?)(?:\n|$)',
+            r'brand name[:\s]*(.*?)(?:\n|$)',
+            r'manufacturer[:\s]*(.*?)(?:\n|$)'
+        ]
+        
+        brand_matches = []
+        for pattern in brand_patterns:
+            matches = re.findall(pattern, vision_response, re.IGNORECASE)
+            brand_matches.extend(matches)
+            
+        # Clean up brand matches
+        cleaned_brands = []
+        has_brand = False
+        for brand in brand_matches:
+            # Check if the brand is not visible
+            if re.search(r'not visible|unknown|none', brand, re.IGNORECASE):
+                continue
+                
+            # Remove common words and markdown
+            brand = re.sub(r'not visible|visible|if visible|unknown|\*\*|\*', '', brand, flags=re.IGNORECASE).strip()
+            if brand and len(brand) > 1:  # Ensure it's not empty and more than one character
+                cleaned_brands.append(brand)
+                has_brand = True
+        
+        # Look for model numbers
+        model_patterns = [
+            r'model(?:\s*number|\s*no)?[:\s]*(.*?)(?:\n|$)',
+            r'model(?:\s*name|\s*style)?[:\s]*(.*?)(?:\n|$)',
+            r'(?:part|product)\s*number[:\s]*(.*?)(?:\n|$)'
+        ]
+        
+        model_matches = []
+        for pattern in model_patterns:
+            matches = re.findall(pattern, vision_response, re.IGNORECASE)
+            model_matches.extend(matches)
+            
+        # Clean up model matches
+        cleaned_models = []
+        for model in model_matches:
+            # Check if the model is not visible
+            if re.search(r'not visible|unknown|none', model, re.IGNORECASE):
+                continue
+                
+            # Remove common words and markdown
+            model = re.sub(r'not visible|visible|if visible|unknown|\*\*|\*', '', model, flags=re.IGNORECASE).strip()
+            if model and len(model) > 1:  # Ensure it's not empty and more than one character
+                cleaned_models.append(model)
+        
+        # Extract any alphanumeric patterns that might be model numbers
+        # This is a more aggressive approach to find potential model numbers
+        alphanumeric_pattern = r'([A-Z0-9]{2,}[-]?[A-Z0-9]{2,})'
+        potential_models = re.findall(alphanumeric_pattern, vision_response)
+        for model in potential_models:
+            if model not in cleaned_models:
+                cleaned_models.append(model)
+        
+        # Directly check for common brand names in the text
+        common_brands = ["DRC", "Embraco", "Danfoss", "Bitzer", "Copeland", "Tecumseh", "Aspera", "Eliwell", "Carel"]
+        for brand in common_brands:
+            if brand.lower() in vision_response.lower() and brand not in cleaned_brands:
+                cleaned_brands.append(brand)
+                has_brand = True
+        
+        # Build search queries based on extracted information
+        search_queries = []
+        
+        # If we have brand names, they're good starting points
+        if cleaned_brands:
+            for brand in cleaned_brands:
+                search_queries.append(brand)
+                
+                # If we also have model numbers, combine them with brands
+                if cleaned_models:
+                    for model in cleaned_models:
+                        search_queries.append(f"{brand} {model}")
+                
+                # Combine brands with product types
+                if found_types:
+                    for p_type in found_types:
+                        search_queries.append(f"{brand} {p_type}")
+        
+        # If we have model numbers but no brands
+        elif cleaned_models:
+            search_queries.extend(cleaned_models)
+            
+            # Combine models with product types
+            if found_types:
+                for model in cleaned_models:
+                    for p_type in found_types:
+                        search_queries.append(f"{model} {p_type}")
+        
+        # If we only have product types
+        elif found_types:
+            search_queries.extend(found_types)
+        
+        # If no structured information was found, use key phrases from the response
+        if not search_queries:
+            # Extract key phrases (sentences containing product-related terms)
+            key_phrases = []
+            sentences = re.split(r'[.!?]', vision_response)
+            product_related_terms = ["product", "device", "equipment", "system", "controller", "compressor", "refrigeration"]
+            
+            for sentence in sentences:
+                if any(term in sentence.lower() for term in product_related_terms):
+                    key_phrases.append(sentence.strip())
+            
+            if key_phrases:
+                # Use the first few key phrases as search queries
+                search_queries.extend(key_phrases[:3])
+            else:
+                # Fallback to using the first part of the response
+                search_queries = [vision_response[:100]]
+        
+        # Remove duplicates and empty strings
+        search_queries = list(set([q.strip() for q in search_queries if q.strip()]))
+        
+        # Additional search queries for common product types
+        if "temperature controller" in vision_response.lower() or "refrigeration controller" in vision_response.lower():
+            search_queries.extend(["temperature controller", "refrigeration controller", "digital temperature controller"])
+        elif "thermostat" in vision_response.lower():
+            search_queries.extend(["thermostat", "digital thermostat", "temperature control"])
+        elif "compressor" in vision_response.lower():
+            search_queries.extend(["compressor", "refrigeration compressor", "cooling compressor"])
+        elif "valve" in vision_response.lower():
+            search_queries.extend(["expansion valve", "solenoid valve", "refrigeration valve"])
+        elif "condenser" in vision_response.lower():
+            search_queries.extend(["condenser", "refrigeration condenser", "cooling condenser"])
+        elif "evaporator" in vision_response.lower():
+            search_queries.extend(["evaporator", "refrigeration evaporator", "cooling evaporator"])
+            
+        # Map general product types to specific categories
+        product_type_mapping = {
+            "controller": ["temperature controller", "refrigeration controller", "digital controller"],
+            "thermostat": ["thermostat", "digital thermostat", "temperature control"],
+            "compressor": ["compressor", "refrigeration compressor", "cooling compressor"],
+            "valve": ["expansion valve", "solenoid valve", "refrigeration valve"],
+            "condenser": ["condenser", "refrigeration condenser", "cooling condenser"],
+            "evaporator": ["evaporator", "refrigeration evaporator", "cooling evaporator"],
+            "cooling": ["refrigeration", "cooling system", "chiller"],
+            "refrigeration": ["refrigeration system", "cooling system", "refrigeration equipment"],
+            "air conditioner": ["air conditioning", "hvac", "climate control"],
+            "freezer": ["freezer", "cold storage", "freezing equipment"]
+        }
+        
+        # Add category-based searches for when no brand is available
+        if not has_brand:
+            print("No brand information found, adding category-based searches")
+            
+            # Try to identify the general product type
+            general_type = None
+            for p_type in found_types:
+                for key in product_type_mapping.keys():
+                    if key in p_type.lower():
+                        general_type = key
+                        break
+                if general_type:
+                    break
+            
+            # If we identified a general type, add its specific categories
+            if general_type and general_type in product_type_mapping:
+                search_queries.extend(product_type_mapping[general_type])
+                
+                # Add top brands for this product type
+                if general_type == "controller" or general_type == "thermostat":
+                    search_queries.extend(["Danfoss controller", "DRC controller", "Eliwell controller", "Carel controller"])
+                elif general_type == "compressor":
+                    search_queries.extend(["Embraco compressor", "Danfoss compressor", "Bitzer compressor", "Copeland compressor"])
+                elif general_type == "valve":
+                    search_queries.extend(["Danfoss valve", "Castel valve", "Sporlan valve"])
+            
+            # Add top product categories as fallback
+            if not general_type and found_types:
+                top_categories = ["compressor", "controller", "valve", "thermostat", "refrigeration"]
+                search_queries.extend(top_categories)
+        
+        print(f"Generated search queries: {search_queries}")
+        
+        # Search for products using the queries
+        all_matches = []
+        for query in search_queries:
+            if USE_WOOCOMMERCE and woocommerce.is_connected:
+                # Use WooCommerce API for search
+                matches = woocommerce.advanced_product_search(query, limit=3)
+                if matches:
+                    all_matches.extend(matches)
+            else:
+                # Use local product database
+                matches = find_similar_products(query)
+                if matches:
+                    all_matches.extend(matches)
+        
+        # Remove duplicates
+        unique_matches = {}
+        for product in all_matches:
+            if isinstance(product, dict) and 'id' in product:
+                if product['id'] not in unique_matches:
+                    unique_matches[product['id']] = product
+        
+        # Return the unique matches, limited to top 5
+        result = list(unique_matches.values())[:5]
+        print(f"Found {len(result)} matching products")
+        return result
+        
+    except Exception as e:
+        print(f"Error searching products from vision: {e}")
+        traceback.print_exc()
+        return []
+
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))

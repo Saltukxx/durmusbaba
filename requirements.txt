@@ -8,3 +8,4 @@ python-dotenv
 woocommerce
 fuzzywuzzy
 python-Levenshtein
+Pillow

@@ -1,49 +1,67 @@
 #!/usr/bin/env python
-"""
-Bu script, kullanılabilir Gemini modellerini listeler.
-"""
+# -*- coding: utf-8 -*-
 
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# .env dosyasından değişkenleri yükle
+# Load environment variables
 load_dotenv()
 
-def list_available_models():
-    """
-    Kullanılabilir Gemini modellerini listeler
-    """
-    gemini_api_key = os.getenv("GEMINI_API_KEY")
+def check_gemini_models():
+    """Check available Gemini models and verify access to gemini-1.5-flash"""
     
-    if not gemini_api_key:
-        print("ERROR: GEMINI_API_KEY not found in .env file")
+    # Get API key from environment
+    api_key = os.getenv("GEMINI_API_KEY")
+    
+    if not api_key:
+        print("❌ GEMINI_API_KEY not found in environment variables")
         return False
     
     try:
-        # Configure Gemini
-        genai.configure(api_key=gemini_api_key)
+        # Configure the Gemini API
+        genai.configure(api_key=api_key)
         
         # List available models
-        print("Listing available models...")
         models = genai.list_models()
         
-        print("\nAvailable Models:")
-        for model in models:
-            print(f"- {model.name}")
-            print(f"  Supported generation methods: {model.supported_generation_methods}")
-            print()
+        print("Available models:")
+        vision_model_found = False
         
-        return True
+        for model in models:
+            model_name = model.name
+            print(f"- {model_name}")
+            
+            # Check if this is the vision model
+            if "gemini-1.5-flash" in model_name:
+                vision_model_found = True
+                print(f"✅ Found vision model: {model_name}")
+                
+                # Try to initialize the model to verify access
+                try:
+                    vision_model = genai.GenerativeModel(model_name)
+                    print("✅ Successfully initialized vision model")
+                    
+                    # Print model details
+                    print(f"   Display name: {model.display_name}")
+                    print(f"   Description: {model.description}")
+                    print(f"   Input token limit: {model.input_token_limit}")
+                    print(f"   Output token limit: {model.output_token_limit}")
+                    print(f"   Supported generation methods: {model.supported_generation_methods}")
+                    
+                    return True
+                except Exception as e:
+                    print(f"❌ Error initializing vision model: {e}")
+                    return False
+        
+        if not vision_model_found:
+            print("❌ gemini-1.5-flash model not found in available models")
+            return False
+            
     except Exception as e:
-        print(f"Error listing models: {e}")
+        print(f"❌ Error checking Gemini models: {e}")
         return False
 
 if __name__ == "__main__":
-    print("Gemini Models Lister")
-    print("===================\n")
-    
-    success = list_available_models()
-    
-    if not success:
-        print("\n❌ Failed to list models.") 
+    print("Checking Gemini models...")
+    check_gemini_models() 
