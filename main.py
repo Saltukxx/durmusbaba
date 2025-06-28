@@ -1102,349 +1102,17 @@ def check_price_range_request(text, user_id=None):
                 # Default to German
                 return f"❓ Es tut mir leid, ich konnte keine Produkte im Preisbereich von {min_price}-{max_price} EUR finden. Bitte versuchen Sie einen anderen Preisbereich oder kontaktieren Sie uns unter: info@durmusbaba.com"
     
-    # Check if there's a referenced price range in the conversation context
-    elif context and context['entities']['price_ranges']:
-        referenced_entities = conversation_context.get_referenced_entities(user_id, text)
-        if 'price_range' in referenced_entities or any(word in text.lower() for word in ['price range', 'preisbereich', 'fiyat aralığı']):
-            # Use the most recent price range
-            min_price, max_price = context['entities']['price_ranges'][-1]
-            # Recursively call this function with the price range
-            return check_price_range_request(f"show products between {min_price} and {max_price} EUR", user_id)
-    
-    return None
-
-def extract_price_range(text):
-    """Extract price range from text."""
-    import re
-    
-    # Define patterns for price range queries in different languages
-    patterns = [
-        # German patterns
-        r'unter (\d+)[\s]?(?:€|euro)',  # unter 500€
-        r'bis zu (\d+)[\s]?(?:€|euro)',  # bis zu 500€
-        r'weniger als (\d+)[\s]?(?:€|euro)',  # weniger als 500€
-        r'über (\d+)[\s]?(?:€|euro)',  # über 500€
-        r'mehr als (\d+)[\s]?(?:€|euro)',  # mehr als 500€
-        r'zwischen (\d+) und (\d+)[\s]?(?:€|euro)',  # zwischen 500 und 1000€
-        r'von (\d+) bis (\d+)[\s]?(?:€|euro)',  # von 500 bis 1000€
-        
-        # English patterns
-        r'under (\d+)[\s]?(?:€|euro)',  # under 500€
-        r'up to (\d+)[\s]?(?:€|euro)',  # up to 500€
-        r'less than (\d+)[\s]?(?:€|euro)',  # less than 500€
-        r'over (\d+)[\s]?(?:€|euro)',  # over 500€
-        r'more than (\d+)[\s]?(?:€|euro)',  # more than 500€
-        r'between (\d+) and (\d+)[\s]?(?:€|euro)',  # between 500 and 1000€
-        r'from (\d+) to (\d+)[\s]?(?:€|euro)',  # from 500 to 1000€
-        
-        # Turkish patterns
-        r'(\d+)[\s]?(?:€|euro) altında',  # 500€ altında
-        r'(\d+)[\s]?(?:€|euro) kadar',  # 500€ kadar
-        r'(\d+)[\s]?(?:€|euro)\'dan az',  # 500€'dan az
-        r'(\d+)[\s]?(?:€|euro) üzerinde',  # 500€ üzerinde
-        r'(\d+)[\s]?(?:€|euro)\'dan fazla',  # 500€'dan fazla
-        r'(\d+) ve (\d+)[\s]?(?:€|euro) arasında',  # 500 ve 1000€ arasında
-    ]
-    
-    min_price = None
-    max_price = None
-    
-    # Check each pattern
-    for pattern in patterns:
-        match = re.search(pattern, text)
-        if match:
-            if len(match.groups()) == 1:
-                # Single price value patterns
-                price = int(match.group(1))
-                
-                # Determine if it's a min or max constraint
-                if any(keyword in text for keyword in ['unter', 'bis zu', 'weniger', 'under', 'up to', 'less than', 'altında', 'kadar', 'az']):
-                    max_price = price
-                    min_price = 0  # Set a default minimum
-                elif any(keyword in text for keyword in ['über', 'mehr', 'over', 'more than', 'üzerinde', 'fazla']):
-                    min_price = price
-                    max_price = 10000  # Set a default maximum
-            else:
-                # Range patterns with two values
-                min_price = int(match.group(1))
-                max_price = int(match.group(2))
-            
-            break
-    
-    # If we found a price range, return it
-    if min_price is not None and max_price is not None:
-        return min_price, max_price
-    
-    return None
-
-def is_more_products_request(text):
-    """Check if the user is asking to see more products from a previous search."""
-    text_lower = text.lower()
-    more_patterns = [
-        'mehr', 'weitere', 'zeig mehr', 'zeige mehr', 'mehr produkte', 'weitere produkte',  # German
-        'more', 'show more', 'list more', 'next', 'continue', 'more products',  # English
-        'daha', 'daha fazla', 'devam', 'diğer', 'başka', 'sonraki'  # Turkish
-    ]
-    
-    return any(pattern in text_lower for pattern in more_patterns)
-
-def handle_more_products_request(user_id, text):
-    """Handle requests to show more products from a previous search."""
-    # Get context for this user
-    context = conversation_context.get_context(user_id) if user_id else None
-    
-    if not context or not context['entities']['products']:
-        # No context available or no products in context
-        if any(word in text.lower() for word in ['daha', 'fazla', 'devam']):
+    else:
+        # No products found in this price range
+        if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
             # Turkish
-            return "❓ Üzgünüm, şu anda gösterilecek daha fazla ürün yok. Lütfen yeni bir arama yapın."
-        elif any(word in text.lower() for word in ['more', 'next', 'continue']):
+            return f"❓ Üzgünüm, {min_price}-{max_price} EUR aralığında ürün bulamadım. Lütfen farklı bir fiyat aralığı deneyin veya bizimle iletişime geçin: info@durmusbaba.com"
+        elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
             # English
-            return "❓ I'm sorry, there are no more products to show at the moment. Please try a new search."
+            return f"❓ I'm sorry, I couldn't find any products in the price range of {min_price}-{max_price} EUR. Please try a different price range or contact us at: info@durmusbaba.com"
         else:
             # Default to German
-            return "❓ Es tut mir leid, es gibt derzeit keine weiteren Produkte zum Anzeigen. Bitte versuchen Sie eine neue Suche."
-    
-    # Increment the product page
-    if 'product_page' not in context:
-        context['product_page'] = 0
-    context['product_page'] += 1
-    
-    # Get the current topic
-    current_topic = context['current_topic']
-    
-    # Determine which products to show based on the current topic
-    products_to_show = []
-    
-    if current_topic == 'category_search' and context['entities']['categories']:
-        # Get products for the most recent category
-        category = context['entities']['categories'][-1]
-        
-        # Define keywords for the category
-        category_keywords = {
-            "embraco": ["embraco", "embrac"],
-            "bitzer": ["bitzer", "bitze"],
-            "danfoss": ["danfoss", "danfo"],
-            "secop": ["secop", "seco"],
-            "copeland": ["copeland", "copel"],
-            "tecumseh": ["tecumseh", "tecum"],
-            "dcb": ["dcb"],
-            "ebm": ["ebm", "ebmpapst", "papst"],
-            "drc": ["drc"],
-            "york": ["york"]
-        }
-        
-        # Find the keywords for this category
-        keywords = []
-        for cat, kw in category_keywords.items():
-            if cat.lower() in category.lower():
-                keywords = kw
-                break
-        
-        # Find products in this category
-        all_products = []
-        for product in PRODUCT_DB:
-            product_name = product.get('product_name', '').lower()
-            if any(keyword in product_name for keyword in keywords):
-                all_products.append(product)
-        
-        # Get the current page of products
-        start_idx = (context['product_page'] - 1) * 5
-        if start_idx < len(all_products):
-            products_to_show = all_products[start_idx:start_idx + 5]
-            total_products = len(all_products)
-        else:
-            # Reset to the first page if we've gone too far
-            context['product_page'] = 1
-            products_to_show = all_products[:5]
-            total_products = len(all_products)
-    
-    elif current_topic == 'price_search' and context['entities']['price_ranges']:
-        # Get products for the most recent price range
-        min_price, max_price = context['entities']['price_ranges'][-1]
-        
-        # Find products in this price range
-        all_products = []
-        for product in PRODUCT_DB:
-            try:
-                price = float(product.get('price_eur', '0').replace('€', '').replace(',', '.').strip())
-                if min_price <= price <= max_price:
-                    all_products.append(product)
-            except (ValueError, TypeError):
-                continue
-        
-        # Sort products by price
-        all_products.sort(key=lambda x: float(x.get('price_eur', '0').replace('€', '').replace(',', '.').strip()))
-        
-        # Get the current page of products
-        start_idx = (context['product_page'] - 1) * 5
-        if start_idx < len(all_products):
-            products_to_show = all_products[start_idx:start_idx + 5]
-            total_products = len(all_products)
-        else:
-            # Reset to the first page if we've gone too far
-            context['product_page'] = 1
-            products_to_show = all_products[:5]
-            total_products = len(all_products)
-    
-    else:
-        # Just show the next 5 products from the entities
-        all_products = [{'product_name': p['name'], 'price_eur': '?', 'status': '', 'url': ''} for p in context['entities']['products']]
-        
-        # Try to find full product info for each product
-        for i, product in enumerate(all_products):
-            for db_product in PRODUCT_DB:
-                if product['product_name'].lower() in db_product['product_name'].lower():
-                    all_products[i] = db_product
-                    break
-        
-        # Get the current page of products
-        start_idx = (context['product_page'] - 1) * 5
-        if start_idx < len(all_products):
-            products_to_show = all_products[start_idx:start_idx + 5]
-            total_products = len(all_products)
-        else:
-            # Reset to the first page if we've gone too far
-            context['product_page'] = 1
-            products_to_show = all_products[:5]
-            total_products = len(all_products)
-    
-    # If we have no products to show, return an error message
-    if not products_to_show:
-        if any(word in text.lower() for word in ['daha', 'fazla', 'devam']):
-            # Turkish
-            return "❓ Üzgünüm, gösterilecek başka ürün kalmadı. Lütfen yeni bir arama yapın."
-        elif any(word in text.lower() for word in ['more', 'next', 'continue']):
-            # English
-            return "❓ I'm sorry, there are no more products to show. Please try a new search."
-        else:
-            # Default to German
-            return "❓ Es tut mir leid, es gibt keine weiteren Produkte zum Anzeigen. Bitte versuchen Sie eine neue Suche."
-    
-    # Calculate the current range of products being shown
-    start_idx = (context['product_page'] - 1) * 5
-    end_idx = start_idx + len(products_to_show)
-    
-    # Detect language from the request
-    is_turkish = any(word in text.lower() for word in ['daha', 'fazla', 'devam', 'diğer', 'başka'])
-    is_english = any(word in text.lower() for word in ['more', 'show', 'list', 'next', 'continue'])
-    
-    # Format the response based on language
-    if is_turkish:
-        result = f"🔍 İşte {total_products} üründen {start_idx + 1}-{end_idx} arası ürünler:\n\n"
-    elif is_english:
-        result = f"🔍 Here are products {start_idx + 1}-{end_idx} of {total_products}:\n\n"
-    else:
-        result = f"🔍 Hier sind Produkte {start_idx + 1}-{end_idx} von {total_products}:\n\n"
-    
-    # Add product information
-    for i, product in enumerate(products_to_show):
-        # Add product to entities in context
-        product_entity = {'name': product['product_name'], 'mentioned_at': time.time()}
-        if not any(p['name'] == product_entity['name'] for p in context['entities']['products']):
-            context['entities']['products'].append(product_entity)
-        
-        status_text = "auf Lager" if product.get('status') == "instock" else "nicht auf Lager"
-        if is_turkish:
-            status_text = "stokta" if product.get('status') == "instock" else "stokta değil"
-        elif is_english:
-            status_text = "in stock" if product.get('status') == "instock" else "out of stock"
-        
-        status_emoji = "✅" if product.get('status') == "instock" else "⚠️"
-        result += f"{start_idx + i + 1}. 📦 {product['product_name']}\n"
-        result += f"   💰 {product.get('price_eur', '?')} EUR | {status_emoji} {status_text}\n"
-        result += f"   🔗 {product.get('url', '')}\n\n"
-    
-    # Add message about more products if available
-    remaining = total_products - end_idx
-    if remaining > 0:
-        if is_turkish:
-            result += f"... ve {remaining} ürün daha. Daha fazla görmek için 'daha fazla göster' yazabilirsiniz.\n\n"
-        elif is_english:
-            result += f"... and {remaining} more products. You can type 'show more' to see additional products.\n\n"
-        else:
-            result += f"... und {remaining} weitere Produkte. Sie können 'mehr zeigen' eingeben, um weitere Produkte zu sehen.\n\n"
-    
-    # Add contact information
-    if is_turkish:
-        result += "📞 Daha fazla bilgi için bizimle iletişime geçin: info@durmusbaba.com"
-    elif is_english:
-        result += "📞 For more information, please contact us at: info@durmusbaba.com"
-    else:
-        result += "📞 Für weitere Informationen kontaktieren Sie uns bitte unter: info@durmusbaba.com"
-    
-    return result
-
-def is_order_query(text):
-    """Check if the message is asking about an order."""
-    order_keywords = {
-        'german': ['bestellung', 'auftrag', 'bestellnummer', 'bestellt', 'lieferung', 'versand', 'sendung', 'paket', 'order'],
-        'english': ['order', 'purchase', 'delivery', 'shipping', 'package', 'tracking', 'bought', 'ordered'],
-        'turkish': ['sipariş', 'teslimat', 'kargo', 'paket', 'takip', 'satın aldım', 'sipariş ettim', 'sipariş durumu']
-    }
-    
-    text_lower = text.lower()
-    
-    # Check for order number patterns
-    order_number_pattern = r'\b\d{4,}\b'  # 4 or more digits
-    if re.search(order_number_pattern, text_lower):
-        # If we have digits that could be an order number, check for order keywords
-        for language, keywords in order_keywords.items():
-            if any(keyword in text_lower for keyword in keywords):
-                return True
-    
-    # Check for explicit order status requests
-    for language, keywords in order_keywords.items():
-        # If two or more order keywords are present, it's likely an order query
-        keyword_count = sum(1 for keyword in keywords if keyword in text_lower)
-        if keyword_count >= 2:
-            return True
-    
-    return False
-
-def extract_order_number(text):
-    """Extract potential order numbers from text."""
-    # Look for patterns like "#1234" or "order 1234" or just "1234" if it's 4+ digits
-    patterns = [
-        r'#(\d{4,})',  # #1234
-        r'order\s+(\d{4,})',  # order 1234
-        r'bestellung\s+(\d{4,})',  # bestellung 1234
-        r'auftrag\s+(\d{4,})',  # auftrag 1234
-        r'sipariş\s+(\d{4,})',  # sipariş 1234
-        r'\b(\d{4,})\b'  # any 4+ digit number
-    ]
-    
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return match.group(1)
-    
-    return None
-
-def get_order_status(order_id=None, phone=None):
-    """Get order status from WooCommerce."""
-    if not USE_WOOCOMMERCE or not woocommerce.is_connected:
-        return "❌ Sorry, order lookup is currently unavailable."
-    
-    try:
-        if order_id:
-            # Try to get order by ID
-            order = woocommerce.get_order(order_id)
-            if order:
-                return format_order_info(order)
-        
-        if phone:
-            # Try to find orders by phone number
-            orders = woocommerce.get_customer_orders(phone=phone)
-            if orders:
-                # Return the most recent order
-                return format_order_info(orders[0], show_all_link=True, total_orders=len(orders))
-        
-        return "❌ No order found with the provided information."
-    except Exception as e:
-        print(f"Error getting order status: {e}")
-        traceback.print_exc()
-        return "❌ Sorry, there was an error looking up your order."
+            return f"❓ Es tut mir leid, ich konnte keine Produkte im Preisbereich von {min_price}-{max_price} EUR finden. Bitte versuchen Sie einen anderen Preisbereich oder kontaktieren Sie uns unter: info@durmusbaba.com"
 
 def format_order_info(order, show_all_link=False, total_orders=1):
     """Format order information for display."""
@@ -1829,139 +1497,6 @@ def test_notification():
         traceback.print_exc()
         return f"Error: {str(e)}", 500
 
-# Check if this is a chat history request
-def is_history_request(text):
-    """Check if the message is requesting chat history"""
-    patterns = [
-        r'(?:show|get|view|display).+(?:history|chat|conversation)',
-        r'(?:what.+(?:talked|said|discussed))',
-        r'(?:previous.+(?:messages|conversation))',
-        r'(?:our.+(?:chat|conversation))',
-        r'(?:zeig|zeige).+(?:verlauf|chat|konversation)',  # German
-        r'(?:geçmiş|sohbet).+(?:göster|getir)'  # Turkish
-    ]
-    
-    return any(re.search(pattern, text.lower()) for pattern in patterns)
-
-# Format chat history for display
-def format_chat_history(messages):
-    """Format chat history for display to the user"""
-    if not messages:
-        return "Es gibt noch keine Chatverläufe."
-    
-    formatted = "Hier ist unser Gesprächsverlauf:\n\n"
-    
-    for i, msg in enumerate(messages):
-        # Format timestamp
-        timestamp = datetime.fromtimestamp(msg['timestamp']).strftime('%H:%M:%S')
-        role = "Sie" if msg['is_user'] else "Ich"
-        formatted += f"{timestamp} - {role}: {msg['text']}\n\n"
-    
-    return formatted
-
-# Handle chat history request
-def handle_history_request(user_id, text):
-    """Handle a request to view chat history"""
-    # Get full conversation history
-    full_history = conversation_context.get_full_conversation_history(user_id)
-    
-    # Remove the current request from history for display
-    display_history = full_history[:-1] if full_history else []
-    
-    # Format the history for display
-    return format_chat_history(display_history)
-
-def process_image_with_gemini(image_path, user_id):
-    """
-    Process an image with Gemini Vision API to identify products
-    
-    Args:
-        image_path (str): Path or URL of the image to process
-        user_id (str): User ID for conversation context
-        
-    Returns:
-        str: Gemini's response about the image
-    """
-    try:
-        print(f"Processing image with Gemini Vision: {image_path}")
-        
-        # Convert to PIL Image for better compatibility
-        try:
-            from PIL import Image
-            import io
-            
-            # Check if it's a local file path
-            if image_path.startswith("file://"):
-                local_path = image_path.replace("file://", "")
-                print(f"Loading image from local path: {local_path}")
-                image = Image.open(local_path)
-            else:
-                # It's a URL, download the image
-                print(f"Downloading image from URL: {image_path}")
-                response = requests.get(image_path)
-                if response.status_code != 200:
-                    print(f"Failed to download image: {response.status_code}")
-                    return "Sorry, I couldn't download the image to analyze it."
-                
-                image_data = response.content
-                image = Image.open(io.BytesIO(image_data))
-            
-            # Convert to RGB if needed
-            if image.mode != "RGB":
-                print(f"Converting image from {image.mode} to RGB")
-                image = image.convert("RGB")
-                
-            print(f"Image dimensions: {image.size}")
-            print(f"Image format: {image.format}")
-                
-        except Exception as e:
-            print(f"Error processing image with PIL: {e}")
-            traceback.print_exc()
-            return "Sorry, I encountered an error while processing the image. Could you please describe what you're looking for instead?"
-        
-        # Configure Gemini Vision model (using Gemini 2.5 Flash)
-        vision_model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        # Prepare the prompt for product identification
-        prompt = """
-        Identify the product in this image in detail. 
-        Focus on:
-        1. Product type (e.g., refrigeration compressor, cooling system, etc.)
-        2. Brand name if visible
-        3. Model/style name or number if visible
-        4. Key features visible in the image
-        5. Technical specifications if visible
-        
-        If this appears to be a screenshot of a product search or website, extract the product information from the text visible in the image.
-        
-        Provide the information in a structured format that can be used for product search.
-        """
-        
-        # Process the image with Gemini Vision
-        response = vision_model.generate_content([prompt, image])
-        
-        # Get the text response
-        vision_response = response.text
-        print(f"Gemini Vision response: {vision_response}")
-        
-        # Update conversation context
-        conversation_context.update_context(user_id, f"[Image sent: {vision_response}]")
-        
-        # Search for matching products
-        product_matches = search_products_from_vision(vision_response)
-        
-        if product_matches:
-            # Format the response with product matches
-            return format_vision_product_response(vision_response, product_matches, user_id)
-        else:
-            # No matches found, return the vision analysis with a message
-            return f"I analyzed your image and found: \n\n{vision_response}\n\nI couldn't find exact matches in our inventory. Would you like to search for something specific?"
-            
-    except Exception as e:
-        print(f"Error processing image with Gemini Vision: {e}")
-        traceback.print_exc()
-        return "Sorry, I encountered an error while analyzing the image. Could you please describe what you're looking for instead?"
-
 def format_vision_product_response(vision_analysis, products, user_id):
     """
     Format the response with product matches from vision analysis
@@ -2281,6 +1816,44 @@ def search_products_from_vision(vision_response):
             if brand.lower() in vision_response.lower() and brand not in cleaned_brands:
                 cleaned_brands.append(brand)
                 has_brand = True
+                
+        # Extract specific model numbers for Embraco products
+        if "embraco" in vision_response.lower():
+            embraco_model_patterns = [
+                r'(NJ\s*\d{4}\s*[A-Z]{1,2})',  # NJ 6220 Z
+                r'(NEU\s*\d{4}\s*[A-Z]{1,2})',  # NEU 6215 GK
+                r'(EMY\s*\d{2,3})',  # EMY 80
+                r'(FFI\s*\d{2,3})',  # FFI 12
+                r'(NT\s*\d{4}\s*[A-Z]{1,2})'   # NT 6220 GK
+            ]
+            
+            for pattern in embraco_model_patterns:
+                matches = re.findall(pattern, vision_response, re.IGNORECASE)
+                for match in matches:
+                    if match not in cleaned_models:
+                        cleaned_models.append(match)
+                        
+        # First identify product categories
+        product_categories = []
+        
+        # Map product types to WooCommerce categories
+        category_mapping = {
+            "compressor": ["Kompressoren", "Halbhermetische Kompressoren"],
+            "refrigeration": ["Kältesysteme"],
+            "valve": ["Expansionsventile"],
+            "thermostat": ["Thermostat"],
+            "controller": ["Thermostat"],
+            "temperature controller": ["Thermostat"],
+            "freezer": ["Kühlschranke"],
+            "door": ["Tiefkühlraumtür"],
+            "air conditioner": ["Klimageräte-Einheiten"]
+        }
+        
+        # Identify categories based on product types
+        for p_type in found_types:
+            for key, categories in category_mapping.items():
+                if key in p_type.lower():
+                    product_categories.extend(categories)
         
         # Build search queries based on extracted information
         search_queries = []
@@ -2377,50 +1950,115 @@ def search_products_from_vision(vision_response):
                 if general_type:
                     break
             
-            # If we identified a general type, add its specific categories
+            # If we found a general type, add its specific searches
             if general_type and general_type in product_type_mapping:
                 search_queries.extend(product_type_mapping[general_type])
+        
+        # Print search queries for debugging
+        print(f"Search queries: {search_queries}")
+        print(f"Product categories: {product_categories}")
+        
+        # Search for products using WooCommerce API if available
+        matching_products = []
+        
+        if USE_WOOCOMMERCE and woocommerce.is_connected:
+            try:
+                # First, try to search by category and model number if available
+                if product_categories and cleaned_models:
+                    print(f"Searching by category and model number")
+                    for category in product_categories:
+                        for model in cleaned_models:
+                            # Get category ID
+                            category_id = None
+                            for cat_id, cat_name in PRODUCT_CATEGORIES.items():
+                                if cat_name == category:
+                                    category_id = cat_id
+                                    break
+                            
+                            if category_id:
+                                # Search in this category with the model number
+                                category_products = woocommerce.get_products(category=category_id, search=model)
+                                if category_products:
+                                    print(f"Found {len(category_products)} products in category {category} with model {model}")
+                                    matching_products.extend(category_products)
                 
-                # Add top brands for this product type
-                if general_type == "controller" or general_type == "thermostat":
-                    search_queries.extend(["Danfoss controller", "DRC controller", "Eliwell controller", "Carel controller"])
-                elif general_type == "compressor":
-                    search_queries.extend(["Embraco compressor", "Danfoss compressor", "Bitzer compressor", "Copeland compressor"])
-                elif general_type == "valve":
-                    search_queries.extend(["Danfoss valve", "Castel valve", "Sporlan valve"])
+                # If no products found by category and model, try by brand and model
+                if not matching_products and cleaned_brands and cleaned_models:
+                    print(f"Searching by brand and model number")
+                    for brand in cleaned_brands:
+                        for model in cleaned_models:
+                            search_term = f"{brand} {model}"
+                            brand_model_products = woocommerce.advanced_product_search(search_term)
+                            if brand_model_products:
+                                print(f"Found {len(brand_model_products)} products with brand {brand} and model {model}")
+                                matching_products.extend(brand_model_products)
+                
+                # If still no products, try by category only
+                if not matching_products and product_categories:
+                    print(f"Searching by category only")
+                    for category in product_categories:
+                        # Get category ID
+                        category_id = None
+                        for cat_id, cat_name in PRODUCT_CATEGORIES.items():
+                            if cat_name == category:
+                                category_id = cat_id
+                                break
+                        
+                        if category_id:
+                            # Get products from this category
+                            category_products = woocommerce.get_products(category=category_id)
+                            if category_products:
+                                print(f"Found {len(category_products)} products in category {category}")
+                                matching_products.extend(category_products)
+                
+                # If still no products, try with search queries
+                if not matching_products:
+                    print(f"Searching with general search queries")
+                    for query in search_queries:
+                        # Use advanced search for better results
+                        query_products = woocommerce.advanced_product_search(query)
+                        if query_products:
+                            print(f"Found {len(query_products)} products for query: {query}")
+                            matching_products.extend(query_products)
+                
+                # Remove duplicates
+                unique_products = {}
+                for product in matching_products:
+                    if product['id'] not in unique_products:
+                        unique_products[product['id']] = product
+                
+                # Return up to 5 unique products
+                return list(unique_products.values())[:5]
+                
+            except Exception as e:
+                print(f"Error searching WooCommerce products: {e}")
+                traceback.print_exc()
+                # Fall back to local database
+        
+        # If WooCommerce search failed or is not available, search in local database
+        if not matching_products:
+            print("Searching in local database")
+            local_matches = []
             
-            # Add top product categories as fallback
-            if not general_type and found_types:
-                top_categories = ["compressor", "controller", "valve", "thermostat", "refrigeration"]
-                search_queries.extend(top_categories)
+            # Try to match products in the local database
+            for query in search_queries:
+                for product in PRODUCT_DB:
+                    product_name = product['product_name'].lower()
+                    if query.lower() in product_name or any(word in product_name for word in query.lower().split()):
+                        local_matches.append(product)
+            
+            # Remove duplicates
+            unique_local_matches = []
+            product_names = set()
+            for product in local_matches:
+                if product['product_name'] not in product_names:
+                    product_names.add(product['product_name'])
+                    unique_local_matches.append(product)
+            
+            # Return up to 5 products
+            return unique_local_matches[:5]
         
-        print(f"Generated search queries: {search_queries}")
-        
-        # Search for products using the queries
-        all_matches = []
-        for query in search_queries:
-            if USE_WOOCOMMERCE and woocommerce.is_connected:
-                # Use WooCommerce API for search
-                matches = woocommerce.advanced_product_search(query, limit=3)
-                if matches:
-                    all_matches.extend(matches)
-            else:
-                # Use local product database
-                matches = find_similar_products(query)
-                if matches:
-                    all_matches.extend(matches)
-        
-        # Remove duplicates
-        unique_matches = {}
-        for product in all_matches:
-            if isinstance(product, dict) and 'id' in product:
-                if product['id'] not in unique_matches:
-                    unique_matches[product['id']] = product
-        
-        # Return the unique matches, limited to top 5
-        result = list(unique_matches.values())[:5]
-        print(f"Found {len(result)} matching products")
-        return result
+        return []
         
     except Exception as e:
         print(f"Error searching products from vision: {e}")
