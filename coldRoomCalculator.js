@@ -188,10 +188,16 @@ function extractParameters(message) {
     const lowerMessage = message.toLowerCase();
     const params = {};
 
-    // Extract volume
-    const volumeMatch = lowerMessage.match(/(\d+)\s*(?:m3|m³|cubic meters?|hacim|volume)/i);
+    // Extract volume - more comprehensive patterns
+    const volumeMatch = lowerMessage.match(/(\d+)\s*(?:m3|m³|cubic meters?|hacim|volume|room|oda|raum)/i);
     if (volumeMatch) {
         params.volume = parseInt(volumeMatch[1]);
+    } else {
+        // Look for volume patterns like "330m³", "500 cubic meters", etc.
+        const volumePattern = lowerMessage.match(/(\d+)\s*(?:m3|m³|cubic meters?)/i);
+        if (volumePattern) {
+            params.volume = parseInt(volumePattern[1]);
+        }
     }
 
     // Extract room temperature - look for negative temperatures first

@@ -14,6 +14,27 @@ async function detectIntent(message) {
     // Simple keyword-based intent detection
     const lowerMessage = message.toLowerCase();
     
+    // Cold room capacity calculation intent - CHECK THIS FIRST
+    if (
+      lowerMessage.includes('cold room') || 
+      lowerMessage.includes('soğuk oda') || 
+      lowerMessage.includes('kühlraum') ||
+      lowerMessage.includes('refrigeration') || 
+      lowerMessage.includes('dondurucu') || 
+      lowerMessage.includes('kältetechnik') ||
+      lowerMessage.includes('cooling capacity') || 
+      lowerMessage.includes('soğutma kapasitesi') || 
+      lowerMessage.includes('kühlkapazität') ||
+      lowerMessage.includes('calculate capacity') || 
+      lowerMessage.includes('kapasite hesapla') || 
+      lowerMessage.includes('kapazität berechnen') ||
+      (lowerMessage.includes('capacity') && (lowerMessage.includes('calculate') || lowerMessage.includes('hesapla') || lowerMessage.includes('berechnen'))) ||
+      (lowerMessage.includes('kapasite') && (lowerMessage.includes('hesapla') || lowerMessage.includes('calculate'))) ||
+      (lowerMessage.includes('kapazität') && (lowerMessage.includes('berechnen') || lowerMessage.includes('calculate')))
+    ) {
+      return { type: 'cold_room_calculation', confidence: 0.9 };
+    }
+    
     // Product search intent
     if (
       lowerMessage.includes('product') || 
@@ -64,27 +85,6 @@ async function detectIntent(message) {
     const languageCode = languageProcessor.checkLanguageChangeRequest(message);
     if (languageCode) {
       return { type: 'language_change', confidence: 0.95, languageCode };
-    }
-    
-    // Cold room capacity calculation intent
-    if (
-      lowerMessage.includes('cold room') || 
-      lowerMessage.includes('soğuk oda') || 
-      lowerMessage.includes('kühlraum') ||
-      lowerMessage.includes('capacity') || 
-      lowerMessage.includes('kapasite') || 
-      lowerMessage.includes('kapazität') ||
-      lowerMessage.includes('cooling') || 
-      lowerMessage.includes('soğutma') || 
-      lowerMessage.includes('kühlung') ||
-      lowerMessage.includes('calculate') || 
-      lowerMessage.includes('hesapla') || 
-      lowerMessage.includes('berechnen') ||
-      lowerMessage.includes('refrigeration') || 
-      lowerMessage.includes('dondurucu') || 
-      lowerMessage.includes('kältetechnik')
-    ) {
-      return { type: 'cold_room_calculation', confidence: 0.8 };
     }
     
     // Default to general query
