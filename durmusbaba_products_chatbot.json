@@ -1,0 +1,2053 @@
+[
+  {
+    "product_name": "Embraco EGAS 80 HLR",
+    "slug": "embraco-egas-80-hlr",
+    "price_eur": 79.45,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-egas-80-hlr/"
+  },
+  {
+    "product_name": "Embraco EGAS 100 HLR",
+    "slug": "embraco-egas-100-hlr",
+    "price_eur": 101.01,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-egas-100-hlr/"
+  },
+  {
+    "product_name": "Embraco EMZ 100 HLC",
+    "slug": "embraco-emz-100-hlc",
+    "price_eur": 89.02,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emz-100-hlc/"
+  },
+  {
+    "product_name": "Embraco EMY 70 CLP",
+    "slug": "embraco-emy-70-clp",
+    "price_eur": 87.68,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emy-70-clp/"
+  },
+  {
+    "product_name": "Embraco EMY 80 CLP",
+    "slug": "embraco-emy-80-clp",
+    "price_eur": 93.47,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emy-80-clp/"
+  },
+  {
+    "product_name": "Embraco EGYS 90 CLP",
+    "slug": "embraco-egys-90-clp",
+    "price_eur": 97.6,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-egys-90-clp/"
+  },
+  {
+    "product_name": "Embraco EMY 3118 Y (1/5)",
+    "slug": "embraco-emy-3118-y-1-5",
+    "price_eur": 78.1,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emy-3118-y-1-5/"
+  },
+  {
+    "product_name": "Embraco FF 8.5 HBK",
+    "slug": "embraco-ff-8-5-hbk",
+    "price_eur": 109.37,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-ff-8-5-hbk/"
+  },
+  {
+    "product_name": "Embraco FFI 12 HBK",
+    "slug": "embraco-ffi-12-hbk",
+    "price_eur": 111.72,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-ffi-12-hbk/"
+  },
+  {
+    "product_name": "Embraco EMT 6144 Z",
+    "slug": "embraco-emt-6144-z",
+    "price_eur": 94.75,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emt-6144-z/"
+  },
+  {
+    "product_name": "Embraco NEK 6160 Z - dual frekans",
+    "slug": "embraco-nek-6160-z-dual-frekans",
+    "price_eur": 114.71,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nek-6160-z-dual-frekans/"
+  },
+  {
+    "product_name": "Embraco NEU 6215 GK",
+    "slug": "embraco-neu-6215-gk",
+    "price_eur": 84.32,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6215-gk/"
+  },
+  {
+    "product_name": "Embraco NEK 6170 Z - dual frekans",
+    "slug": "embraco-nek-6170-z-dual-frekans",
+    "price_eur": 110.61,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nek-6170-z-dual-frekans/"
+  },
+  {
+    "product_name": "Embraco NEU 6187 Z-Dual frekans",
+    "slug": "embraco-neu-6187-z-dual-frekans",
+    "price_eur": 115.76,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6187-z-dual-frekans/"
+  },
+  {
+    "product_name": "Embraco NEK 6187 Z -Dual frekans",
+    "slug": "embraco-nek-6187-z-dual-frekans",
+    "price_eur": 128.88,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nek-6187-z-dual-frekans/"
+  },
+  {
+    "product_name": "Embraco NEU 6210 Z",
+    "slug": "embraco-neu-6210-z",
+    "price_eur": 118.35,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6210-z/"
+  },
+  {
+    "product_name": "Embraco NEU 6212 Z",
+    "slug": "embraco-neu-6212-z",
+    "price_eur": 127.58,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6212-z/"
+  },
+  {
+    "product_name": "Embraco NEU 6214 Z",
+    "slug": "embraco-neu-6214-z",
+    "price_eur": 135.59,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6214-z/"
+  },
+  {
+    "product_name": "Embraco NEU 6214 Z- Dual frekans - CSR",
+    "slug": "embraco-neu-6214-z-dual-frekans-csr",
+    "price_eur": 167.73,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6214-z-dual-frekans-csr/"
+  },
+  {
+    "product_name": "Embraco NJ 6220 Z (ohne Ventil – mit Lötanschluss)",
+    "slug": "embraco-nj-6220-z-ohne-ventil-mit-loetanschluss-2",
+    "price_eur": 286.18,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-6220-z-ohne-ventil-mit-loetanschluss-2/"
+  },
+  {
+    "product_name": "Embraco NT 6220 Z",
+    "slug": "embraco-nt-6220-z",
+    "price_eur": 238.22,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6220-z/"
+  },
+  {
+    "product_name": "Embraco NJ 6226 Z",
+    "slug": "embraco-nj-6226-z",
+    "price_eur": 307.19,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-6226-z/"
+  },
+  {
+    "product_name": "Embraco NJ 6220 Z (ohne Ventil – mit Lötanschluss)",
+    "slug": "embraco-nj-6220-z-ohne-ventil-mit-loetanschluss",
+    "price_eur": 286.18,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-6220-z-ohne-ventil-mit-loetanschluss/"
+  },
+  {
+    "product_name": "Embraco NT 6220 Z",
+    "slug": "embraco-nt-6220-z-2",
+    "price_eur": 238.22,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6220-z-2/"
+  },
+  {
+    "product_name": "Embraco NJ 6226 Z",
+    "slug": "embraco-nj-6226-z-2",
+    "price_eur": 307.19,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-6226-z-2/"
+  },
+  {
+    "product_name": "Embraco NJ 6226 ZX (ohne Ventil – mit Lötanschluss)",
+    "slug": "embraco-nj-6226-zx-ohne-ventil-mit-loetanschluss",
+    "price_eur": 299.81,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-6226-zx-ohne-ventil-mit-loetanschluss/"
+  },
+  {
+    "product_name": "Embraco NEU 6214 E",
+    "slug": "embraco-neu-6214-e",
+    "price_eur": 159.72,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6214-e/"
+  },
+  {
+    "product_name": "Embraco NJ 9226 E",
+    "slug": "embraco-nj-9226-e",
+    "price_eur": 304.78,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9226-e/"
+  },
+  {
+    "product_name": "Embraco NJ 9232 E",
+    "slug": "embraco-nj-9232-e",
+    "price_eur": 319.89,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9232-e/"
+  },
+  {
+    "product_name": "Embraco NJ 9238 E",
+    "slug": "embraco-nj-9238-e",
+    "price_eur": 322.71,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9238-e/"
+  },
+  {
+    "product_name": "Embraco EMT 6152 GK",
+    "slug": "embraco-emt-6152-gk",
+    "price_eur": 102.57,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emt-6152-gk/"
+  },
+  {
+    "product_name": "Embraco EMT 6165 GK",
+    "slug": "embraco-emt-6165-gk",
+    "price_eur": 105.18,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emt-6165-gk/"
+  },
+  {
+    "product_name": "Embraco NEU 6215 GK",
+    "slug": "embraco-neu-6215-gk-2",
+    "price_eur": 121.82,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6215-gk-2/"
+  },
+  {
+    "product_name": "Embraco NEK 6217 GK",
+    "slug": "embraco-nek-6217-gk",
+    "price_eur": 175.91,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nek-6217-gk/"
+  },
+  {
+    "product_name": "Embraco NT 6220 GK",
+    "slug": "embraco-nt-6220-gk",
+    "price_eur": 198.01,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6220-gk/"
+  },
+  {
+    "product_name": "Embraco NEU 6220 GK-CSR",
+    "slug": "embraco-neu-6220-gk-csr",
+    "price_eur": 152.87,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6220-gk-csr/"
+  },
+  {
+    "product_name": "Embraco NT 6222 GK",
+    "slug": "embraco-nt-6222-gk",
+    "price_eur": 205.46,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6222-gk/"
+  },
+  {
+    "product_name": "Embraco NT 6222 GK - CSR",
+    "slug": "embraco-nt-6222-gk-csr",
+    "price_eur": 232.54,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6222-gk-csr/"
+  },
+  {
+    "product_name": "Embraco NT 6224 GK",
+    "slug": "embraco-nt-6224-gk",
+    "price_eur": 240.23,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6224-gk/"
+  },
+  {
+    "product_name": "Embraco NT 6226 GK",
+    "slug": "embraco-nt-6226-gk",
+    "price_eur": 235.03,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6226-gk/"
+  },
+  {
+    "product_name": "Embraco NT 6226 GK (with rotolock valve)",
+    "slug": "embraco-nt-6226-gk-with-rotolock-valve",
+    "price_eur": 245.53,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6226-gk-with-rotolock-valve/"
+  },
+  {
+    "product_name": "Embraco NJ 9226 GK (with rotolock valve )",
+    "slug": "embraco-nj-9226-gk-with-rotolock-valve",
+    "price_eur": 290.42,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9226-gk-with-rotolock-valve/"
+  },
+  {
+    "product_name": "Embraco NJ 9232 GK",
+    "slug": "embraco-nj-9232-gk",
+    "price_eur": 265.25,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9232-gk/"
+  },
+  {
+    "product_name": "Embraco NJ 9226 GS",
+    "slug": "embraco-nj-9226-gs",
+    "price_eur": 292.99,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9226-gs/"
+  },
+  {
+    "product_name": "Embraco NJ 9238 GS",
+    "slug": "embraco-nj-9238-gs",
+    "price_eur": 312.54,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9238-gs/"
+  },
+  {
+    "product_name": "Embraco NJX 6250 GK",
+    "slug": "embraco-njx-6250-gk",
+    "price_eur": 413.05,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-njx-6250-gk/"
+  },
+  {
+    "product_name": "Embraco EMT 2130 GK",
+    "slug": "embraco-emt-2130-gk",
+    "price_eur": 112.34,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emt-2130-gk/"
+  },
+  {
+    "product_name": "Embraco NEU 2140 GK",
+    "slug": "embraco-neu-2140-gk",
+    "price_eur": 110.69,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-2140-gk/"
+  },
+  {
+    "product_name": "Embraco NEU 2140 GK-Dual Frekans",
+    "slug": "embraco-neu-2140-gk-dual-frekans",
+    "price_eur": 123.31,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-2140-gk-dual-frekans/"
+  },
+  {
+    "product_name": "Embraco NEU 6215 GK",
+    "slug": "embraco-neu-6215-gk-3",
+    "price_eur": 121.72,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6215-gk-3/"
+  },
+  {
+    "product_name": "Embraco NEU 2178 GKA - CSR",
+    "slug": "embraco-neu-2178-gka-csr",
+    "price_eur": 153.17,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-2178-gka-csr/"
+  },
+  {
+    "product_name": "Embraco NT 2180 GK -CSR",
+    "slug": "embraco-nt-2180-gk-csr",
+    "price_eur": 239.32,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-2180-gk-csr/"
+  },
+  {
+    "product_name": "Embraco NT 2192 GK",
+    "slug": "embraco-nt-2192-gk",
+    "price_eur": 229.02,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-2192-gk/"
+  },
+  {
+    "product_name": "Embraco NT 2212 GK",
+    "slug": "embraco-nt-2212-gk",
+    "price_eur": 253.34,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-2212-gk/"
+  },
+  {
+    "product_name": "Embraco NJ 2212 GS",
+    "slug": "embraco-nj-2212-gs",
+    "price_eur": 325.59,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-2212-gs/"
+  },
+  {
+    "product_name": "Embraco NJX 2219 GK",
+    "slug": "embraco-njx-2219-gk",
+    "price_eur": 399.72,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-njx-2219-gk/"
+  },
+  {
+    "product_name": "Embraco NEU 6181 U - 115V 60Hz",
+    "slug": "embraco-neu-6181-u-115v-60hz",
+    "price_eur": 120.45,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6181-u-115v-60hz/"
+  },
+  {
+    "product_name": "Embraco NEU 6210 U",
+    "slug": "embraco-neu-6210-u",
+    "price_eur": 117.44,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6210-u/"
+  },
+  {
+    "product_name": "Embraco NEU 6214 U",
+    "slug": "embraco-neu-6214-u",
+    "price_eur": 126.04,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6214-u/"
+  },
+  {
+    "product_name": "Embraco NEU 6217 U",
+    "slug": "embraco-neu-6217-u",
+    "price_eur": 135.76,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6217-u/"
+  },
+  {
+    "product_name": "Embraco NEU 6217 U - 115-127V / 60Hz",
+    "slug": "embraco-neu-6217-u-115-127v-60hz",
+    "price_eur": 129.07,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6217-u-115-127v-60hz/"
+  },
+  {
+    "product_name": "Embraco NEU 6220 U",
+    "slug": "embraco-neu-6220-u",
+    "price_eur": 159.25,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6220-u/"
+  },
+  {
+    "product_name": "Embraco NT 6230 U",
+    "slug": "embraco-nt-6230-u",
+    "price_eur": 245.69,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6230-u/"
+  },
+  {
+    "product_name": "Embraco NEK 2134 U",
+    "slug": "embraco-nek-2134-u",
+    "price_eur": 130.72,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nek-2134-u/"
+  },
+  {
+    "product_name": "Embraco NEU 2140 U",
+    "slug": "embraco-neu-2140-u",
+    "price_eur": 121.78,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-2140-u/"
+  },
+  {
+    "product_name": "Embraco NEK 2150 U",
+    "slug": "embraco-nek-2150-u",
+    "price_eur": 130.66,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nek-2150-u/"
+  },
+  {
+    "product_name": "Embraco NEU 2155 U",
+    "slug": "embraco-neu-2155-u",
+    "price_eur": 122.03,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-2155-u/"
+  },
+  {
+    "product_name": "Embraco NEU 2168 U",
+    "slug": "embraco-neu-2168-u",
+    "price_eur": 142.86,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-2168-u/"
+  },
+  {
+    "product_name": "Embraco NT 2170 U-CSR",
+    "slug": "embraco-nt-2170-u-csr",
+    "price_eur": 238.45,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-2170-u-csr/"
+  },
+  {
+    "product_name": "Embraco NT 2180 U",
+    "slug": "embraco-nt-2180-u",
+    "price_eur": 239.89,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-2180-u/"
+  },
+  {
+    "product_name": "Embraco NT 2180 U-CSR",
+    "slug": "embraco-nt-2180-u-csr",
+    "price_eur": 250.8,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-2180-u-csr/"
+  },
+  {
+    "product_name": "Embraco NT 2210 U",
+    "slug": "embraco-nt-2210-u",
+    "price_eur": 244.94,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-2210-u/"
+  },
+  {
+    "product_name": "Embraco ERUe 70 HLP",
+    "slug": "embraco-erue-70-hlp",
+    "price_eur": 68.84,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-erue-70-hlp/"
+  },
+  {
+    "product_name": "Embraco ERU2 80 HSP",
+    "slug": "embraco-eru2-80-hsp",
+    "price_eur": 67.73,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-eru2-80-hsp/"
+  },
+  {
+    "product_name": "Embraco EGAS 90 HLR",
+    "slug": "embraco-egas-90-hlr",
+    "price_eur": 84.99,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-egas-90-hlr/"
+  },
+  {
+    "product_name": "Embraco EMZ 90 HLC",
+    "slug": "embraco-emz-90-hlc",
+    "price_eur": 80.74,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emz-90-hlc/"
+  },
+  {
+    "product_name": "Embraco FFU 160 HAX",
+    "slug": "embraco-ffu-160-hax",
+    "price_eur": 134.47,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-ffu-160-hax/"
+  },
+  {
+    "product_name": "Embraco NBY 1118 Y",
+    "slug": "embraco-nby-1118-y",
+    "price_eur": 120.23,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nby-1118-y/"
+  },
+  {
+    "product_name": "Embraco EM 30 HHR",
+    "slug": "embraco-em-30-hhr",
+    "price_eur": 88.78,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-em-30-hhr/"
+  },
+  {
+    "product_name": "Embraco EM 65 HHR",
+    "slug": "embraco-em-65-hhr",
+    "price_eur": 182.76,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-em-65-hhr/"
+  },
+  {
+    "product_name": "Embraco EMT 6160 Z",
+    "slug": "embraco-emt-6160-z",
+    "price_eur": 96.28,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emt-6160-z/"
+  },
+  {
+    "product_name": "Embraco EMT 6170 Z",
+    "slug": "embraco-emt-6170-z",
+    "price_eur": 97.78,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-emt-6170-z/"
+  },
+  {
+    "product_name": "Embraco NEU 6215 GK",
+    "slug": "embraco-neu-6215-gk-4",
+    "price_eur": 84.32,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6215-gk-4/"
+  },
+  {
+    "product_name": "Embraco NEU 6210 Z -Dual Frekans",
+    "slug": "embraco-neu-6210-z-dual-frekans",
+    "price_eur": 122.22,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6210-z-dual-frekans/"
+  },
+  {
+    "product_name": "Embraco NEU 6212 Z-Dual Frekans",
+    "slug": "embraco-neu-6212-z-dual-frekans",
+    "price_eur": 131.32,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-neu-6212-z-dual-frekans/"
+  },
+  {
+    "product_name": "Embraco NT 6217 Z",
+    "slug": "embraco-nt-6217-z",
+    "price_eur": 201.19,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6217-z/"
+  },
+  {
+    "product_name": "Embraco NT 6217 Z (with rotolock valve)",
+    "slug": "embraco-nt-6217-z-with-rotolock-valve",
+    "price_eur": 242.62,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6217-z-with-rotolock-valve/"
+  },
+  {
+    "product_name": "Embraco NJ 6220 Z",
+    "slug": "embraco-nj-6220-z",
+    "price_eur": 292.12,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-6220-z/"
+  },
+  {
+    "product_name": "Embraco NJ 6220 ZX (ohne Ventil + mit Lötanschluss)",
+    "slug": "embraco-nj-6220-zx-vanasizkaynak-baglantili",
+    "price_eur": 293.06,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-6220-zx-vanasizkaynak-baglantili/"
+  },
+  {
+    "product_name": "Embraco NJ 9238 P",
+    "slug": "embraco-nj-9238-p",
+    "price_eur": 345.35,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nj-9238-p/"
+  },
+  {
+    "product_name": "Embraco NT 6222 GK (with rotolock valve)",
+    "slug": "embraco-nt-6222-gk-with-rotolock-valve",
+    "price_eur": 251.8,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/embraco-nt-6222-gk-with-rotolock-valve/"
+  },
+  {
+    "product_name": "Bitzer 28 MM Ansaugventil für halbhermetischen Kompressor",
+    "slug": "bitzer-28-mm-ansaugventil-fuer-halbhermetischen-kompressor",
+    "price_eur": 64.5,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-28-mm-ansaugventil-fuer-halbhermetischen-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2CE-3Y-40S Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-2ce-3y-40s-ecoline-halbhermetisch-kompressor",
+    "price_eur": 2152.28,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2ce-3y-40s-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2ces-4y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-2ces-4y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 2245.35,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2ces-4y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2DES-2Y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-2des-2y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 2076.17,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2des-2y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2DES-3Y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-2des-3y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 2162.46,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2des-3y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2ees-2y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-2ees-2y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 1980.27,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2ees-2y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2ees-3y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-2ees-3y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 2135.14,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2ees-3y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2Fes-2y Ecoline Semi-Hermetisch-Kompressor",
+    "slug": "bitzer-2fes-2y-ecoline-semi-hermetisch-kompressor",
+    "price_eur": 1419.03,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2fes-2y-ecoline-semi-hermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2Fes-3y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-2fes-3y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 1486.85,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2fes-3y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2Ges-2y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-2ges-2y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 1361.76,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2ges-2y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2HES-1Y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-2hes-1y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 1337.26,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2hes-1y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2JES-07Y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-2jes-07y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 1323.13,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2jes-07y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 2KES-05Y Ecoline Semi-Hermetisch-Kompressor",
+    "slug": "bitzer-2kes-05y-ecoline-semi-hermetisch-kompressor",
+    "price_eur": 1308.81,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-2kes-05y-ecoline-semi-hermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4Bes-9Y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4bes-9y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 3796.45,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4bes-9y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4ces-6y (4cc-6,2y) AOB Ecoline semi-hermetischer Kompressor",
+    "slug": "bitzer-4ces-6y-4cc-62y-aob-ecoline-semi-hermetischer-kompressor",
+    "price_eur": 3273.64,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4ces-6y-4cc-62y-aob-ecoline-semi-hermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4DES-5Y Ecoline Semi-Hermetisch-Kompressor",
+    "slug": "bitzer-4des-5y-ecoline-semi-hermetisch-kompressor",
+    "price_eur": 2979.36,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4des-5y-ecoline-semi-hermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4DES-7Y Ecoline Semi-Hermetisch-Kompressor",
+    "slug": "bitzer-4des-7y-ecoline-semi-hermetisch-kompressor",
+    "price_eur": 3131.96,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4des-7y-ecoline-semi-hermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4ees-4y ecoline semi-hermetischer Kompressor",
+    "slug": "bitzer-4ees-4y-ecoline-semi-hermetischer-kompressor",
+    "price_eur": 2371.14,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4ees-4y-ecoline-semi-hermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4ees-6y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-4ees-6y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 2717.67,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4ees-6y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4FE-28y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4fe-28y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 7569.72,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4fe-28y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4Fe-35y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4fe-35y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 7883.6,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4fe-35y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4Fes-3y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-4fes-3y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 2315.81,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4fes-3y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4FES-5Y-40S Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4fes-5y-40s-ecoline-halbhermetisch-kompressor",
+    "price_eur": 2557.72,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4fes-5y-40s-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4Ge-23y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4ge-23y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 7299.18,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4ge-23y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4Ge-30y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-4ge-30y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 7503.26,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4ge-30y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4HE-18Y ECOLINE SEMI Hermetisch Kompressor",
+    "slug": "bitzer-4he-18y-ecoline-semi-hermetisch-kompressor",
+    "price_eur": 6505.83,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4he-18y-ecoline-semi-hermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4HE-25Y (4H-25.2y) OYB Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4he-25y-4h-25-2y-oyb-ecoline-halbhermetisch-kompressor",
+    "price_eur": 6843.06,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4he-25y-4h-25-2y-oyb-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4je-15y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-4je-15y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 6490.76,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4je-15y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4je-22y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4je-22y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 6824.6,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4je-22y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4nes-14y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-4nes-14y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 4946.82,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4nes-14y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4NES-20y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4nes-20y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 5250.14,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4nes-20y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4pes-12y (4pcs-10.2y) AOB Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4pes-12y-4pcs-10-2y-aob-ecoline-halbhermetisch-kompressor",
+    "price_eur": 4393.11,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4pes-12y-4pcs-10-2y-aob-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4pes-15y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-4pes-15y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 4583.96,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4pes-15y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4tes-12y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-4tes-12y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 4226.94,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4tes-12y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4tes-9y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4tes-9y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 4049.28,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4tes-9y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 4Ves-7y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-4ves-7y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 3945.28,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-4ves-7y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 6FE-44y (6F-40,2y) AOB Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-6fe-44y-6f-402y-aob-ecoline-halbhermetisch-kompressor",
+    "price_eur": 11484.68,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-6fe-44y-6f-402y-aob-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 6FE-50y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-6fe-50y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 11794.973,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-6fe-50y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 6GE-34Y ECOLINE SEMI-Hermetische Kompressor",
+    "slug": "bitzer-6ge-34y-ecoline-semi-hermetische-kompressor",
+    "price_eur": 9477.658,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-6ge-34y-ecoline-semi-hermetische-kompressor/"
+  },
+  {
+    "product_name": "bitzer 6GE-40Y ECOLINE SEMIEMEMETISCHENKOMPRESSOR",
+    "slug": "bitzer-6ge-40y-ecoline-semiememetischenkompressor",
+    "price_eur": 10123.0,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-6ge-40y-ecoline-semiememetischenkompressor/"
+  },
+  {
+    "product_name": "bitzer 6HE-28Y ECOLINE SEMI-Hermetisch Kompressor",
+    "slug": "bitzer-6he-28y-ecoline-semi-hermetisch-kompressor",
+    "price_eur": 8264.17,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-6he-28y-ecoline-semi-hermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 6HE-35Y Ecoline Halbhermetisch Kompressor",
+    "slug": "bitzer-6he-35y-ecoline-halbhermetisch-kompressor",
+    "price_eur": 9477.659,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-6he-35y-ecoline-halbhermetisch-kompressor/"
+  },
+  {
+    "product_name": "bitzer 6je-33y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-6je-33y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 9213.709,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-6je-33y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 8FE-70Y Ecoline Halbhermetischer Kompressor",
+    "slug": "bitzer-8fe-70y-ecoline-halbhermetischer-kompressor",
+    "price_eur": 15669.6,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-8fe-70y-ecoline-halbhermetischer-kompressor/"
+  },
+  {
+    "product_name": "bitzer 8GE-60Y ECOLINE SEMI-Hermetische Kompressor",
+    "slug": "bitzer-8ge-60y-ecoline-semi-hermetische-kompressor",
+    "price_eur": 14426.921,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-8ge-60y-ecoline-semi-hermetische-kompressor/"
+  },
+  {
+    "product_name": "bitzer S4G-12,2Y-LS Semi-Hemetic Double Stufe Kompressor",
+    "slug": "bitzer-s4g-122y-ls-semi-hemetic-double-stufe-kompressor",
+    "price_eur": 8669.94,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-s4g-122y-ls-semi-hemetic-double-stufe-kompressor/"
+  },
+  {
+    "product_name": "bitzer S6F-30,2Y-LS Halbhermetisch Double Stage Kompressor",
+    "slug": "bitzer-s6f-302y-ls-halbhermetisch-double-stage-kompressor",
+    "price_eur": 14272.62,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/bitzer-s6f-302y-ls-halbhermetisch-double-stage-kompressor/"
+  },
+  {
+    "product_name": "Danfoss VTZ038AGNR1A",
+    "slug": "danfoss-vtz038agnr1a",
+    "price_eur": 737.33,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-vtz038agnr1a/"
+  },
+  {
+    "product_name": "Danfoss VTZ054AGNR1A",
+    "slug": "danfoss-vtz054agnr1a",
+    "price_eur": 827.25,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-vtz054agnr1a/"
+  },
+  {
+    "product_name": "Danfoss VTZ086AGNR1A",
+    "slug": "danfoss-vtz086agnr1a",
+    "price_eur": 975.6,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-vtz086agnr1a/"
+  },
+  {
+    "product_name": "Danfoss VTZ121AGNR1B",
+    "slug": "danfoss-vtz121agnr1b",
+    "price_eur": 1256.62,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-vtz121agnr1b/"
+  },
+  {
+    "product_name": "Danfoss VTZ171AGNR1A",
+    "slug": "danfoss-vtz171agnr1a",
+    "price_eur": 1510.64,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-vtz171agnr1a/"
+  },
+  {
+    "product_name": "Danfoss VTZ215AGNR1A",
+    "slug": "danfoss-vtz215agnr1a",
+    "price_eur": 1656.74,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-vtz215agnr1a/"
+  },
+  {
+    "product_name": "Danfoss MTZ 125-4VI",
+    "slug": "danfoss-mtz-125-4vi",
+    "price_eur": 1857.89,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-125-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ144-4VI",
+    "slug": "danfoss-mtz144-4vi",
+    "price_eur": 1935.49,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz144-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 160-4VI",
+    "slug": "danfoss-mtz-160-4vi",
+    "price_eur": 2078.11,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-160-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 018-4VI",
+    "slug": "danfoss-mtz-018-4vi",
+    "price_eur": 490.92,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-018-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 018 - 5VI",
+    "slug": "danfoss-mtz-018-5vi",
+    "price_eur": 497.06,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-018-5vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 022-4VI",
+    "slug": "danfoss-mtz-022-4vi",
+    "price_eur": 511.29,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-022-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 022 - 5VI",
+    "slug": "danfoss-mtz-022-5vi",
+    "price_eur": 511.29,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-022-5vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 028-4VI",
+    "slug": "danfoss-mtz-028-4vi",
+    "price_eur": 538.45,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-028-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 028 - 5VI",
+    "slug": "danfoss-mtz-028-5vi",
+    "price_eur": 591.8,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-028-5vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 032-4VI",
+    "slug": "danfoss-mtz-032-4vi",
+    "price_eur": 560.78,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-032-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 032 - 5VI",
+    "slug": "danfoss-mtz-032-5vi",
+    "price_eur": 617.03,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-032-5vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 036-4VI",
+    "slug": "danfoss-mtz-036-4vi",
+    "price_eur": 589.87,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-036-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 036 - 5VI",
+    "slug": "danfoss-mtz-036-5vi",
+    "price_eur": 649.06,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-036-5vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 040-4VI",
+    "slug": "danfoss-mtz-040-4vi",
+    "price_eur": 632.56,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-040-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 044-4VI",
+    "slug": "danfoss-mtz-044-4vi",
+    "price_eur": 714.06,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-044-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 050-4VI",
+    "slug": "danfoss-mtz-050-4vi",
+    "price_eur": 740.24,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-050-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ56-4VI",
+    "slug": "danfoss-mtz56-4vi",
+    "price_eur": 781.01,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz56-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 064-4VI",
+    "slug": "danfoss-mtz-064-4vi",
+    "price_eur": 845.03,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-064-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 072-4VI",
+    "slug": "danfoss-mtz-072-4vi",
+    "price_eur": 978.9,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-072-4vi/"
+  },
+  {
+    "product_name": "Danfoss MTZ 080-4VI",
+    "slug": "danfoss-mtz-080-4vi",
+    "price_eur": 1000.24,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mtz-080-4vi/"
+  },
+  {
+    "product_name": "Danfoss DSH090A4ALD - 120H1511",
+    "slug": "danfoss-dsh090a4ald-120h1511",
+    "price_eur": 1416.83,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh090a4ald-120h1511/"
+  },
+  {
+    "product_name": "Danfoss DSH105A4ALD - 120H1521",
+    "slug": "danfoss-dsh105a4ald-120h1521",
+    "price_eur": 1589.5,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh105a4ald-120h1521/"
+  },
+  {
+    "product_name": "Danfoss DSH120A4ALD - 120H1531",
+    "slug": "danfoss-dsh120a4ald-120h1531",
+    "price_eur": 1675.84,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh120a4ald-120h1531/"
+  },
+  {
+    "product_name": "Danfoss DSH140A4ALD - 120H1541",
+    "slug": "danfoss-dsh140a4ald-120h1541",
+    "price_eur": 1893.21,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh140a4ald-120h1541/"
+  },
+  {
+    "product_name": "Danfoss DSH161A4ALD - 120H1551",
+    "slug": "danfoss-dsh161a4ald-120h1551",
+    "price_eur": 2031.2,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh161a4ald-120h1551/"
+  },
+  {
+    "product_name": "Danfoss DSH184A4ALD - 120H1561",
+    "slug": "danfoss-dsh184a4ald-120h1561",
+    "price_eur": 2110.59,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh184a4ald-120h1561/"
+  },
+  {
+    "product_name": "Danfoss DSH240-4 380-415/3/50 460/3/60 - 120H1374",
+    "slug": "danfoss-dsh240-4-380-415-3-50-460-3-60-120h1374",
+    "price_eur": 3093.95,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh240-4-380-415-3-50-460-3-60-120h1374/"
+  },
+  {
+    "product_name": "Danfoss DSH295-4 380-415/3/50 460/3/60 - 120H1370",
+    "slug": "danfoss-dsh295-4-380-415-3-50-460-3-60-120h1370",
+    "price_eur": 3371.98,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh295-4-380-415-3-50-460-3-60-120h1370/"
+  },
+  {
+    "product_name": "Danfoss DSH381-4 380-415/3/50 460/3/60 - 120H1366",
+    "slug": "danfoss-dsh381-4-380-415-3-50-460-3-60-120h1366",
+    "price_eur": 4015.94,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh381-4-380-415-3-50-460-3-60-120h1366/"
+  },
+  {
+    "product_name": "Danfoss DSH485-4 380-415/3/50 460/3/60 - 120H1362",
+    "slug": "danfoss-dsh485-4-380-415-3-50-460-3-60-120h1362",
+    "price_eur": 5268.39,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-dsh485-4-380-415-3-50-460-3-60-120h1362/"
+  },
+  {
+    "product_name": "Danfoss HCP 109 T4LC6 (88.924 BTU)",
+    "slug": "danfoss-hcp-109-t4lc6-88-924-btu",
+    "price_eur": 1360.16,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hcp-109-t4lc6-88-924-btu/"
+  },
+  {
+    "product_name": "Danfoss HLJ 072 T4LC6 (60.886 BTU)",
+    "slug": "danfoss-hlj-072-t4lc6-60-886-btu",
+    "price_eur": 1074.79,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hlj-072-t4lc6-60-886-btu/"
+  },
+  {
+    "product_name": "Danfoss HLJ 083 T4LC8 (69.673 BTU)",
+    "slug": "danfoss-hlj-083-t4lc8-69-673-btu",
+    "price_eur": 1226.99,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hlj-083-t4lc8-69-673-btu/"
+  },
+  {
+    "product_name": "Danfoss HLH 061 T4LC6 (51.120 BTU)",
+    "slug": "danfoss-hlh-061-t4lc6-51-120-btu",
+    "price_eur": 633.95,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hlh-061-t4lc6-51-120-btu/"
+  },
+  {
+    "product_name": "Danfoss HLP 072 T4LC6 (56.723 BTU)",
+    "slug": "danfoss-hlp-072-t4lc6-56-723-btu",
+    "price_eur": 886.48,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hlp-072-t4lc6-56-723-btu/"
+  },
+  {
+    "product_name": "Danfoss HLP 072 T4LC6 (56.723 BTU) - 121L1756",
+    "slug": "danfoss-hlp-072-t4lc6-56-723-btu-121l1756",
+    "price_eur": 886.48,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hlp-072-t4lc6-56-723-btu-121l1756/"
+  },
+  {
+    "product_name": "Danfoss HLP 081 T4LC6 (66.489 BTU) - 121L1781",
+    "slug": "danfoss-hlp-081-t4lc6-66-489-btu-121l1781",
+    "price_eur": 932.14,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hlp-081-t4lc6-66-489-btu-121l1781/"
+  },
+  {
+    "product_name": "Danfoss HRH 029 U4LP6 (24.510 BTU)",
+    "slug": "danfoss-hrh-029-u4lp6-24-510-btu",
+    "price_eur": 541.78,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-029-u4lp6-24-510-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 032 U4LP6 (26.420 BTU)",
+    "slug": "danfoss-hrh-032-u4lp6-26-420-btu",
+    "price_eur": 544.02,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-032-u4lp6-26-420-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 034 U4LP6 (29.240 BTU)",
+    "slug": "danfoss-hrh-034-u4lp6-29-240-btu",
+    "price_eur": 546.27,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-034-u4lp6-29-240-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 036 U4LP6 (30.095 BTU)",
+    "slug": "danfoss-hrh-036-u4lp6-30-095-btu",
+    "price_eur": 808.49,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-036-u4lp6-30-095-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 036 U4LP6 (30.350 BTU)",
+    "slug": "danfoss-hrh-036-u4lp6-30-350-btu",
+    "price_eur": 514.79,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-036-u4lp6-30-350-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 038 U4LP6 (31.860 BTU)",
+    "slug": "danfoss-hrh-038-u4lp6-31-860-btu",
+    "price_eur": 575.5,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-038-u4lp6-31-860-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 041 U4LP6 (34.580 BTU)",
+    "slug": "danfoss-hrh-041-u4lp6-34-580-btu",
+    "price_eur": 562.02,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-041-u4lp6-34-580-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 044 U4LP6 (37.200 BTU)",
+    "slug": "danfoss-hrh-044-u4lp6-37-200-btu",
+    "price_eur": 618.2,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-044-u4lp6-37-200-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 048 U4LP6 (40.940 BTU)",
+    "slug": "danfoss-hrh-048-u4lp6-40-940-btu",
+    "price_eur": 631.7,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-048-u4lp6-40-940-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 049 U4LP6 (41.640 BTU)",
+    "slug": "danfoss-hrh-049-u4lp6-41-640-btu",
+    "price_eur": 624.95,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-049-u4lp6-41-640-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 051 U4LP6 (44.260 BTU)",
+    "slug": "danfoss-hrh-051-u4lp6-44-260-btu",
+    "price_eur": 638.45,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-051-u4lp6-44-260-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 054 U4LP6 (45.480 BTU)",
+    "slug": "danfoss-hrh-054-u4lp6-45-480-btu",
+    "price_eur": 989.2,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-054-u4lp6-45-480-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 054 U4LP6 (45.870 BTU)",
+    "slug": "danfoss-hrh-054-u4lp6-45-870-btu",
+    "price_eur": 640.7,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-054-u4lp6-45-870-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 051 U4LP6 (47.580 BTU)",
+    "slug": "danfoss-hrh-051-u4lp6-47-580-btu",
+    "price_eur": 640.7,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-051-u4lp6-47-580-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 068 U4LP6 (58.100 BTU)",
+    "slug": "danfoss-hrh-068-u4lp6-58-100-btu",
+    "price_eur": 645.19,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-068-u4lp6-58-100-btu/"
+  },
+  {
+    "product_name": "Danfoss HRH 083 U4LP6 (70.260 BTU)",
+    "slug": "danfoss-hrh-083-u4lp6-70-260-btu",
+    "price_eur": 714.87,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrh-083-u4lp6-70-260-btu/"
+  },
+  {
+    "product_name": "Danfoss HRP 034 T4LP6 (27.089 BTU) - 121L2024",
+    "slug": "danfoss-hrp-034-t4lp6-27-089-btu-121l2024",
+    "price_eur": 694.43,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrp-034-t4lp6-27-089-btu-121l2024/"
+  },
+  {
+    "product_name": "Danfoss HRP 040 T4LP6 (31.085 BTU) - 121L1016",
+    "slug": "danfoss-hrp-040-t4lp6-31-085-btu-121l1016",
+    "price_eur": 713.37,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrp-040-t4lp6-31-085-btu-121l1016/"
+  },
+  {
+    "product_name": "Danfoss HRP 040 T4LP6 (35.090 BTU)",
+    "slug": "danfoss-hrp-040-t4lp6-35-090-btu",
+    "price_eur": 584.48,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrp-040-t4lp6-35-090-btu/"
+  },
+  {
+    "product_name": "Danfoss HRP 060 T4LP6 (47.289 BTU) - 121L1726",
+    "slug": "danfoss-hrp-060-t4lp6-47-289-btu-121l1726",
+    "price_eur": 832.26,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-hrp-060-t4lp6-47-289-btu-121l1726/"
+  },
+  {
+    "product_name": "Danfoss LLZ 013 T4",
+    "slug": "danfoss-llz-013-t4",
+    "price_eur": 1113.01,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-llz-013-t4/"
+  },
+  {
+    "product_name": "Danfoss LLZ 015 T4",
+    "slug": "danfoss-llz-015-t4",
+    "price_eur": 1098.74,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-llz-015-t4/"
+  },
+  {
+    "product_name": "Danfoss LLZ 018 T4",
+    "slug": "danfoss-llz-018-t4",
+    "price_eur": 1223.4,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-llz-018-t4/"
+  },
+  {
+    "product_name": "Danfoss LLZ 024 T4",
+    "slug": "danfoss-llz-024-t4",
+    "price_eur": 1371.28,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-llz-024-t4/"
+  },
+  {
+    "product_name": "Danfoss LLZ 034 T4LQ9",
+    "slug": "danfoss-llz-034-t4lq9",
+    "price_eur": 1606.87,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-llz-034-t4lq9/"
+  },
+  {
+    "product_name": "Danfoss MLZ 015 T5LP9",
+    "slug": "danfoss-mlz-015-t5lp9",
+    "price_eur": 616.13,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-015-t5lp9/"
+  },
+  {
+    "product_name": "DANFOSS MLZ 015 T4LP9 2 HP",
+    "slug": "danfoss-mlz-015-t4lp9-2-hp",
+    "price_eur": 564.38,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-015-t4lp9-2-hp/"
+  },
+  {
+    "product_name": "Danfoss MLZ 021 T5LP9",
+    "slug": "danfoss-mlz-021-t5lp9",
+    "price_eur": 616.13,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-021-t5lp9/"
+  },
+  {
+    "product_name": "DANFOSS MLZ 021 T4LP9 3 HP",
+    "slug": "danfoss-mlz-021-t4lp9-3-hp",
+    "price_eur": 579.17,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-021-t4lp9-3-hp/"
+  },
+  {
+    "product_name": "Danfoss MLZ 026 T5LP9",
+    "slug": "danfoss-mlz-026-t5lp9",
+    "price_eur": 623.52,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-026-t5lp9/"
+  },
+  {
+    "product_name": "Danfoss MLZ026T4LP9",
+    "slug": "danfoss-mlz026t4lp9",
+    "price_eur": 638.31,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz026t4lp9/"
+  },
+  {
+    "product_name": "Danfoss MLZ 030 T5LC9",
+    "slug": "danfoss-mlz-030-t5lc9",
+    "price_eur": 734.44,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-030-t5lc9/"
+  },
+  {
+    "product_name": "DANFOSS MLZ 030 T4LC9 4 HP",
+    "slug": "danfoss-mlz-030-t4lc9-4-hp",
+    "price_eur": 670.35,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-030-t4lc9-4-hp/"
+  },
+  {
+    "product_name": "Danfoss MLZ 038 T5LC9",
+    "slug": "danfoss-mlz-038-t5lc9",
+    "price_eur": 778.79,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-038-t5lc9/"
+  },
+  {
+    "product_name": "DANFOSS MLZ 038 T4LC9 5 HP",
+    "slug": "danfoss-mlz-038-t4lc9-5-hp",
+    "price_eur": 724.56,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-038-t4lc9-5-hp/"
+  },
+  {
+    "product_name": "DANFOSS MLZ 045 T4LC9 6 HP",
+    "slug": "danfoss-mlz-045-t4lc9-6-hp",
+    "price_eur": 776.32,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz-045-t4lc9-6-hp/"
+  },
+  {
+    "product_name": "Danfoss MLZ048T4LC9",
+    "slug": "danfoss-mlz048t4lc9",
+    "price_eur": 897.08,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz048t4lc9/"
+  },
+  {
+    "product_name": "Danfoss MLZ058T4LC9",
+    "slug": "danfoss-mlz058t4lc9",
+    "price_eur": 1042.49,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz058t4lc9/"
+  },
+  {
+    "product_name": "Danfoss MLZ066T4LC9",
+    "slug": "danfoss-mlz066t4lc9",
+    "price_eur": 1202.67,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz066t4lc9/"
+  },
+  {
+    "product_name": "Danfoss MLZ076T4LC9",
+    "slug": "danfoss-mlz076t4lc9",
+    "price_eur": 1261.83,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-mlz076t4lc9/"
+  },
+  {
+    "product_name": "Danfoss NTZ048A4LR1B",
+    "slug": "danfoss-ntz048a4lr1b",
+    "price_eur": 544.27,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz048a4lr1b/"
+  },
+  {
+    "product_name": "Danfoss NTZ-5LR1",
+    "slug": "danfoss-ntz-5lr1",
+    "price_eur": 593.25,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz-5lr1/"
+  },
+  {
+    "product_name": "Danfoss NTZ068A4LR1B",
+    "slug": "danfoss-ntz068a4lr1b",
+    "price_eur": 596.67,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz068a4lr1b/"
+  },
+  {
+    "product_name": "Danfoss NTZ096A4LR1B",
+    "slug": "danfoss-ntz096a4lr1b",
+    "price_eur": 732.49,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz096a4lr1b/"
+  },
+  {
+    "product_name": "Danfoss NTZ108A4LR1B",
+    "slug": "danfoss-ntz108a4lr1b",
+    "price_eur": 757.72,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz108a4lr1b/"
+  },
+  {
+    "product_name": "Danfoss NTZ136A4LR1B",
+    "slug": "danfoss-ntz136a4lr1b",
+    "price_eur": 778.08,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz136a4lr1b/"
+  },
+  {
+    "product_name": "Danfoss NTZ215A4LR1B",
+    "slug": "danfoss-ntz215a4lr1b",
+    "price_eur": 1280.64,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz215a4lr1b/"
+  },
+  {
+    "product_name": "Danfoss NTZ271A4LR1B",
+    "slug": "danfoss-ntz271a4lr1b",
+    "price_eur": 1429.08,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-ntz271a4lr1b/"
+  },
+  {
+    "product_name": "Danfoss SH 105 (91.544 BTU)",
+    "slug": "danfoss-sh-105-91-544-btu",
+    "price_eur": 1539.78,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-105-91-544-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 120 (102.245 BTU)",
+    "slug": "danfoss-sh-120-102-245-btu",
+    "price_eur": 1625.98,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-120-102-245-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 140 (118.463 BTU)",
+    "slug": "danfoss-sh-140-118-463-btu",
+    "price_eur": 1844.03,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-140-118-463-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 161 (132.456 BTU)",
+    "slug": "danfoss-sh-161-132-456-btu",
+    "price_eur": 1981.78,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-161-132-456-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 180 (151.919 BTU)",
+    "slug": "danfoss-sh-180-151-919-btu",
+    "price_eur": 2496.78,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-180-151-919-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 240-4AB",
+    "slug": "danfoss-sh-240-4ab",
+    "price_eur": 3093.95,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-240-4ab/"
+  },
+  {
+    "product_name": "Danfoss SH 090 (76.132 BTU)",
+    "slug": "danfoss-sh-090-76-132-btu",
+    "price_eur": 1367.38,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-090-76-132-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 295 (302.080 BTU)",
+    "slug": "danfoss-sh-295-302-080-btu",
+    "price_eur": 3371.98,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-295-302-080-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 300-4AB",
+    "slug": "danfoss-sh-300-4ab",
+    "price_eur": 3646.65,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-300-4ab/"
+  },
+  {
+    "product_name": "Danfoss SH 380 (308.847 BTU)",
+    "slug": "danfoss-sh-380-308-847-btu",
+    "price_eur": 4015.94,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-380-308-847-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 380 - 120H0256 (308.847 BTU)",
+    "slug": "danfoss-sh-380-120h0256-308-847-btu",
+    "price_eur": 4015.94,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-380-120h0256-308-847-btu/"
+  },
+  {
+    "product_name": "Danfoss SH 485 (397.334 BTU)",
+    "slug": "danfoss-sh-485-397-334-btu",
+    "price_eur": 5268.39,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sh-485-397-334-btu/"
+  },
+  {
+    "product_name": "Danfoss SY185-4RI (147.118 BTU)",
+    "slug": "danfoss-sy185-4ri-147-118-btu",
+    "price_eur": 2006.28,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sy185-4ri-147-118-btu/"
+  },
+  {
+    "product_name": "Danfoss SY240A4PBI",
+    "slug": "danfoss-sy240a4pbi",
+    "price_eur": 3083.8,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sy240a4pbi/"
+  },
+  {
+    "product_name": "Danfoss SY300A4PBI",
+    "slug": "danfoss-sy300a4pbi",
+    "price_eur": 3477.61,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sy300a4pbi/"
+  },
+  {
+    "product_name": "Danfoss SY380A4CBI",
+    "slug": "danfoss-sy380a4cbi",
+    "price_eur": 3965.23,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sy380a4cbi/"
+  },
+  {
+    "product_name": "Danfoss SZ 084-4 VI / I",
+    "slug": "danfoss-sz-084-4-vi-i",
+    "price_eur": 1445.76,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-084-4-vi-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 090-4VI / I",
+    "slug": "danfoss-sz-090-4vi-i",
+    "price_eur": 1327.67,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-090-4vi-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 100-4VI / I",
+    "slug": "danfoss-sz-100-4vi-i",
+    "price_eur": 1380.07,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-100-4vi-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 110-4VI / I",
+    "slug": "danfoss-sz-110-4vi-i",
+    "price_eur": 1466.27,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-110-4vi-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 115-RI / I",
+    "slug": "danfoss-sz-115-ri-i",
+    "price_eur": 1769.14,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-115-ri-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 120-4VI / I",
+    "slug": "danfoss-sz-120-4vi-i",
+    "price_eur": 1521.19,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-120-4vi-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 125-RI / I",
+    "slug": "danfoss-sz-125-ri-i",
+    "price_eur": 1643.75,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-125-ri-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 148-4VI / I",
+    "slug": "danfoss-sz-148-4vi-i",
+    "price_eur": 1749.36,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-148-4vi-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 160-RI / I",
+    "slug": "danfoss-sz-160-ri-i",
+    "price_eur": 2134.38,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-160-ri-i/"
+  },
+  {
+    "product_name": "Danfoss SZ 161-4VAI",
+    "slug": "danfoss-sz-161-4vai",
+    "price_eur": 1815.29,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-161-4vai/"
+  },
+  {
+    "product_name": "Danfoss SZ 175-RI / I",
+    "slug": "danfoss-sz-175-ri-i",
+    "price_eur": 2279.92,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-175-ri-i/"
+  },
+  {
+    "product_name": "Danfoss SZ185-3CAI",
+    "slug": "danfoss-sz185-3cai",
+    "price_eur": 2547.69,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz185-3cai/"
+  },
+  {
+    "product_name": "Danfoss SZ185-4CAI",
+    "slug": "danfoss-sz185-4cai",
+    "price_eur": 2006.28,
+    "status": "outofstock",
+    "url": "https://durmusbaba.de/product/danfoss-sz185-4cai/"
+  },
+  {
+    "product_name": "Danfoss SZ 185-4RI",
+    "slug": "danfoss-sz-185-4ri",
+    "price_eur": 2006.28,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-sz-185-4ri/"
+  },
+  {
+    "product_name": "DCB100 PLUS",
+    "slug": "dcb100-plus",
+    "price_eur": 74.8,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/dcb100-plus/"
+  },
+  {
+    "product_name": "DCB51 - Dijital",
+    "slug": "dcb51-dijital",
+    "price_eur": 24.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/dcb51-dijital/"
+  },
+  {
+    "product_name": "DCB31",
+    "slug": "dcb31",
+    "price_eur": 18.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/dcb31/"
+  },
+  {
+    "product_name": "Positiver Einzeltür-Kühlschrank (+2°C / +8°C)",
+    "slug": "positiver-einzeltuer-kuehlschrank-2c-8c",
+    "price_eur": 2299.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/positiver-einzeltuer-kuehlschrank-2c-8c/"
+  },
+  {
+    "product_name": "Negativer Einzeltür-Kühlschrank (-18°C)",
+    "slug": "negativer-einzeltuer-kuehlschrank-18c",
+    "price_eur": 2499.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/negativer-einzeltuer-kuehlschrank-18c/"
+  },
+  {
+    "product_name": "Positiver Zweitür-Kühlschrank (+2°C / +8°C)",
+    "slug": "positiver-zweituer-kuehlschrank-2c-8c",
+    "price_eur": 2100.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/positiver-zweituer-kuehlschrank-2c-8c/"
+  },
+  {
+    "product_name": "Negativer Zweitür-Kühlschrank (-18°C)",
+    "slug": "negativer-zweituer-kuehlschrank-18c",
+    "price_eur": 2800.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/negativer-zweituer-kuehlschrank-18c/"
+  },
+  {
+    "product_name": "EBM 250 mm Absorption Axial Lüfter S4S250-AH02-01",
+    "slug": "ebm-250-mm-absorption-axial-luefter-s4s250-ah02-01",
+    "price_eur": 72.125,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/ebm-250-mm-absorption-axial-luefter-s4s250-ah02-01/"
+  },
+  {
+    "product_name": "EBM 250 mm Blowing Axial Lüfter S4S250-AI02-01",
+    "slug": "ebm-250-mm-blowing-axial-luefter-s4s250-ai02-01",
+    "price_eur": 72.125,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/ebm-250-mm-blowing-axial-luefter-s4s250-ai02-01/"
+  },
+  {
+    "product_name": "EBM 300 mm Absorption Axial Lüfter S4E300-AS72-37",
+    "slug": "ebm-300-mm-absorption-axial-luefter-s4e300-as72-37",
+    "price_eur": 72.125,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/ebm-300-mm-absorption-axial-luefter-s4e300-as72-37/"
+  },
+  {
+    "product_name": "Ebmpapst 300 mm Blasender Axiallüfter S4E300AS7280 220V 1400 U/min",
+    "slug": "ebmpapst-300-mm-blasender-axialluefter-s4e300as7280-220v-1400-u-min",
+    "price_eur": 72.125,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/ebmpapst-300-mm-blasender-axialluefter-s4e300as7280-220v-1400-u-min/"
+  },
+  {
+    "product_name": "Ebmpapst 350 mm Absaugender Axiallüfter S4E350AN0250 220V 1400 U/min",
+    "slug": "ebmpapst-350-mm-absaugender-axialluefter-s4e350an0250-220v-1400-u-min",
+    "price_eur": 96.642,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/ebmpapst-350-mm-absaugender-axialluefter-s4e350an0250-220v-1400-u-min/"
+  },
+  {
+    "product_name": "Ebmpapst 350 mm Axiallüfter S6E350AN2440",
+    "slug": "ebmpapst-350-mm-axialluefter-s6e350an2440",
+    "price_eur": 96.642,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/ebmpapst-350-mm-axialluefter-s6e350an2440/"
+  },
+  {
+    "product_name": "Ebmpapst 350 mm Absaugender Axiallüfter S4D350AN0830 380V 1400 U/min",
+    "slug": "ebmpapst-350-mm-absaugender-axialluefter-s4d350an0830-380v-1400-u-min",
+    "price_eur": 233.966,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/ebmpapst-350-mm-absaugender-axialluefter-s4d350an0830-380v-1400-u-min/"
+  },
+  {
+    "product_name": "York Klima YHKF24 24000 BTU",
+    "slug": "york-klima-yhkf24-24000-btu",
+    "price_eur": 1100.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/york-klima-yhkf24-24000-btu/"
+  },
+  {
+    "product_name": "York Klima YHKF24 18000 BTU",
+    "slug": "york-klima-yhkf24-18000-btu",
+    "price_eur": 900.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/york-klima-yhkf24-18000-btu/"
+  },
+  {
+    "product_name": "York Klima YHKF24 12000 BTU",
+    "slug": "york-klima-yhkf24-12000-btu",
+    "price_eur": 650.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/york-klima-yhkf24-12000-btu/"
+  },
+  {
+    "product_name": "DRC Kühlraumtür - Scharniertyp in Verschiedenen Größen",
+    "slug": "drc-kuehlraumtuer-scharniertyp-in-verschiedenen-groessen",
+    "price_eur": 510.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/drc-kuehlraumtuer-scharniertyp-in-verschiedenen-groessen/"
+  },
+  {
+    "product_name": "DRC Tiefkühlraumtür - Klare Durchgangsmaße, Schiebetür-Typ 80 mm",
+    "slug": "drc-tiefkuehlraumtuer-klare-durchgangsmasse-schiebetuer-typ-80-mm",
+    "price_eur": 1240.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/drc-tiefkuehlraumtuer-klare-durchgangsmasse-schiebetuer-typ-80-mm/"
+  },
+  {
+    "product_name": "Danfoss 067N5157 TGEN 10-11",
+    "slug": "danfoss-067n5157-tgen-10-11",
+    "price_eur": 171.14,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-067n5157-tgen-10-11/"
+  },
+  {
+    "product_name": "Danfoss 067N5151 TGEN 10-3",
+    "slug": "danfoss-067n5151-tgen-10-3",
+    "price_eur": 139.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-067n5151-tgen-10-3/"
+  },
+  {
+    "product_name": "Danfoss 067N5006 TGEN 10-8",
+    "slug": "danfoss-067n5006-tgen-10-8",
+    "price_eur": 132.64,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-067n5006-tgen-10-8/"
+  },
+  {
+    "product_name": "Danfoss 068Z3348 TEN 2 R134a (External P Eq / Flare.)",
+    "slug": "danfoss-068z3348-ten-2-r134a-external-p-eq-flare",
+    "price_eur": 65.96,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-068z3348-ten-2-r134a-external-p-eq-flare/"
+  },
+  {
+    "product_name": "Danfoss 068Z3385 TEN 2 R134a (External P Eq/ SOLDER)",
+    "slug": "danfoss-068z3385-ten-2-r134a-external-p-eq-solder",
+    "price_eur": 65.96,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-068z3385-ten-2-r134a-external-p-eq-solder/"
+  },
+  {
+    "product_name": "Danfoss 068Z3386 TEN 2 R134a (External Equ.-Solder) MOP N",
+    "slug": "danfoss-068z3386-ten-2-r134a-external-equ-solder-mop-n",
+    "price_eur": 65.96,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-068z3386-ten-2-r134a-external-equ-solder-mop-n/"
+  },
+  {
+    "product_name": "Danfoss 068Z3392 TEN 2 R134a (External P Eq / Flare.) MOP NM",
+    "slug": "danfoss-068z3392-ten-2-r134a-external-p-eq-flare-mop-nm",
+    "price_eur": 65.96,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-068z3392-ten-2-r134a-external-p-eq-flare-mop-nm/"
+  },
+  {
+    "product_name": "Danfoss 068Z3370 TEN 2 R134a (External P Eq / Flare.) MOP NL",
+    "slug": "danfoss-068z3370-ten-2-r134a-external-p-eq-flare-mop-nl",
+    "price_eur": 65.96,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-068z3370-ten-2-r134a-external-p-eq-flare-mop-nl/"
+  },
+  {
+    "product_name": "Danfoss 067B3292 TEN 20 Thermostatic Element (R134a) MOP N",
+    "slug": "danfoss-067b3292-ten-20-thermostatic-element-r134a-mop-n",
+    "price_eur": 256.71,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-067b3292-ten-20-thermostatic-element-r134a-mop-n/"
+  },
+  {
+    "product_name": "Danfoss 067B3297 thermostatic TEN 5 (R134a)",
+    "slug": "danfoss-067b3297-thermostatic-ten-5-r134a",
+    "price_eur": 111.24,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/danfoss-067b3297-thermostatic-ten-5-r134a/"
+  },
+  {
+    "product_name": "DRC Kühlraumtür - Scharniertyp in Verschiedenen Größen",
+    "slug": "drc-kuehlraumtuer-scharniertyp-in-verschiedenen-groessen-2",
+    "price_eur": 546.218,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/drc-kuehlraumtuer-scharniertyp-in-verschiedenen-groessen-2/"
+  },
+  {
+    "product_name": "Negativer Zweitür-Kühlschrank (-18°C)",
+    "slug": "negativer-zweituer-kuehlschrank-18c-2",
+    "price_eur": 3332.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/negativer-zweituer-kuehlschrank-18c-2/"
+  },
+  {
+    "product_name": "Positiver Zweitür-Kühlschrank (+2°C / +8°C)",
+    "slug": "positiver-zweituer-kuehlschrank-2c-8c-2",
+    "price_eur": 2499.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/positiver-zweituer-kuehlschrank-2c-8c-2/"
+  },
+  {
+    "product_name": "Negativer Einzeltür-Kühlschrank (-18°C)",
+    "slug": "negativer-einzeltuer-kuehlschrank-18c-2",
+    "price_eur": 2973.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/negativer-einzeltuer-kuehlschrank-18c-2/"
+  },
+  {
+    "product_name": "Positiver Einzeltür-Kühlschrank (+2°C / +8°C)",
+    "slug": "positiver-einzeltuer-kuehlschrank-2c-8c-2",
+    "price_eur": 2735.0,
+    "status": "instock",
+    "url": "https://durmusbaba.de/product/positiver-einzeltuer-kuehlschrank-2c-8c-2/"
+  }
+]

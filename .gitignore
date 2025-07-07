@@ -11,17 +11,52 @@ yarn-error.log
 .env.test.local
 .env.production.local
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
 # Logs
 logs/
 *.log
 conversation_logs/
+
+# Temporary files
+tmp_service_account.json
+*.tmp
+
+# Virtual Environment
+venv/
+ENV/
 
 # IDE files
 .idea/
 .vscode/
 *.sublime-project
 *.sublime-workspace
+*.swp
+*.swo
 
 # OS files
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Sensitive Files
+service-account.json

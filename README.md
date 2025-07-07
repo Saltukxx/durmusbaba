@@ -1,6 +1,6 @@
 # WhatsApp Chatbot for DURMUSBABA.DE
 
-A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing customer support and product information.
+A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing customer support, product information, and **cold room capacity calculations**.
 
 ## Features
 
@@ -8,8 +8,30 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 - AI-powered responses using Google's Gemini AI
 - Conversation context and history management
 - WooCommerce integration for e-commerce functionality
-- Multilingual support
+- Multilingual support (English, German, Turkish)
 - Media message handling
+- **Cold Room Capacity Calculator** - Professional refrigeration system sizing
+- Product search and recommendation
+- Order status queries
+- Automatic order notifications via WhatsApp
+- **Snap-to-Shop**: Image recognition for product search (send a photo to find matching products)
+
+## Cold Room Capacity Calculator
+
+The chatbot includes a professional cold room capacity calculation system that:
+
+- Calculates required cooling capacity based on room volume and temperature
+- Supports multiple temperature ranges: 12°C, 5°C, 0°C, -5°C, -15°C, -18°C, -20°C, -25°C
+- Accounts for ambient temperature corrections
+- Includes climate zone adjustments (hot/cool regions)
+- Applies safety factors (0%, 10%, 20%, 30%)
+- Provides comparison tables for different volumes
+- Multi-language support for calculations
+
+### Usage Examples:
+- "Calculate cold room capacity for 330m³ at -20°C with 35°C ambient"
+- "Soğuk oda kapasitesi hesapla 200m³ oda -5°C sıcaklık 30°C dış ortam"
+- "Kühlraum Kapazität berechnen für 150m³ bei 0°C mit 45°C Umgebungstemperatur"
 
 ## Prerequisites
 
@@ -23,8 +45,8 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/whatsapp-chatbot.git
-   cd whatsapp-chatbot
+   git clone https://github.com/Saltukxx/durmusbaba.git
+   cd durmusbaba
    ```
 
 2. Install dependencies:
@@ -40,10 +62,9 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 4. Fill in your environment variables in the `.env` file:
    ```
    # WhatsApp Business API credentials
-   WHATSAPP_API_TOKEN=your_whatsapp_api_token
    WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
-   WHATSAPP_BUSINESS_ACCOUNT_ID=your_business_account_id
-   WHATSAPP_VERIFY_TOKEN=your_custom_verify_token
+   WHATSAPP_ACCESS_TOKEN=your_access_token
+   WEBHOOK_VERIFY_TOKEN=your_custom_verify_token
 
    # Google Gemini AI API
    GEMINI_API_KEY=your_gemini_api_key
@@ -63,7 +84,7 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 1. Create a Meta for Developers account at https://developers.facebook.com/
 2. Set up a WhatsApp Business app
 3. Configure your webhook URL (your-server-url/webhook)
-4. Set your verify token (must match WHATSAPP_VERIFY_TOKEN in .env)
+4. Set your verify token (must match WEBHOOK_VERIFY_TOKEN in .env)
 5. Subscribe to the messages webhook
 
 ## Webhook Setup
@@ -80,21 +101,32 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 
 3. Configure the webhook URL in the Meta for Developers dashboard:
    - Webhook URL: https://your-ngrok-url/webhook
-   - Verify Token: Your WHATSAPP_VERIFY_TOKEN value
+   - Verify Token: Your WEBHOOK_VERIFY_TOKEN value
 
 ## Testing
 
 1. Test the webhook verification:
    ```
-   node test-webhook-verification.js
+   npm run test:webhook
    ```
 
 2. Test sending a message:
    ```
-   node test-whatsapp.js
+   npm run test:whatsapp
    ```
 
-3. Test receiving a message by sending a message to your WhatsApp Business number.
+3. Test the cold room calculator:
+   ```
+   npm run test:cold-room
+   ```
+
+4. Test other components:
+   ```
+   npm run test:gemini
+   npm run test:woocommerce
+   npm run test:language
+   npm run test:intent
+   ```
 
 ## Deployment
 
@@ -113,10 +145,9 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 
 4. Set environment variables:
    ```
-   heroku config:set WHATSAPP_API_TOKEN=your_token
    heroku config:set WHATSAPP_PHONE_NUMBER_ID=your_id
-   heroku config:set WHATSAPP_BUSINESS_ACCOUNT_ID=your_account_id
-   heroku config:set WHATSAPP_VERIFY_TOKEN=your_verify_token
+   heroku config:set WHATSAPP_ACCESS_TOKEN=your_token
+   heroku config:set WEBHOOK_VERIFY_TOKEN=your_verify_token
    heroku config:set GEMINI_API_KEY=your_gemini_key
    heroku config:set NODE_ENV=production
    ```
@@ -126,18 +157,12 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
    git push heroku main
    ```
 
-### AWS EC2
+### Render
 
-1. Launch an EC2 instance
-2. SSH into your instance
-3. Clone the repository
-4. Install Node.js and dependencies
-5. Set up environment variables
-6. Use PM2 to keep the server running:
-   ```
-   npm install -g pm2
-   pm2 start server.js
-   ```
+1. Create a Render account
+2. Connect your GitHub repository
+3. Set environment variables in the Render dashboard
+4. Deploy automatically
 
 ## Project Structure
 
@@ -147,8 +172,38 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 - `geminiService.js` - Gemini AI integration
 - `sessionManager.js` - Conversation management
 - `woocommerceService.js` - WooCommerce integration
+- `coldRoomCalculator.js` - Cold room capacity calculations
+- `intentRouter.js` - Intent detection and routing
+- `languageProcessor.js` - Multilingual support
 - `routes.js` - API routes
 - `logger.js` - Logging service
+
+## Advanced Features
+
+### Conversation Context Management
+
+The bot maintains intelligent conversation context:
+- Entity tracking (products, categories, price ranges, orders)
+- Contextual references ("this product", "in this category")
+- Topic tracking (product info, order status, sales queries, support)
+- Multi-language reference detection
+- Automatic entity extraction
+
+### Sales Assistant Features
+
+- Product recommendations based on customer needs
+- Category navigation and filtering
+- Smart matching by price range, brand, features
+- Multi-language support (German, English, Turkish)
+- Professional sales communication
+
+### Snap-to-Shop Feature
+
+Send product images via WhatsApp to find matching products:
+- Product identification from images
+- Feature extraction and matching
+- Intelligent product search
+- Formatted responses with product details
 
 ## License
 
@@ -156,4 +211,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Support
 
-For support, please contact [your-email@example.com] 
+For support, please contact [your-email@example.com]
