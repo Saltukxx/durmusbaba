@@ -12,6 +12,7 @@ import re
 from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 from conversation_context import conversation_context
+from cold_room_calculator import is_cold_room_calculation_request, handle_cold_room_calculation
 import time
 import threading
 from order_notification import handle_order_webhook, notify_new_order, check_for_new_orders
@@ -192,6 +193,12 @@ def get_gemini_response(user_id, text):
             context = conversation_context.get_context(user_id)
             context['current_topic'] = 'sales_inquiry'
             return handle_sales_inquiry(text, user_id)
+        
+        # Check if this is a cold room capacity calculation request
+        if is_cold_room_calculation_request(text):
+            context = conversation_context.get_context(user_id)
+            context['current_topic'] = 'cold_room_calculation'
+            return handle_cold_room_calculation(text, user_id)
         
         # First check if the message is just a product name (direct product query)
         exact_product = find_exact_product(text)
