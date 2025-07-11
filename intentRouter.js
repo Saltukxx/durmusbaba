@@ -3,6 +3,7 @@ const woocommerceService = require('./woocommerceService');
 const languageProcessor = require('./languageProcessor');
 const coldRoomCalculator = require('./coldRoomCalculator');
 const coldStorageService = require('./coldStorageService');
+const coldStorageFlow = require('./coldStorageFlow');
 const logger = require('./logger');
 
 /**
@@ -16,12 +17,17 @@ async function detectIntent(message) {
     const lowerMessage = message.toLowerCase();
     
     // Cold storage calculation intent - CHECK THIS FIRST
-    if (coldStorageService.isColdStorageRequest(lowerMessage)) {
+    if (lowerMessage.includes('cold room') || lowerMessage.includes('soğuk oda') || 
+        lowerMessage.includes('cold storage') || lowerMessage.includes('soğuk hava') ||
+        lowerMessage.includes('kühlraum') || lowerMessage.includes('refrigeration') ||
+        lowerMessage.includes('cooling capacity') || lowerMessage.includes('soğutma kapasitesi')) {
       return { type: 'cold_storage_calculation', confidence: 0.9 };
     }
     
     // Check for cancel request
-    if (coldStorageService.isCancelRequest(lowerMessage)) {
+    if (lowerMessage.includes('cancel') || lowerMessage.includes('iptal') || 
+        lowerMessage.includes('stop') || lowerMessage.includes('dur') ||
+        lowerMessage.includes('quit') || lowerMessage.includes('exit')) {
       return { type: 'cancel_session', confidence: 0.95 };
     }
     
@@ -139,9 +145,9 @@ async function handleMessage(session, message) {
       case 'customer_support':
       case 'general_query':
       default:
-        // Check if there's an active cold storage session
-        if (session.coldStorage && session.coldStorage.active) {
-          return await handleColdStorageCalculation(session, message);
+        // Check if there's an active cold storage flow
+        if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
+          return coldStorageFlow.processAnswer(session, message);
         }
         // For general queries, use multilingual response
         return await languageProcessor.generateMultilingualResponse(session, message);
@@ -264,7 +270,16 @@ function handleLanguageChange(session, languageCode) {
  */
 async function handleColdStorageCalculation(session, message) {
   try {
-    return coldStorageService.handleColdStorageRequest(session, message);
+    // Check if there's already an active flow
+    if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
+      return coldStorageFlow.processAnswer(session, message);
+    }
+    
+    // Detect language from message
+    const language = detectLanguage(message);
+    
+    // Initialize new cold storage flow
+    return coldStorageFlow.initializeColdStorageFlow(session.userId, language);
   } catch (error) {
     logger.error('Error in cold storage calculation:', error);
     return "I'm sorry, I encountered an error with the cold storage calculation. Please try again.";
@@ -278,13 +293,20 @@ async function handleColdStorageCalculation(session, message) {
  * @returns {string} - Response confirming cancellation
  */
 function handleCancelSession(session, message) {
-  const result = coldStorageService.cancelColdStorageSession(session);
-  if (result) {
-    return result;
+  // Check if there's an active cold storage flow to cancel
+  if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
+    coldStorageFlow.cancelColdStorageFlow(session);
+    const language = detectLanguage(message);
+    const messages = {
+      en: "✅ Cold storage calculation cancelled. How can I help you?",
+      tr: "✅ Soğuk hava deposu hesaplaması iptal edildi. Size nasıl yardımcı olabilirim?",
+      de: "✅ Kühlraum-Berechnung abgebrochen. Wie kann ich Ihnen helfen?"
+    };
+    return messages[language] || messages.en;
   }
   
   // If no active session to cancel
-  const language = coldStorageService.detectLanguage(message);
+  const language = detectLanguage(message);
   const messages = {
     en: "There's no active session to cancel. How can I help you?",
     tr: "İptal edilecek aktif oturum yok. Size nasıl yardımcı olabilirim?",
@@ -292,6 +314,33 @@ function handleCancelSession(session, message) {
   };
   
   return messages[language] || messages.en;
+}
+
+/**
+ * Detect language from message
+ * @param {string} message - User message
+ * @returns {string} - Language code
+ */
+function detectLanguage(message) {
+  const lowerMessage = message.toLowerCase();
+  
+  // Turkish keywords
+  if (lowerMessage.includes('soğuk') || lowerMessage.includes('oda') || 
+      lowerMessage.includes('sıcaklık') || lowerMessage.includes('hesapla') ||
+      lowerMessage.includes('evet') || lowerMessage.includes('hayır') ||
+      lowerMessage.includes('iptal') || lowerMessage.includes('dur')) {
+    return 'tr';
+  }
+  
+  // German keywords
+  if (lowerMessage.includes('kühlraum') || lowerMessage.includes('temperatur') ||
+      lowerMessage.includes('berechnen') || lowerMessage.includes('ja') ||
+      lowerMessage.includes('nein') || lowerMessage.includes('abbrechen')) {
+    return 'de';
+  }
+  
+  // Default to English
+  return 'en';
 }
 
 /**

@@ -18,6 +18,7 @@
     "test:intent": "node test-intent.js",
     "test:cold-room": "node test-cold-room.js",
     "test:cold-storage": "node test-cold-storage-flow.js",
+    "test:cold-storage-new": "node test-cold-storage-flow-new.js",
     "logs": "node view-conversations.js"
   },
   "dependencies": {
