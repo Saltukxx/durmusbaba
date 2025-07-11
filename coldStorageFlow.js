@@ -33,6 +33,18 @@ const questions = {
         doorFrequency: "Kapı günde kaç kez açılacak?\n\nÖrnek: 10 kez, nadir, sık sık",
         loadingAmount: "Günlük yükleme/boşaltma miktarı nedir? (kg cinsinden)\n\nÖrnek: 500 kg",
         entryTemperature: "Ürünler odaya girdiğinde sıcaklığı nedir? (°C)\n\nÖrnek: 20°C"
+    },
+    de: {
+        temperature: "Welche Kühlraumtemperatur ist erforderlich? (°C)\n\nUnterstützte Temperaturen: 12, 5, 0, -5, -15, -18, -20, -25°C",
+        products: "Welche Produkte werden im Raum gelagert?\n\nBeispiel: Obst, Gemüse, Fleisch, Milchprodukte, usw.",
+        length: "Wie lang ist der Raum innen? (in Metern)\n\nBeispiel: 5.5",
+        width: "Wie breit ist der Raum innen? (in Metern)\n\nBeispiel: 3.2",
+        height: "Wie hoch ist der Raum innen? (in Metern)\n\nBeispiel: 2.8",
+        insulation: "Wie dick sind die Isolierpaneele?\n\nBeispiel: 8 cm, 10 cm, 12 cm",
+        floorInsulation: "Gibt es eine Bodenisolierung?\n\nAntwort: Ja oder Nein",
+        doorFrequency: "Wie oft wird die Tür täglich geöffnet?\n\nBeispiel: 10 mal, selten, häufig",
+        loadingAmount: "Wie viel wird täglich be-/entladen? (in kg)\n\nBeispiel: 500 kg",
+        entryTemperature: "Welche Temperatur haben die Produkte beim Einlagern? (°C)\n\nBeispiel: 20°C"
     }
 };
 
@@ -49,6 +61,12 @@ const progressMessages = {
         calculation: "🔄 Soğuk hava deposu gereksinimleriniz hesaplanıyor...",
         complete: "✅ Hesaplama tamamlandı! İşte sonuçlarınız:",
         restart: "Yeni bir hesaplama başlatmak için 'cold room' veya 'soğuk oda' gönderin."
+    },
+    de: {
+        progress: "Fortschritt: {current}/{total} Fragen beantwortet",
+        calculation: "🔄 Ihre Kühlraum-Anforderungen werden berechnet...",
+        complete: "✅ Berechnung abgeschlossen! Hier sind Ihre Ergebnisse:",
+        restart: "Für eine neue Berechnung senden Sie 'cold room' oder 'kühlraum'."
     }
 };
 
@@ -174,21 +192,21 @@ function validateAnswer(questionKey, answer) {
             
         case 'floorInsulation':
             const hasFloorInsulation = cleanAnswer.toLowerCase();
-            if (hasFloorInsulation.includes('yes') || hasFloorInsulation.includes('evet')) {
+            if (hasFloorInsulation.includes('yes') || hasFloorInsulation.includes('evet') || hasFloorInsulation.includes('ja')) {
                 return { value: true };
-            } else if (hasFloorInsulation.includes('no') || hasFloorInsulation.includes('hayır')) {
+            } else if (hasFloorInsulation.includes('no') || hasFloorInsulation.includes('hayır') || hasFloorInsulation.includes('nein')) {
                 return { value: false };
             } else {
-                return { error: "❌ Please answer 'Yes' or 'No' for floor insulation." };
+                return { error: "❌ Please answer 'Yes'/'Evet'/'Ja' or 'No'/'Hayır'/'Nein' for floor insulation." };
             }
             
         case 'doorFrequency':
             const frequency = cleanAnswer.toLowerCase();
             let timesPerDay;
             
-            if (frequency.includes('rare') || frequency.includes('nadir')) {
+            if (frequency.includes('rare') || frequency.includes('nadir') || frequency.includes('selten')) {
                 timesPerDay = 2;
-            } else if (frequency.includes('frequent') || frequency.includes('sık')) {
+            } else if (frequency.includes('frequent') || frequency.includes('sık') || frequency.includes('häufig')) {
                 timesPerDay = 20;
             } else {
                 const extractedNumber = parseInt(cleanAnswer.replace(/[^0-9]/g, ''));
@@ -314,57 +332,164 @@ function calculateAdditionalLoads(answers) {
  * @returns {string} - Formatted result
  */
 function formatColdStorageResult(answers, volume, finalCapacity, additionalLoads, language) {
-    const isturkish = language === 'tr';
+    // Language-specific text mappings
+    const texts = {
+        en: {
+            title: 'Cold Storage Calculation Results',
+            roomSpecs: 'Room Specifications',
+            dimensions: 'Dimensions',
+            volume: 'Volume',
+            temperature: 'Temperature',
+            products: 'Products',
+            insulation: 'Insulation',
+            floorInsulation: 'Floor Insulation',
+            yes: 'Yes',
+            no: 'No',
+            operationalParams: 'Operational Parameters',
+            doorFrequency: 'Door Opening Frequency',
+            timesPerDay: 'times/day',
+            dailyLoading: 'Daily Loading',
+            entryTemp: 'Product Entry Temperature',
+            coolingCapacity: 'Cooling Capacity',
+            baseCapacity: 'Base Capacity',
+            infiltrationLoad: 'Infiltration Load',
+            productLoad: 'Product Cooling Load',
+            floorLoad: 'Floor Load',
+            totalCapacity: 'TOTAL CAPACITY',
+            inKW: 'In kW'
+        },
+        tr: {
+            title: 'Soğuk Hava Deposu Hesaplama Sonuçları',
+            roomSpecs: 'Oda Özellikleri',
+            dimensions: 'Boyutlar',
+            volume: 'Hacim',
+            temperature: 'Sıcaklık',
+            products: 'Ürün',
+            insulation: 'Yalıtım',
+            floorInsulation: 'Zemin Yalıtımı',
+            yes: 'Var',
+            no: 'Yok',
+            operationalParams: 'Çalışma Parametreleri',
+            doorFrequency: 'Kapı Açma Sıklığı',
+            timesPerDay: 'kez/gün',
+            dailyLoading: 'Günlük Yükleme',
+            entryTemp: 'Ürün Giriş Sıcaklığı',
+            coolingCapacity: 'Soğutma Kapasitesi',
+            baseCapacity: 'Temel Kapasite',
+            infiltrationLoad: 'Infiltrasyon Yükü',
+            productLoad: 'Ürün Soğutma Yükü',
+            floorLoad: 'Zemin Yükü',
+            totalCapacity: 'TOPLAM KAPASİTE',
+            inKW: 'kW Cinsinden'
+        },
+        de: {
+            title: 'Kühlraum-Berechnungsergebnisse',
+            roomSpecs: 'Raum-Spezifikationen',
+            dimensions: 'Abmessungen',
+            volume: 'Volumen',
+            temperature: 'Temperatur',
+            products: 'Produkte',
+            insulation: 'Isolierung',
+            floorInsulation: 'Bodenisolierung',
+            yes: 'Ja',
+            no: 'Nein',
+            operationalParams: 'Betriebsparameter',
+            doorFrequency: 'Türöffnungsfrequenz',
+            timesPerDay: 'mal/Tag',
+            dailyLoading: 'Tägliche Beladung',
+            entryTemp: 'Produkteingangstemperatur',
+            coolingCapacity: 'Kühlkapazität',
+            baseCapacity: 'Grundkapazität',
+            infiltrationLoad: 'Infiltrationslast',
+            productLoad: 'Produktkühlungslast',
+            floorLoad: 'Bodenlast',
+            totalCapacity: 'GESAMTKAPAZITÄT',
+            inKW: 'In kW'
+        }
+    };
     
-    let result = `❄️ ${isturkish ? 'Soğuk Hava Deposu Hesaplama Sonuçları' : 'Cold Storage Calculation Results'}\n\n`;
+    const t = texts[language] || texts.en;
+    
+    let result = `❄️ ${t.title}\n\n`;
     
     // Room specifications
-    result += `📏 ${isturkish ? 'Oda Özellikleri' : 'Room Specifications'}:\n`;
-    result += `• ${isturkish ? 'Boyutlar' : 'Dimensions'}: ${answers.length}m × ${answers.width}m × ${answers.height}m\n`;
-    result += `• ${isturkish ? 'Hacim' : 'Volume'}: ${volume.toFixed(1)} m³\n`;
-    result += `• ${isturkish ? 'Sıcaklık' : 'Temperature'}: ${answers.temperature}°C\n`;
-    result += `• ${isturkish ? 'Ürün' : 'Products'}: ${answers.products}\n`;
-    result += `• ${isturkish ? 'Yalıtım' : 'Insulation'}: ${answers.insulation} cm\n`;
-    result += `• ${isturkish ? 'Zemin Yalıtımı' : 'Floor Insulation'}: ${answers.floorInsulation ? (isturkish ? 'Var' : 'Yes') : (isturkish ? 'Yok' : 'No')}\n\n`;
+    result += `📏 ${t.roomSpecs}:\n`;
+    result += `• ${t.dimensions}: ${answers.length}m × ${answers.width}m × ${answers.height}m\n`;
+    result += `• ${t.volume}: ${volume.toFixed(1)} m³\n`;
+    result += `• ${t.temperature}: ${answers.temperature}°C\n`;
+    result += `• ${t.products}: ${answers.products}\n`;
+    result += `• ${t.insulation}: ${answers.insulation} cm\n`;
+    result += `• ${t.floorInsulation}: ${answers.floorInsulation ? t.yes : t.no}\n\n`;
     
     // Operational parameters
-    result += `⚙️ ${isturkish ? 'Çalışma Parametreleri' : 'Operational Parameters'}:\n`;
-    result += `• ${isturkish ? 'Kapı Açma Sıklığı' : 'Door Opening Frequency'}: ${answers.doorFrequency} ${isturkish ? 'kez/gün' : 'times/day'}\n`;
-    result += `• ${isturkish ? 'Günlük Yükleme' : 'Daily Loading'}: ${answers.loadingAmount} kg\n`;
-    result += `• ${isturkish ? 'Ürün Giriş Sıcaklığı' : 'Product Entry Temperature'}: ${answers.entryTemperature}°C\n\n`;
+    result += `⚙️ ${t.operationalParams}:\n`;
+    result += `• ${t.doorFrequency}: ${answers.doorFrequency} ${t.timesPerDay}\n`;
+    result += `• ${t.dailyLoading}: ${answers.loadingAmount} kg\n`;
+    result += `• ${t.entryTemp}: ${answers.entryTemperature}°C\n\n`;
     
     // Capacity calculation
-    result += `🔧 ${isturkish ? 'Soğutma Kapasitesi' : 'Cooling Capacity'}:\n`;
-    result += `• ${isturkish ? 'Temel Kapasite' : 'Base Capacity'}: ${Math.round(finalCapacity - additionalLoads.total).toLocaleString()} W\n`;
+    result += `🔧 ${t.coolingCapacity}:\n`;
+    result += `• ${t.baseCapacity}: ${Math.round(finalCapacity - additionalLoads.total).toLocaleString()} W\n`;
     if (additionalLoads.infiltration > 0) {
-        result += `• ${isturkish ? 'Infiltrasyon Yükü' : 'Infiltration Load'}: ${Math.round(additionalLoads.infiltration).toLocaleString()} W\n`;
+        result += `• ${t.infiltrationLoad}: ${Math.round(additionalLoads.infiltration).toLocaleString()} W\n`;
     }
     if (additionalLoads.product > 0) {
-        result += `• ${isturkish ? 'Ürün Soğutma Yükü' : 'Product Cooling Load'}: ${Math.round(additionalLoads.product).toLocaleString()} W\n`;
+        result += `• ${t.productLoad}: ${Math.round(additionalLoads.product).toLocaleString()} W\n`;
     }
     if (additionalLoads.floor > 0) {
-        result += `• ${isturkish ? 'Zemin Yükü' : 'Floor Load'}: ${Math.round(additionalLoads.floor).toLocaleString()} W\n`;
+        result += `• ${t.floorLoad}: ${Math.round(additionalLoads.floor).toLocaleString()} W\n`;
     }
-    result += `• *${isturkish ? 'TOPLAM KAPASİTE' : 'TOTAL CAPACITY'}: ${Math.round(finalCapacity).toLocaleString()} W*\n`;
-    result += `• *${isturkish ? 'kW Cinsinden' : 'In kW'}: ${(finalCapacity / 1000).toFixed(1)} kW*\n\n`;
+    result += `• *${t.totalCapacity}: ${Math.round(finalCapacity).toLocaleString()} W*\n`;
+    result += `• *${t.inKW}: ${(finalCapacity / 1000).toFixed(1)} kW*\n\n`;
     
     // System recommendation
-    result += `💡 ${isturkish ? 'Sistem Önerisi' : 'System Recommendation'}:\n`;
+    const systemTexts = {
+        en: {
+            recommendation: 'System Recommendation',
+            recommendedSystem: 'Recommended System',
+            capacityRange: 'Capacity Range',
+            monoblock: 'Monoblock system',
+            split: 'Split system',
+            industrial: 'Industrial split system',
+            central: 'Central cooling system'
+        },
+        tr: {
+            recommendation: 'Sistem Önerisi',
+            recommendedSystem: 'Önerilen Sistem',
+            capacityRange: 'Kapasite Aralığı',
+            monoblock: 'Monoblock sistem',
+            split: 'Split sistem',
+            industrial: 'Endüstriyel split sistem',
+            central: 'Merkezi soğutma sistemi'
+        },
+        de: {
+            recommendation: 'Systemempfehlung',
+            recommendedSystem: 'Empfohlenes System',
+            capacityRange: 'Kapazitätsbereich',
+            monoblock: 'Monoblock-System',
+            split: 'Split-System',
+            industrial: 'Industrielles Split-System',
+            central: 'Zentrale Kühlanlage'
+        }
+    };
+    
+    const st = systemTexts[language] || systemTexts.en;
+    result += `💡 ${st.recommendation}:\n`;
     const capacityKW = finalCapacity / 1000;
     let systemType = '';
     
     if (capacityKW < 5) {
-        systemType = isturkish ? 'Monoblock sistem' : 'Monoblock system';
+        systemType = st.monoblock;
     } else if (capacityKW < 15) {
-        systemType = isturkish ? 'Split sistem' : 'Split system';
+        systemType = st.split;
     } else if (capacityKW < 50) {
-        systemType = isturkish ? 'Endüstriyel split sistem' : 'Industrial split system';
+        systemType = st.industrial;
     } else {
-        systemType = isturkish ? 'Merkezi soğutma sistemi' : 'Central cooling system';
+        systemType = st.central;
     }
     
-    result += `• ${isturkish ? 'Önerilen Sistem' : 'Recommended System'}: ${systemType}\n`;
-    result += `• ${isturkish ? 'Kapasite Aralığı' : 'Capacity Range'}: ${(capacityKW * 0.9).toFixed(1)} - ${(capacityKW * 1.1).toFixed(1)} kW\n`;
+    result += `• ${st.recommendedSystem}: ${systemType}\n`;
+    result += `• ${st.capacityRange}: ${(capacityKW * 0.9).toFixed(1)} - ${(capacityKW * 1.1).toFixed(1)} kW\n`;
     
     return result;
 }

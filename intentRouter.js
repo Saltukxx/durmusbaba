@@ -16,11 +16,12 @@ async function detectIntent(message) {
     // Simple keyword-based intent detection
     const lowerMessage = message.toLowerCase();
     
-    // Cold storage calculation intent - CHECK THIS FIRST
+    // Cold storage calculation intent - CHECK THIS FIRST - Always use step-by-step flow
     if (lowerMessage.includes('cold room') || lowerMessage.includes('soğuk oda') || 
         lowerMessage.includes('cold storage') || lowerMessage.includes('soğuk hava') ||
         lowerMessage.includes('kühlraum') || lowerMessage.includes('refrigeration') ||
-        lowerMessage.includes('cooling capacity') || lowerMessage.includes('soğutma kapasitesi')) {
+        lowerMessage.includes('cooling capacity') || lowerMessage.includes('soğutma kapasitesi') ||
+        lowerMessage.includes('cold calculation') || lowerMessage.includes('soğuk hesap')) {
       return { type: 'cold_storage_calculation', confidence: 0.9 };
     }
     
@@ -140,7 +141,8 @@ async function handleMessage(session, message) {
         return handleCancelSession(session, message);
         
       case 'cold_room_calculation':
-        return await handleColdRoomCalculation(session, message);
+        // Redirect to step-by-step flow instead of legacy system
+        return await handleColdStorageCalculation(session, message);
         
       case 'customer_support':
       case 'general_query':
@@ -334,8 +336,13 @@ function detectLanguage(message) {
   
   // German keywords
   if (lowerMessage.includes('kühlraum') || lowerMessage.includes('temperatur') ||
-      lowerMessage.includes('berechnen') || lowerMessage.includes('ja') ||
-      lowerMessage.includes('nein') || lowerMessage.includes('abbrechen')) {
+      lowerMessage.includes('berechnen') || lowerMessage.includes('berechnung') ||
+      lowerMessage.includes('kühlung') || lowerMessage.includes('isolierung') ||
+      lowerMessage.includes('häufig') || lowerMessage.includes('selten') ||
+      lowerMessage.includes('ja') || lowerMessage.includes('nein') || 
+      lowerMessage.includes('abbrechen') || lowerMessage.includes('meter') ||
+      lowerMessage.includes('produkte') || lowerMessage.includes('fleisch') ||
+      lowerMessage.includes('obst') || lowerMessage.includes('gemüse')) {
     return 'de';
   }
   
