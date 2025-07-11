@@ -2,6 +2,7 @@ const geminiService = require('./geminiService');
 const woocommerceService = require('./woocommerceService');
 const languageProcessor = require('./languageProcessor');
 const coldRoomCalculator = require('./coldRoomCalculator');
+const coldStorageService = require('./coldStorageService');
 const logger = require('./logger');
 
 /**
@@ -14,25 +15,14 @@ async function detectIntent(message) {
     // Simple keyword-based intent detection
     const lowerMessage = message.toLowerCase();
     
-    // Cold room capacity calculation intent - CHECK THIS FIRST
-    if (
-      lowerMessage.includes('cold room') || 
-      lowerMessage.includes('soğuk oda') || 
-      lowerMessage.includes('kühlraum') ||
-      lowerMessage.includes('refrigeration') || 
-      lowerMessage.includes('dondurucu') || 
-      lowerMessage.includes('kältetechnik') ||
-      lowerMessage.includes('cooling capacity') || 
-      lowerMessage.includes('soğutma kapasitesi') || 
-      lowerMessage.includes('kühlkapazität') ||
-      lowerMessage.includes('calculate capacity') || 
-      lowerMessage.includes('kapasite hesapla') || 
-      lowerMessage.includes('kapazität berechnen') ||
-      (lowerMessage.includes('capacity') && (lowerMessage.includes('calculate') || lowerMessage.includes('hesapla') || lowerMessage.includes('berechnen'))) ||
-      (lowerMessage.includes('kapasite') && (lowerMessage.includes('hesapla') || lowerMessage.includes('calculate'))) ||
-      (lowerMessage.includes('kapazität') && (lowerMessage.includes('berechnen') || lowerMessage.includes('calculate')))
-    ) {
-      return { type: 'cold_room_calculation', confidence: 0.9 };
+    // Cold storage calculation intent - CHECK THIS FIRST
+    if (coldStorageService.isColdStorageRequest(lowerMessage)) {
+      return { type: 'cold_storage_calculation', confidence: 0.9 };
+    }
+    
+    // Check for cancel request
+    if (coldStorageService.isCancelRequest(lowerMessage)) {
+      return { type: 'cancel_session', confidence: 0.95 };
     }
     
     // Product search intent
@@ -137,12 +127,22 @@ async function handleMessage(session, message) {
       case 'language_change':
         return handleLanguageChange(session, intent.languageCode);
         
+      case 'cold_storage_calculation':
+        return await handleColdStorageCalculation(session, message);
+        
+      case 'cancel_session':
+        return handleCancelSession(session, message);
+        
       case 'cold_room_calculation':
         return await handleColdRoomCalculation(session, message);
         
       case 'customer_support':
       case 'general_query':
       default:
+        // Check if there's an active cold storage session
+        if (session.coldStorage && session.coldStorage.active) {
+          return await handleColdStorageCalculation(session, message);
+        }
         // For general queries, use multilingual response
         return await languageProcessor.generateMultilingualResponse(session, message);
     }
@@ -257,7 +257,45 @@ function handleLanguageChange(session, languageCode) {
 }
 
 /**
- * Handle cold room capacity calculation intent
+ * Handle cold storage calculation intent (new step-by-step version)
+ * @param {Object} session - User session
+ * @param {string} message - User message
+ * @returns {Promise<string>} - Response with calculation results
+ */
+async function handleColdStorageCalculation(session, message) {
+  try {
+    return coldStorageService.handleColdStorageRequest(session, message);
+  } catch (error) {
+    logger.error('Error in cold storage calculation:', error);
+    return "I'm sorry, I encountered an error with the cold storage calculation. Please try again.";
+  }
+}
+
+/**
+ * Handle cancel session intent
+ * @param {Object} session - User session
+ * @param {string} message - User message
+ * @returns {string} - Response confirming cancellation
+ */
+function handleCancelSession(session, message) {
+  const result = coldStorageService.cancelColdStorageSession(session);
+  if (result) {
+    return result;
+  }
+  
+  // If no active session to cancel
+  const language = coldStorageService.detectLanguage(message);
+  const messages = {
+    en: "There's no active session to cancel. How can I help you?",
+    tr: "İptal edilecek aktif oturum yok. Size nasıl yardımcı olabilirim?",
+    de: "Es gibt keine aktive Sitzung zum Abbrechen. Wie kann ich Ihnen helfen?"
+  };
+  
+  return messages[language] || messages.en;
+}
+
+/**
+ * Handle cold room capacity calculation intent (legacy version)
  * @param {Object} session - User session
  * @param {string} message - User message
  * @returns {Promise<string>} - Response with calculation results
