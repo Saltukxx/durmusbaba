@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git config:*)"
+    ],
+    "deny": []
+  }
+}
