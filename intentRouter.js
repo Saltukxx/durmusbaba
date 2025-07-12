@@ -4,6 +4,8 @@ const languageProcessor = require('./languageProcessor');
 const coldRoomCalculator = require('./coldRoomCalculator');
 const coldStorageService = require('./coldStorageService');
 const coldStorageFlow = require('./coldStorageFlow');
+const equipmentRecommendationService = require('./equipmentRecommendationService');
+const equipmentRecommendationFlow = require('./equipmentRecommendationFlow');
 const logger = require('./logger');
 
 /**
@@ -43,6 +45,25 @@ async function detectIntent(message) {
         lowerMessage.includes('stop') || lowerMessage.includes('dur') ||
         lowerMessage.includes('quit') || lowerMessage.includes('exit')) {
       return { type: 'cancel_session', confidence: 0.95 };
+    }
+    
+    // Equipment recommendation intent - CHECK BEFORE general product search
+    const equipmentKeywords = {
+      en: ['recommend equipment', 'suggest equipment', 'equipment recommendation', 'what equipment', 
+           'which equipment', 'equipment needed', 'equipment for', 'cooling equipment', 'refrigeration equipment',
+           'complete system', 'equipment selection', 'best equipment', 'suitable equipment'],
+      tr: ['ekipman öner', 'ekipman tavsiye', 'hangi ekipman', 'ekipman seç', 'soğutma ekipmanı',
+           'ekipman önerisi', 'uygun ekipman', 'en iyi ekipman', 'komple sistem', 'ekipman ihtiyacı'],
+      de: ['geräte empfehlen', 'ausrüstung empfehlen', 'welche geräte', 'geräte auswahl', 
+           'kühlgeräte', 'passende geräte', 'beste geräte', 'komplettes system', 'geräte bedarf']
+    };
+    
+    const hasEquipmentKeyword = Object.values(equipmentKeywords).flat().some(keyword => 
+      lowerMessage.includes(keyword)
+    );
+    
+    if (hasEquipmentKeyword) {
+      return { type: 'equipment_recommendation', confidence: 0.9 };
     }
     
     // Product search intent
@@ -140,13 +161,28 @@ async function handleMessage(session, message) {
       // Otherwise, process as answer to current question
       return coldStorageFlow.processAnswer(session, message);
     }
+
+    // PRIORITY 2: Check if there's an active equipment recommendation flow
+    if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
+      // Check for cancel request first
+      if (message.toLowerCase().includes('cancel') || message.toLowerCase().includes('iptal') || 
+          message.toLowerCase().includes('stop') || message.toLowerCase().includes('dur') ||
+          message.toLowerCase().includes('quit') || message.toLowerCase().includes('exit')) {
+        return handleCancelSession(session, message);
+      }
+      // Otherwise, process as answer to current question
+      return equipmentRecommendationFlow.processAnswer(session, message);
+    }
     
-    // PRIORITY 2: Detect intent only if no active flow
+    // PRIORITY 3: Detect intent only if no active flow
     const intent = await detectIntent(message);
     logger.debug(`Detected intent: ${intent.type} (confidence: ${intent.confidence})`);
     
     // Handle based on intent type
     switch (intent.type) {
+      case 'equipment_recommendation':
+        return await handleEquipmentRecommendation(session, message);
+        
       case 'product_search':
         return await handleProductSearch(session, message);
         
@@ -316,10 +352,11 @@ async function handleColdStorageCalculation(session, message) {
  * @returns {string} - Response confirming cancellation
  */
 function handleCancelSession(session, message) {
+  const language = detectLanguage(message);
+  
   // Check if there's an active cold storage flow to cancel
   if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
     coldStorageFlow.cancelColdStorageFlow(session);
-    const language = detectLanguage(message);
     const messages = {
       en: "✅ Cold storage calculation cancelled. How can I help you?",
       tr: "✅ Soğuk hava deposu hesaplaması iptal edildi. Size nasıl yardımcı olabilirim?",
@@ -328,8 +365,18 @@ function handleCancelSession(session, message) {
     return messages[language] || messages.en;
   }
   
+  // Check if there's an active equipment recommendation flow to cancel
+  if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
+    equipmentRecommendationFlow.cancelFlow(session.userId);
+    const messages = {
+      en: "✅ Equipment recommendation cancelled. How can I help you?",
+      tr: "✅ Ekipman önerisi iptal edildi. Size nasıl yardımcı olabilirim?",
+      de: "✅ Geräteempfehlung abgebrochen. Wie kann ich Ihnen helfen?"
+    };
+    return messages[language] || messages.en;
+  }
+  
   // If no active session to cancel
-  const language = detectLanguage(message);
   const messages = {
     en: "There's no active session to cancel. How can I help you?",
     tr: "İptal edilecek aktif oturum yok. Size nasıl yardımcı olabilirim?",
@@ -383,6 +430,43 @@ function detectLanguage(message) {
   
   // Default to English
   return 'en';
+}
+
+/**
+ * Handle equipment recommendation intent - NEW GUIDED FLOW
+ * @param {Object} session - User session
+ * @param {string} message - User message
+ * @returns {Promise<string>} - Response with guided questions or equipment recommendations
+ */
+async function handleEquipmentRecommendation(session, message) {
+  try {
+    // Detect language
+    const language = detectLanguage(message);
+    
+    // Check if we have a previous cold storage calculation to use as initial data
+    let initialData = null;
+    if (session.lastColdStorageResult) {
+      initialData = session.lastColdStorageResult;
+    }
+    
+    // Start the guided equipment recommendation flow
+    const response = equipmentRecommendationFlow.initializeFlow(session.userId, language, initialData);
+    
+    logger.info(`Started guided equipment recommendation for user ${session.userId} in ${language}`);
+    return response;
+    
+  } catch (error) {
+    logger.error('Error starting equipment recommendation flow:', error);
+    
+    const errorMessages = {
+      en: "❌ I encountered an error while starting the equipment recommendation. Please try again or contact our support team.",
+      tr: "❌ Ekipman önerisi başlatılırken bir hata oluştu. Lütfen tekrar deneyin veya destek ekibimizle iletişime geçin.", 
+      de: "❌ Beim Starten der Geräteempfehlung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie unser Support-Team."
+    };
+    
+    const language = detectLanguage(message);
+    return errorMessages[language] || errorMessages.en;
+  }
 }
 
 /**

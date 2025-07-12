@@ -162,11 +162,153 @@ async function isProductInStock(productId) {
   }
 }
 
+/**
+ * Get products by category
+ * @param {number|string} categoryId - Category ID or slug
+ * @param {Object} options - Additional query options
+ * @returns {Promise<Array>} - List of products in category
+ */
+async function getProductsByCategory(categoryId, options = {}) {
+  if (!WooCommerce) {
+    logger.warn('WooCommerce not configured');
+    return [];
+  }
+
+  try {
+    const defaultOptions = {
+      per_page: 20,
+      page: 1,
+      status: 'publish',
+      category: categoryId
+    };
+
+    const queryParams = { ...defaultOptions, ...options };
+    
+    logger.debug(`Fetching products from category: ${categoryId}`);
+    
+    const response = await WooCommerce.getAsync('products', queryParams);
+    const products = JSON.parse(response.body);
+    
+    logger.debug(`Retrieved ${products.length} products from category ${categoryId}`);
+    
+    return products;
+    
+  } catch (error) {
+    logger.error(`Error fetching products from category ${categoryId}:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * Search products with advanced filtering
+ * @param {Object} filters - Search filters
+ * @returns {Promise<Array>} - List of matching products
+ */
+async function searchProductsAdvanced(filters = {}) {
+  if (!WooCommerce) {
+    logger.warn('WooCommerce not configured');
+    return [];
+  }
+
+  try {
+    const {
+      search = '',
+      category = '',
+      min_price = '',
+      max_price = '',
+      on_sale = '',
+      featured = '',
+      tag = '',
+      per_page = 20,
+      orderby = 'relevance',
+      order = 'desc'
+    } = filters;
+
+    const queryParams = {
+      per_page,
+      status: 'publish',
+      orderby,
+      order
+    };
+
+    // Add filters only if they have values
+    if (search) queryParams.search = search;
+    if (category) queryParams.category = category;
+    if (min_price) queryParams.min_price = min_price;
+    if (max_price) queryParams.max_price = max_price;
+    if (on_sale) queryParams.on_sale = on_sale;
+    if (featured) queryParams.featured = featured;
+    if (tag) queryParams.tag = tag;
+
+    logger.debug('Advanced product search with filters:', queryParams);
+    
+    const response = await WooCommerce.getAsync('products', queryParams);
+    const products = JSON.parse(response.body);
+    
+    logger.debug(`Advanced search returned ${products.length} products`);
+    
+    return products;
+    
+  } catch (error) {
+    logger.error('Error in advanced product search:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * Get product attributes for filtering
+ * @param {number} productId - Product ID
+ * @returns {Promise<Array>} - Product attributes
+ */
+async function getProductAttributes(productId) {
+  try {
+    const product = await getProductById(productId);
+    return product.attributes || [];
+  } catch (error) {
+    logger.error(`Error getting attributes for product ${productId}:`, error.message);
+    return [];
+  }
+}
+
+/**
+ * Format product for equipment recommendation
+ * @param {Object} product - Product object
+ * @param {number} relevanceScore - Relevance score
+ * @returns {Object} - Formatted product for recommendations
+ */
+function formatProductForRecommendation(product, relevanceScore = 0) {
+  return {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    regular_price: product.regular_price,
+    sale_price: product.sale_price,
+    price_html: product.price_html,
+    description: product.description,
+    short_description: product.short_description,
+    permalink: product.permalink,
+    images: product.images,
+    categories: product.categories,
+    tags: product.tags,
+    attributes: product.attributes,
+    stock_status: product.stock_status,
+    stock_quantity: product.stock_quantity,
+    average_rating: product.average_rating,
+    rating_count: product.rating_count,
+    relevanceScore: relevanceScore,
+    formatted_info: formatProductInfo(product)
+  };
+}
+
 module.exports = {
   getProducts,
   searchProducts,
+  searchProductsAdvanced,
+  getProductsByCategory,
   getCategories,
   getProductById,
+  getProductAttributes,
   formatProductInfo,
+  formatProductForRecommendation,
   isProductInStock
 }; 
