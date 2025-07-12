@@ -1113,17 +1113,8 @@ def check_price_range_request(text, user_id=None):
                 # Default to German
                 return f"❓ Es tut mir leid, ich konnte keine Produkte im Preisbereich von {min_price}-{max_price} EUR finden. Bitte versuchen Sie einen anderen Preisbereich oder kontaktieren Sie uns unter: info@durmusbaba.com"
     
-    else:
-        # No products found in this price range
-        if any(word in text.lower() for word in ['fiyat', 'fiyatı', 'kaç', 'ne kadar']):
-            # Turkish
-            return f"❓ Üzgünüm, {min_price}-{max_price} EUR aralığında ürün bulamadım. Lütfen farklı bir fiyat aralığı deneyin veya bizimle iletişime geçin: info@durmusbaba.com"
-        elif any(word in text.lower() for word in ['price', 'cost', 'how much']):
-            # English
-            return f"❓ I'm sorry, I couldn't find any products in the price range of {min_price}-{max_price} EUR. Please try a different price range or contact us at: info@durmusbaba.com"
-        else:
-            # Default to German
-            return f"❓ Es tut mir leid, ich konnte keine Produkte im Preisbereich von {min_price}-{max_price} EUR finden. Bitte versuchen Sie einen anderen Preisbereich oder kontaktieren Sie uns unter: info@durmusbaba.com"
+    
+    return None
 
 def format_order_info(order, show_all_link=False, total_orders=1):
     """Format order information for display."""
