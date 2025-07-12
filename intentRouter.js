@@ -17,12 +17,25 @@ async function detectIntent(message) {
     const lowerMessage = message.toLowerCase();
     
     // Cold storage calculation intent - CHECK THIS FIRST - Always use step-by-step flow
-    if (lowerMessage.includes('cold room') || lowerMessage.includes('soğuk oda') || 
-        lowerMessage.includes('cold storage') || lowerMessage.includes('soğuk hava') ||
-        lowerMessage.includes('kühlraum') || lowerMessage.includes('refrigeration') ||
-        lowerMessage.includes('cooling capacity') || lowerMessage.includes('soğutma kapasitesi') ||
-        lowerMessage.includes('cold calculation') || lowerMessage.includes('soğuk hesap')) {
-      return { type: 'cold_storage_calculation', confidence: 0.9 };
+    // Enhanced multi-language detection for cold room calculation requests
+    const coldRoomKeywords = {
+      en: ['cold room', 'cold storage', 'refrigeration', 'cooling capacity', 'cold calculation', 
+           'freezer room', 'chiller', 'cooling room', 'refrigerated storage', 'cold chamber',
+           'calculate cold', 'cold requirements', 'cooling load', 'refrigeration capacity'],
+      tr: ['soğuk oda', 'soğuk hava', 'soğutma kapasitesi', 'soğuk hesap', 'dondurucu oda',
+           'soğutucu', 'soğuk depo', 'soğuk alan', 'soğutma yükü', 'soğutma hesabı',
+           'soğuk oda hesapla', 'soğuk gereksinimleri', 'soğutma ihtiyacı'],
+      de: ['kühlraum', 'kältekammer', 'kühlhaus', 'kühllager', 'kühlung', 'kühlkapazität',
+           'kälteanlage', 'tiefkühlraum', 'kühlzelle', 'kühlraum berechnen',
+           'kühllast', 'kühlleistung', 'kältebedarf', 'kühlraum auslegung']
+    };
+    
+    const hasKeyword = Object.values(coldRoomKeywords).flat().some(keyword => 
+      lowerMessage.includes(keyword)
+    );
+    
+    if (hasKeyword) {
+      return { type: 'cold_storage_calculation', confidence: 0.95 };
     }
     
     // Check for cancel request
@@ -334,23 +347,37 @@ function handleCancelSession(session, message) {
 function detectLanguage(message) {
   const lowerMessage = message.toLowerCase();
   
-  // Turkish keywords
-  if (lowerMessage.includes('soğuk') || lowerMessage.includes('oda') || 
-      lowerMessage.includes('sıcaklık') || lowerMessage.includes('hesapla') ||
-      lowerMessage.includes('evet') || lowerMessage.includes('hayır') ||
-      lowerMessage.includes('iptal') || lowerMessage.includes('dur')) {
-    return 'tr';
-  }
+  // Enhanced Turkish detection
+  const turkishKeywords = ['soğuk', 'oda', 'sıcaklık', 'hesapla', 'evet', 'hayır', 'iptal', 'dur',
+                          'soğutma', 'kapasitesi', 'hava', 'dondurucu', 'soğutucu', 'depo',
+                          'yalıtım', 'zemin', 'uzunluk', 'genişlik', 'yükseklik', 'günde',
+                          'nadir', 'sık', 'yükleme', 'boşaltma', 'ürün', 'meyve', 'sebze',
+                          'et', 'süt', 'giriş', 'paneelleri', 'kalınlığı', 'metre'];
   
-  // German keywords
-  if (lowerMessage.includes('kühlraum') || lowerMessage.includes('temperatur') ||
-      lowerMessage.includes('berechnen') || lowerMessage.includes('berechnung') ||
-      lowerMessage.includes('kühlung') || lowerMessage.includes('isolierung') ||
-      lowerMessage.includes('häufig') || lowerMessage.includes('selten') ||
-      lowerMessage.includes('ja') || lowerMessage.includes('nein') || 
-      lowerMessage.includes('abbrechen') || lowerMessage.includes('meter') ||
-      lowerMessage.includes('produkte') || lowerMessage.includes('fleisch') ||
-      lowerMessage.includes('obst') || lowerMessage.includes('gemüse')) {
+  // Enhanced German detection  
+  const germanKeywords = ['kühlraum', 'temperatur', 'berechnen', 'berechnung', 'kühlung',
+                         'isolierung', 'häufig', 'selten', 'ja', 'nein', 'abbrechen',
+                         'meter', 'produkte', 'fleisch', 'obst', 'gemüse', 'kältekammer',
+                         'kühlhaus', 'kühllager', 'kälteanlage', 'tiefkühlraum', 'kühlzelle',
+                         'kühllast', 'kühlleistung', 'kältebedarf', 'bodenisolierung',
+                         'türöffnung', 'beladung', 'entladung', 'einlagern', 'milchprodukte'];
+  
+  // Enhanced English detection
+  const englishKeywords = ['cold', 'room', 'temperature', 'calculate', 'yes', 'no', 'cancel',
+                          'stop', 'storage', 'capacity', 'refrigeration', 'freezer', 'chiller',
+                          'insulation', 'floor', 'length', 'width', 'height', 'daily',
+                          'rarely', 'frequently', 'loading', 'unloading', 'product', 'fruits',
+                          'vegetables', 'meat', 'dairy', 'entry', 'panels', 'thickness', 'meters'];
+  
+  // Count keyword matches for each language
+  const turkishMatches = turkishKeywords.filter(keyword => lowerMessage.includes(keyword)).length;
+  const germanMatches = germanKeywords.filter(keyword => lowerMessage.includes(keyword)).length;
+  const englishMatches = englishKeywords.filter(keyword => lowerMessage.includes(keyword)).length;
+  
+  // Return language with most matches
+  if (turkishMatches > germanMatches && turkishMatches > englishMatches) {
+    return 'tr';
+  } else if (germanMatches > englishMatches && germanMatches > turkishMatches) {
     return 'de';
   }
   

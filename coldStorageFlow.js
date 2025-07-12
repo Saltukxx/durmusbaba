@@ -11,40 +11,40 @@ const { calculateCapacity } = require('./coldRoomCalculator');
 // Question templates
 const questions = {
     en: {
-        temperature: "What is the required cold room temperature? (°C)\n\nSupported temperatures: 12, 5, 0, -5, -15, -18, -20, -25°C",
-        products: "What product(s) will be stored inside the room?\n\nExample: Fruits, vegetables, meat, dairy, etc.",
-        length: "What is the inner length of the room? (in meters)\n\nExample: 5.5",
-        width: "What is the inner width of the room? (in meters)\n\nExample: 3.2",
-        height: "What is the inner height of the room? (in meters)\n\nExample: 2.8",
-        insulation: "What is the thickness of insulation panels?\n\nExample: 8 cm, 10 cm, 12 cm",
-        floorInsulation: "Is there floor insulation?\n\nReply: Yes or No",
-        doorFrequency: "How often will the door be opened daily?\n\nExample: 10 times, rarely, frequently",
-        loadingAmount: "What is the daily loading/unloading amount? (in kg)\n\nExample: 500 kg",
-        entryTemperature: "What is the temperature of products when they enter the room? (°C)\n\nExample: 20°C"
+        temperature: "🌡️ What is the required cold room temperature? (°C)\n\n❄️ Supported temperatures: 12, 5, 0, -5, -15, -18, -20, -25°C",
+        products: "📦 What product(s) will be stored inside the room?\n\n🍎 Example: Fruits, vegetables, meat, dairy, etc.",
+        length: "📏 What is the inner length of the room? (in meters)\n\n📐 Example: 5.5",
+        width: "📏 What is the inner width of the room? (in meters)\n\n📐 Example: 3.2",
+        height: "📏 What is the inner height of the room? (in meters)\n\n📐 Example: 2.8",
+        insulation: "🛡️ What is the thickness of insulation panels?\n\n📏 Example: 8 cm, 10 cm, 12 cm",
+        floorInsulation: "🏠 Is there floor insulation?\n\n✅ Reply: Yes or No",
+        doorFrequency: "🚪 How often will the door be opened daily?\n\n🔢 Example: 10 times, rarely, frequently",
+        loadingAmount: "⚖️ What is the daily loading/unloading amount? (in kg)\n\n📦 Example: 500 kg",
+        entryTemperature: "🌡️ What is the temperature of products when they enter the room? (°C)\n\n📊 Example: 20°C"
     },
     tr: {
-        temperature: "Gerekli soğuk oda sıcaklığı nedir? (°C)\n\nDesteklenen sıcaklıklar: 12, 5, 0, -5, -15, -18, -20, -25°C",
-        products: "Oda içerisinde hangi ürün(ler) saklanacak?\n\nÖrnek: Meyve, sebze, et, süt ürünleri, vb.",
-        length: "Odanın iç uzunluğu nedir? (metre cinsinden)\n\nÖrnek: 5.5",
-        width: "Odanın iç genişliği nedir? (metre cinsinden)\n\nÖrnek: 3.2",
-        height: "Odanın iç yüksekliği nedir? (metre cinsinden)\n\nÖrnek: 2.8",
-        insulation: "Yalıtım panellerinin kalınlığı nedir?\n\nÖrnek: 8 cm, 10 cm, 12 cm",
-        floorInsulation: "Zemin yalıtımı var mı?\n\nCevap: Evet veya Hayır",
-        doorFrequency: "Kapı günde kaç kez açılacak?\n\nÖrnek: 10 kez, nadir, sık sık",
-        loadingAmount: "Günlük yükleme/boşaltma miktarı nedir? (kg cinsinden)\n\nÖrnek: 500 kg",
-        entryTemperature: "Ürünler odaya girdiğinde sıcaklığı nedir? (°C)\n\nÖrnek: 20°C"
+        temperature: "🌡️ Gerekli soğuk oda sıcaklığı nedir? (°C)\n\n❄️ Desteklenen sıcaklıklar: 12, 5, 0, -5, -15, -18, -20, -25°C",
+        products: "📦 Oda içerisinde hangi ürün(ler) saklanacak?\n\n🍎 Örnek: Meyve, sebze, et, süt ürünleri, vb.",
+        length: "📏 Odanın iç uzunluğu nedir? (metre cinsinden)\n\n📐 Örnek: 5.5",
+        width: "📏 Odanın iç genişliği nedir? (metre cinsinden)\n\n📐 Örnek: 3.2",
+        height: "📏 Odanın iç yüksekliği nedir? (metre cinsinden)\n\n📐 Örnek: 2.8",
+        insulation: "🛡️ Yalıtım panellerinin kalınlığı nedir?\n\n📏 Örnek: 8 cm, 10 cm, 12 cm",
+        floorInsulation: "🏠 Zemin yalıtımı var mı?\n\n✅ Cevap: Evet veya Hayır",
+        doorFrequency: "🚪 Kapı günde kaç kez açılacak?\n\n🔢 Örnek: 10 kez, nadir, sık sık",
+        loadingAmount: "⚖️ Günlük yükleme/boşaltma miktarı nedir? (kg cinsinden)\n\n📦 Örnek: 500 kg",
+        entryTemperature: "🌡️ Ürünler odaya girdiğinde sıcaklığı nedir? (°C)\n\n📊 Örnek: 20°C"
     },
     de: {
-        temperature: "Welche Kühlraumtemperatur ist erforderlich? (°C)\n\nUnterstützte Temperaturen: 12, 5, 0, -5, -15, -18, -20, -25°C",
-        products: "Welche Produkte werden im Raum gelagert?\n\nBeispiel: Obst, Gemüse, Fleisch, Milchprodukte, usw.",
-        length: "Wie lang ist der Raum innen? (in Metern)\n\nBeispiel: 5.5",
-        width: "Wie breit ist der Raum innen? (in Metern)\n\nBeispiel: 3.2",
-        height: "Wie hoch ist der Raum innen? (in Metern)\n\nBeispiel: 2.8",
-        insulation: "Wie dick sind die Isolierpaneele?\n\nBeispiel: 8 cm, 10 cm, 12 cm",
-        floorInsulation: "Gibt es eine Bodenisolierung?\n\nAntwort: Ja oder Nein",
-        doorFrequency: "Wie oft wird die Tür täglich geöffnet?\n\nBeispiel: 10 mal, selten, häufig",
-        loadingAmount: "Wie viel wird täglich be-/entladen? (in kg)\n\nBeispiel: 500 kg",
-        entryTemperature: "Welche Temperatur haben die Produkte beim Einlagern? (°C)\n\nBeispiel: 20°C"
+        temperature: "🌡️ Welche Kühlraumtemperatur ist erforderlich? (°C)\n\n❄️ Unterstützte Temperaturen: 12, 5, 0, -5, -15, -18, -20, -25°C",
+        products: "📦 Welche Produkte werden im Raum gelagert?\n\n🍎 Beispiel: Obst, Gemüse, Fleisch, Milchprodukte, usw.",
+        length: "📏 Wie lang ist der Raum innen? (in Metern)\n\n📐 Beispiel: 5.5",
+        width: "📏 Wie breit ist der Raum innen? (in Metern)\n\n📐 Beispiel: 3.2",
+        height: "📏 Wie hoch ist der Raum innen? (in Metern)\n\n📐 Beispiel: 2.8",
+        insulation: "🛡️ Wie dick sind die Isolierpaneele?\n\n📏 Beispiel: 8 cm, 10 cm, 12 cm",
+        floorInsulation: "🏠 Gibt es eine Bodenisolierung?\n\n✅ Antwort: Ja oder Nein",
+        doorFrequency: "🚪 Wie oft wird die Tür täglich geöffnet?\n\n🔢 Beispiel: 10 mal, selten, häufig",
+        loadingAmount: "⚖️ Wie viel wird täglich be-/entladen? (in kg)\n\n📦 Beispiel: 500 kg",
+        entryTemperature: "🌡️ Welche Temperatur haben die Produkte beim Einlagern? (°C)\n\n📊 Beispiel: 20°C"
     }
 };
 
@@ -87,7 +87,7 @@ const questionOrder = [
 /**
  * Initialize cold storage flow for a user
  * @param {string} userId - User ID
- * @param {string} language - Language code (en/tr)
+ * @param {string} language - Language code (en/tr/de)
  */
 function initializeColdStorageFlow(userId, language = 'en') {
     const session = sessionManager.getSession(userId);
@@ -100,8 +100,19 @@ function initializeColdStorageFlow(userId, language = 'en') {
         startTime: Date.now()
     };
     
+    // Welcome messages for different languages
+    const welcomeMessages = {
+        en: "❄️ Welcome to the Cold Room Calculator! 🧊\n\nI'll help you calculate the exact cooling capacity needed for your cold storage room. We'll go through 10 quick questions to get accurate results.\n\n🎯 Let's get started!",
+        tr: "❄️ Soğuk Oda Hesaplayıcısına Hoş Geldiniz! 🧊\n\nSoğuk hava deponuz için gereken tam soğutma kapasitesini hesaplamanıza yardımcı olacağım. Doğru sonuçlar için 10 hızlı soru soracağım.\n\n🎯 Hadi başlayalım!",
+        de: "❄️ Willkommen beim Kühlraum-Rechner! 🧊\n\nIch helfe Ihnen bei der Berechnung der exakten Kühlkapazität für Ihren Kühlraum. Wir gehen 10 kurze Fragen durch, um genaue Ergebnisse zu erhalten.\n\n🎯 Los geht's!"
+    };
+    
     logger.info(`Initialized cold storage flow for user ${userId} in ${language}`);
-    return askCurrentQuestion(session);
+    
+    const welcomeMessage = welcomeMessages[language] || welcomeMessages.en;
+    const firstQuestion = askCurrentQuestion(session);
+    
+    return `${welcomeMessage}\n\n${firstQuestion}`;
 }
 
 /**
