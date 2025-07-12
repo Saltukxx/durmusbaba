@@ -12,7 +12,7 @@ import re
 from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 from conversation_context import conversation_context
-from cold_room_calculator import is_cold_room_calculation_request, handle_cold_room_calculation
+# from cold_room_calculator import is_cold_room_calculation_request, handle_cold_room_calculation
 # Cold storage flow now handled by Node.js server with coldStorageService.js
 # Removed old Python implementation import
 import time
@@ -198,11 +198,11 @@ def get_gemini_response(user_id, text):
             return handle_sales_inquiry(text, user_id)
         
         # Cold room calculation requests are now handled by Node.js server
-        # Legacy cold room calculator still available for simple calculations
-        if is_cold_room_calculation_request(text):
-            context = conversation_context.get_context(user_id)
-            context['current_topic'] = 'cold_room_calculation'
-            return handle_cold_room_calculation(text, user_id)
+        # Legacy cold room calculator disabled - all cold room requests go to Node.js service
+        # if is_cold_room_calculation_request(text):
+        #     context = conversation_context.get_context(user_id)
+        #     context['current_topic'] = 'cold_room_calculation'
+        #     return handle_cold_room_calculation(text, user_id)
         
         # First check if the message is just a product name (direct product query)
         exact_product = find_exact_product(text)

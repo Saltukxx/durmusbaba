@@ -61,7 +61,24 @@ function setupWebhook(app) {
       
       if (isFirstTime) {
         // Send welcome message for first interaction
-        const welcomeMessage = "Welcome to DURMUSBABA.DE! I'm your AI assistant. How can I help you today?";
+        const welcomeMessage = `🤖 Welcome to DURMUSBABA.DE! I'm your AI assistant.
+
+📋 **AVAILABLE COMMANDS:**
+• Type 'cold room' or 'soğuk oda' for cold storage capacity calculations
+• Type 'equipment' for HVAC equipment recommendations  
+• Type 'help' for assistance
+• Type 'restart' to start over
+• Type 'stop' or 'dur' to exit
+
+❓ **I CAN HELP YOU WITH:**
+• Cold room/storage capacity calculations
+• HVAC equipment sizing and recommendations
+• Technical specifications and requirements
+• Energy efficiency consultations
+
+💡 **Quick Start:** Just describe what you need help with, and I'll guide you through the process!
+
+How can I assist you today?`;
         await whatsappService.sendMessage(messageData.from, welcomeMessage);
         
         // Update session with the welcome message
