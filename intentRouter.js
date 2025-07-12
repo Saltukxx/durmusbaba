@@ -116,7 +116,19 @@ function extractProductKeywords(message) {
  */
 async function handleMessage(session, message) {
   try {
-    // Detect the user's intent
+    // PRIORITY 1: Check if there's an active cold storage flow FIRST
+    if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
+      // Check for cancel request first
+      if (message.toLowerCase().includes('cancel') || message.toLowerCase().includes('iptal') || 
+          message.toLowerCase().includes('stop') || message.toLowerCase().includes('dur') ||
+          message.toLowerCase().includes('quit') || message.toLowerCase().includes('exit')) {
+        return handleCancelSession(session, message);
+      }
+      // Otherwise, process as answer to current question
+      return coldStorageFlow.processAnswer(session, message);
+    }
+    
+    // PRIORITY 2: Detect intent only if no active flow
     const intent = await detectIntent(message);
     logger.debug(`Detected intent: ${intent.type} (confidence: ${intent.confidence})`);
     
@@ -147,10 +159,6 @@ async function handleMessage(session, message) {
       case 'customer_support':
       case 'general_query':
       default:
-        // Check if there's an active cold storage flow
-        if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
-          return coldStorageFlow.processAnswer(session, message);
-        }
         // For general queries, use multilingual response
         return await languageProcessor.generateMultilingualResponse(session, message);
     }

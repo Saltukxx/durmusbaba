@@ -3,13 +3,18 @@ const WooCommerceAPI = require('woocommerce-api');
 const logger = require('./logger');
 
 // WooCommerce API configuration
-const WooCommerce = new WooCommerceAPI({
-  url: process.env.WOOCOMMERCE_URL,
-  consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY,
-  consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET,
-  wpAPI: true,
-  version: 'wc/v3'
-});
+let WooCommerce = null;
+
+// Initialize WooCommerce only if configuration is available
+if (process.env.WOOCOMMERCE_URL && process.env.WOOCOMMERCE_CONSUMER_KEY) {
+  WooCommerce = new WooCommerceAPI({
+    url: process.env.WOOCOMMERCE_URL,
+    consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY,
+    consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET,
+    wpAPI: true,
+    version: 'wc/v3'
+  });
+}
 
 /**
  * Get products from WooCommerce
@@ -17,6 +22,11 @@ const WooCommerce = new WooCommerceAPI({
  * @returns {Promise<Array>} - List of products
  */
 async function getProducts(options = {}) {
+  if (!WooCommerce) {
+    logger.warn('WooCommerce not configured');
+    return [];
+  }
+  
   try {
     const defaultOptions = {
       per_page: 10,
@@ -48,6 +58,11 @@ async function getProducts(options = {}) {
  * @returns {Promise<Array>} - List of matching products
  */
 async function searchProducts(keyword, limit = 5) {
+  if (!WooCommerce) {
+    logger.warn('WooCommerce not configured');
+    return [];
+  }
+  
   try {
     logger.debug(`Searching products with keyword: ${keyword}`);
     
