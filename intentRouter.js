@@ -20,11 +20,12 @@ async function detectIntent(message) {
     
     // Cold storage calculation intent - CHECK THIS FIRST - Always use step-by-step flow
     // Enhanced multi-language detection for cold room calculation requests
+    // PRIORITY: Simple trigger phrases for easy initialization
     const coldRoomKeywords = {
       en: ['cold room', 'cold storage', 'refrigeration', 'cooling capacity', 'cold calculation', 
            'freezer room', 'chiller', 'cooling room', 'refrigerated storage', 'cold chamber',
            'calculate cold', 'cold requirements', 'cooling load', 'refrigeration capacity'],
-      tr: ['soğuk oda', 'soğuk hava', 'soğutma kapasitesi', 'soğuk hesap', 'dondurucu oda',
+      tr: ['soguk oda', 'soğuk oda', 'soğuk hava', 'soğutma kapasitesi', 'soğuk hesap', 'dondurucu oda',
            'soğutucu', 'soğuk depo', 'soğuk alan', 'soğutma yükü', 'soğutma hesabı',
            'soğuk oda hesapla', 'soğuk gereksinimleri', 'soğutma ihtiyacı'],
       de: ['kühlraum', 'kältekammer', 'kühlhaus', 'kühllager', 'kühlung', 'kühlkapazität',
@@ -40,10 +41,18 @@ async function detectIntent(message) {
       return { type: 'cold_storage_calculation', confidence: 0.95 };
     }
     
-    // Check for cancel request
-    if (lowerMessage.includes('cancel') || lowerMessage.includes('iptal') || 
-        lowerMessage.includes('stop') || lowerMessage.includes('dur') ||
-        lowerMessage.includes('quit') || lowerMessage.includes('exit')) {
+    // Check for cancel/stop request - Enhanced multi-language support
+    const stopKeywords = {
+      en: ['cancel', 'stop', 'quit', 'exit', 'abort', 'end'],
+      tr: ['iptal', 'dur', 'durdur', 'bitir', 'çık', 'son'],
+      de: ['stopp', 'stop', 'abbrechen', 'beenden', 'quit', 'aufhören']
+    };
+    
+    const hasStopKeyword = Object.values(stopKeywords).flat().some(keyword => 
+      lowerMessage.includes(keyword)
+    );
+    
+    if (hasStopKeyword) {
       return { type: 'cancel_session', confidence: 0.95 };
     }
     
@@ -152,10 +161,13 @@ async function handleMessage(session, message) {
   try {
     // PRIORITY 1: Check if there's an active cold storage flow FIRST
     if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
-      // Check for cancel request first
-      if (message.toLowerCase().includes('cancel') || message.toLowerCase().includes('iptal') || 
-          message.toLowerCase().includes('stop') || message.toLowerCase().includes('dur') ||
-          message.toLowerCase().includes('quit') || message.toLowerCase().includes('exit')) {
+      // Check for cancel/stop request first - Enhanced multi-language support
+      const lowerMessage = message.toLowerCase();
+      const stopKeywords = ['cancel', 'stop', 'quit', 'exit', 'abort', 'end', 'iptal', 'dur', 'durdur', 'bitir', 'çık', 'son', 'stopp', 'abbrechen', 'beenden', 'aufhören'];
+      
+      const hasStopKeyword = stopKeywords.some(keyword => lowerMessage.includes(keyword));
+      
+      if (hasStopKeyword) {
         return handleCancelSession(session, message);
       }
       // Otherwise, process as answer to current question
@@ -164,10 +176,13 @@ async function handleMessage(session, message) {
 
     // PRIORITY 2: Check if there's an active equipment recommendation flow
     if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
-      // Check for cancel request first
-      if (message.toLowerCase().includes('cancel') || message.toLowerCase().includes('iptal') || 
-          message.toLowerCase().includes('stop') || message.toLowerCase().includes('dur') ||
-          message.toLowerCase().includes('quit') || message.toLowerCase().includes('exit')) {
+      // Check for cancel/stop request first - Enhanced multi-language support  
+      const lowerMessage = message.toLowerCase();
+      const stopKeywords = ['cancel', 'stop', 'quit', 'exit', 'abort', 'end', 'iptal', 'dur', 'durdur', 'bitir', 'çık', 'son', 'stopp', 'abbrechen', 'beenden', 'aufhören'];
+      
+      const hasStopKeyword = stopKeywords.some(keyword => lowerMessage.includes(keyword));
+      
+      if (hasStopKeyword) {
         return handleCancelSession(session, message);
       }
       // Otherwise, process as answer to current question
