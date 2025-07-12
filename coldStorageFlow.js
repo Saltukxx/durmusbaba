@@ -134,9 +134,9 @@ function initializeColdStorageFlow(userId, language = 'en') {
     
     // Welcome messages for different languages
     const welcomeMessages = {
-        en: "❄️ Welcome to the Cold Room Calculator! 🧊\n\nI'll help you calculate the exact cooling capacity needed for your cold storage room. We'll go through 18 comprehensive questions to get accurate results.\n\n🎯 Let's get started!",
-        tr: "❄️ Soğuk Oda Hesaplayıcısına Hoş Geldiniz! 🧊\n\nSoğuk hava deponuz için gereken tam soğutma kapasitesini hesaplamanıza yardımcı olacağım. Doğru sonuçlar için 18 kapsamlı soru soracağım.\n\n🎯 Hadi başlayalım!",
-        de: "❄️ Willkommen beim Kühlraum-Rechner! 🧊\n\nIch helfe Ihnen bei der Berechnung der exakten Kühlkapazität für Ihren Kühlraum. Wir gehen 18 umfassende Fragen durch, um genaue Ergebnisse zu erhalten.\n\n🎯 Los geht's!"
+        en: "❄️ Welcome to the Cold Room Calculator! 🧊\n\nI'll help you calculate the exact cooling capacity needed for your cold storage room. We'll go through 18 comprehensive questions to get accurate results.\n\n📋 **HELPFUL COMMANDS YOU CAN USE:**\n✅ Type **'wrong'** if you made a mistake\n✅ Type **'show'** to see all your answers\n✅ Type **'restart'** to start over completely\n✅ Type **'stop'** to exit\n\n💡 You can use these commands at any time during the questions!\n\n🎯 Let's get started!",
+        tr: "❄️ Soğuk Oda Hesaplayıcısına Hoş Geldiniz! 🧊\n\nSoğuk hava deponuz için gereken tam soğutma kapasitesini hesaplamanıza yardımcı olacağım. Doğru sonuçlar için 18 kapsamlı soru soracağım.\n\n📋 **KULLANABİLECEĞİNİZ YARDIMCI KOMUTLAR:**\n✅ Hata yaptıysanız **'yanlış'** yazın\n✅ Tüm cevaplarınızı görmek için **'göster'** yazın\n✅ Tamamen yeniden başlamak için **'restart'** yazın\n✅ Çıkmak için **'dur'** yazın\n\n💡 Bu komutları sorular sırasında istediğiniz zaman kullanabilirsiniz!\n\n🎯 Hadi başlayalım!",
+        de: "❄️ Willkommen beim Kühlraum-Rechner! 🧊\n\nIch helfe Ihnen bei der Berechnung der exakten Kühlkapazität für Ihren Kühlraum. Wir gehen 18 umfassende Fragen durch, um genaue Ergebnisse zu erhalten.\n\n📋 **HILFREICHE BEFEHLE DIE SIE VERWENDEN KÖNNEN:**\n✅ Geben Sie **'falsch'** ein, wenn Sie einen Fehler gemacht haben\n✅ Geben Sie **'zeigen'** ein, um alle Ihre Antworten zu sehen\n✅ Geben Sie **'restart'** ein, um komplett neu zu beginnen\n✅ Geben Sie **'stopp'** ein, um zu beenden\n\n💡 Sie können diese Befehle jederzeit während der Fragen verwenden!\n\n🎯 Los geht's!"
     };
     
     logger.info(`Initialized cold storage flow for user ${userId} in ${language}`);
@@ -155,12 +155,44 @@ function initializeColdStorageFlow(userId, language = 'en') {
  */
 function processAnswer(session, answer) {
     const flow = session.coldStorageFlow;
+    
+    // Check for special commands first
+    if (isCancelRequest(answer)) {
+        return cancelColdStorageFlow(session);
+    }
+    
+    if (isBackRequest(answer)) {
+        return goBackToPreviousQuestion(session);
+    }
+    
+    if (isRestartRequest(answer)) {
+        // Reset the flow
+        flow.currentStep = 0;
+        flow.answers = {};
+        const restartMessages = {
+            en: `🔄 Restarting cold storage calculation...\n\n${askCurrentQuestion(session)}`,
+            tr: `🔄 Soğuk depo hesaplaması yeniden başlatılıyor...\n\n${askCurrentQuestion(session)}`,
+            de: `🔄 Kältelagerberechnung wird neu gestartet...\n\n${askCurrentQuestion(session)}`
+        };
+        return restartMessages[flow.language] || restartMessages.en;
+    }
+    
+    if (isShowRequest(answer)) {
+        return showCurrentAnswers(session);
+    }
+    
     const currentQuestionKey = questionOrder[flow.currentStep];
     
     // Validate and store answer
     const validatedAnswer = validateAnswer(currentQuestionKey, answer);
     if (validatedAnswer.error) {
-        return validatedAnswer.error + "\n\n" + questions[flow.language][currentQuestionKey];
+        const helpTexts = {
+            en: "\n\n💡 Need help? Type 'wrong' to go back, 'show' to see answers, or 'restart' to start over.",
+            tr: "\n\n💡 Yardım mı lazım? 'yanlış' yazarak geri gidin, 'göster' ile cevapları görün, ya da 'restart' ile yeniden başlayın.",
+            de: "\n\n💡 Hilfe benötigt? Geben Sie 'falsch' ein um zurückzugehen, 'zeigen' für Antworten, oder 'restart' für Neustart."
+        };
+        const helpText = helpTexts[flow.language] || helpTexts.en;
+        return validatedAnswer.error + "\n\n" + questions[flow.language][currentQuestionKey] + helpText;
     }
     
     flow.answers[currentQuestionKey] = validatedAnswer.value;
@@ -190,7 +222,16 @@ function askCurrentQuestion(session) {
         .replace('{current}', flow.currentStep + 1)
         .replace('{total}', questionOrder.length);
     
-    return `${progress}\n\n${question}`;
+    // Add helpful commands
+    const commandTexts = {
+        en: "\n\n💬 Commands: 'wrong' | 'show' | 'restart' | 'stop'",
+        tr: "\n\n💬 Komutlar: 'yanlış' | 'göster' | 'restart' | 'dur'",
+        de: "\n\n💬 Befehle: 'falsch' | 'zeigen' | 'restart' | 'stopp'"
+    };
+    
+    const commandText = commandTexts[flow.language] || commandTexts.en;
+    
+    return `${progress}\n\n${question}${commandText}`;
 }
 
 /**
@@ -641,9 +682,158 @@ function hasActiveColdStorageFlow(session) {
  */
 function cancelColdStorageFlow(session) {
     if (session.coldStorageFlow) {
+        const language = session.coldStorageFlow.language || 'en';
         delete session.coldStorageFlow;
         logger.info(`Cold storage flow cancelled for user ${session.userId}`);
+        
+        const messages = {
+            en: "❌ Cold storage calculation cancelled. Type 'cold storage' to start again.",
+            tr: "❌ Soğuk depo hesaplaması iptal edildi. Tekrar başlamak için 'soğuk depo' yazın.",
+            de: "❌ Kältelagerberechnung abgebrochen. Geben Sie 'Kühlraum' ein, um erneut zu beginnen."
+        };
+        
+        return messages[language] || messages.en;
     }
+    
+    return null;
+}
+
+/**
+ * Check if user wants to cancel current session
+ * @param {string} message - User message
+ * @returns {boolean} - True if user wants to cancel
+ */
+function isCancelRequest(message) {
+    const cancelKeywords = [
+        'cancel', 'stop', 'quit', 'exit', 'iptal', 'dur', 'çık', 'abbrechen', 'stopp', 'beenden'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    return cancelKeywords.includes(lowerMessage);
+}
+
+/**
+ * Check if user wants to go back to previous question
+ * @param {string} message - User message
+ * @returns {boolean} - True if user wants to go back
+ */
+function isBackRequest(message) {
+    const backKeywords = [
+        'back', 'previous', 'go back', 'geri', 'önceki', 'zurück', 'vorherige', 'früher',
+        'wrong', 'mistake', 'error', 'yanlış', 'hata', 'falsch', 'fehler'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    return backKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Check if user wants to restart calculation
+ * @param {string} message - User message
+ * @returns {boolean} - True if user wants to restart
+ */
+function isRestartRequest(message) {
+    const restartKeywords = [
+        'restart', 'start over', 'begin again', 'yeniden başla', 'tekrar başla', 'neu starten', 'von vorne'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    return restartKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Check if user wants to show current answers
+ * @param {string} message - User message
+ * @returns {boolean} - True if user wants to show answers
+ */
+function isShowRequest(message) {
+    const showKeywords = [
+        'show', 'display', 'review', 'answers', 'göster', 'cevaplar', 'zeigen', 'antworten'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    return showKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Go back to previous question
+ * @param {Object} session - User session
+ * @returns {string} - Previous question or error message
+ */
+function goBackToPreviousQuestion(session) {
+    const flow = session.coldStorageFlow;
+    
+    if (flow.currentStep <= 0) {
+        const messages = {
+            en: "❌ You're already at the first question. Type 'restart' to start over.",
+            tr: "❌ Zaten ilk sorudasınız. Yeniden başlamak için 'restart' yazın.",
+            de: "❌ Sie sind bereits bei der ersten Frage. Geben Sie 'restart' ein, um von vorne zu beginnen."
+        };
+        return messages[flow.language] || messages.en;
+    }
+    
+    // Go back one step and remove the previous answer
+    flow.currentStep--;
+    const previousQuestionKey = questionOrder[flow.currentStep];
+    delete flow.answers[previousQuestionKey];
+    
+    const backMessages = {
+        en: "⬅️ Going back to previous question:",
+        tr: "⬅️ Önceki soruya dönülüyor:",
+        de: "⬅️ Zurück zur vorherigen Frage:"
+    };
+    
+    const backMessage = backMessages[flow.language] || backMessages.en;
+    const question = askCurrentQuestion(session);
+    
+    return `${backMessage}\n\n${question}`;
+}
+
+/**
+ * Show current answers for review
+ * @param {Object} session - User session
+ * @returns {string} - Formatted list of current answers
+ */
+function showCurrentAnswers(session) {
+    const flow = session.coldStorageFlow;
+    const answers = flow.answers;
+    
+    const headers = {
+        en: {
+            title: "📋 Your Current Answers:",
+            noAnswers: "❌ No answers recorded yet.",
+            commands: "\n💡 Commands:\n• Type 'back' to go to previous question\n• Type 'restart' to start over\n• Continue answering to proceed"
+        },
+        tr: {
+            title: "📋 Mevcut Cevaplarınız:",
+            noAnswers: "❌ Henüz hiç cevap kaydedilmedi.",
+            commands: "\n💡 Komutlar:\n• Önceki soruya dönmek için 'back' yazın\n• Yeniden başlamak için 'restart' yazın\n• Devam etmek için cevaplamaya devam edin"
+        },
+        de: {
+            title: "📋 Ihre aktuellen Antworten:",
+            noAnswers: "❌ Noch keine Antworten aufgezeichnet.",
+            commands: "\n💡 Befehle:\n• Geben Sie 'back' ein, um zur vorherigen Frage zu gehen\n• Geben Sie 'restart' ein, um von vorne zu beginnen\n• Setzen Sie das Beantworten fort, um fortzufahren"
+        }
+    };
+    
+    const h = headers[flow.language] || headers.en;
+    
+    if (Object.keys(answers).length === 0) {
+        return h.noAnswers + h.commands;
+    }
+    
+    let response = h.title + "\n\n";
+    
+    for (let i = 0; i < flow.currentStep; i++) {
+        const questionKey = questionOrder[i];
+        const answer = answers[questionKey];
+        if (answer !== undefined) {
+            response += `${i + 1}. ${questionKey}: ${answer}\n`;
+        }
+    }
+    
+    response += h.commands;
+    return response;
 }
 
 module.exports = {
