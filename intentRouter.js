@@ -159,19 +159,10 @@ function extractProductKeywords(message) {
  */
 async function handleMessage(session, message) {
   try {
-    // PRIORITY 1: Check if there's an active cold storage flow FIRST
-    if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
-      // Check for cancel/stop request first - Enhanced multi-language support
-      const lowerMessage = message.toLowerCase();
-      const stopKeywords = ['cancel', 'stop', 'quit', 'exit', 'abort', 'end', 'iptal', 'dur', 'durdur', 'bitir', 'çık', 'son', 'stopp', 'abbrechen', 'beenden', 'aufhören'];
-      
-      const hasStopKeyword = stopKeywords.some(keyword => lowerMessage.includes(keyword));
-      
-      if (hasStopKeyword) {
-        return handleCancelSession(session, message);
-      }
-      // Otherwise, process as answer to current question
-      return coldStorageFlow.processAnswer(session, message);
+    // PRIORITY 1: Check if there's an active cold storage session FIRST
+    if (session.coldStorage && session.coldStorage.active) {
+      // Use the service that has edit commands functionality
+      return coldStorageService.handleColdStorageRequest(session, message);
     }
 
     // PRIORITY 2: Check if there's an active equipment recommendation flow
@@ -211,7 +202,7 @@ async function handleMessage(session, message) {
         return handleLanguageChange(session, intent.languageCode);
         
       case 'cold_storage_calculation':
-        return await handleColdStorageCalculation(session, message);
+        return coldStorageService.handleColdStorageRequest(session, message);
         
       case 'cancel_session':
         return handleCancelSession(session, message);
@@ -437,15 +428,9 @@ Welche Methode bevorzugen Sie?`
 function handleCancelSession(session, message) {
   const language = detectLanguage(message);
   
-  // Check if there's an active cold storage flow to cancel
-  if (coldStorageFlow.hasActiveColdStorageFlow(session)) {
-    coldStorageFlow.cancelColdStorageFlow(session);
-    const messages = {
-      en: "✅ Cold storage calculation cancelled. How can I help you?",
-      tr: "✅ Soğuk hava deposu hesaplaması iptal edildi. Size nasıl yardımcı olabilirim?",
-      de: "✅ Kühlraum-Berechnung abgebrochen. Wie kann ich Ihnen helfen?"
-    };
-    return messages[language] || messages.en;
+  // Check if there's an active cold storage session to cancel
+  if (session.coldStorage && session.coldStorage.active) {
+    return coldStorageService.cancelColdStorageSession(session);
   }
   
   // Check if there's an active equipment recommendation flow to cancel
