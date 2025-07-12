@@ -171,6 +171,140 @@ const COLD_STORAGE_QUESTIONS = [
             tr: "❌ Lütfen -30°C ile 60°C arasında geçerli bir sıcaklık girin",
             de: "❌ Bitte geben Sie eine gültige Temperatur zwischen -30°C und 60°C ein"
         }
+    },
+    {
+        id: 'coolingDuration',
+        question: {
+            en: "⏱️ What is the required cooling duration (in hours)?\n\nThis is how long it takes to cool products from entry temperature to storage temperature.\n\nCommon durations:\n• Fast cooling (4-8 hours)\n• Standard cooling (12-24 hours)\n• Slow cooling (24-48 hours)\n\nPlease enter duration in hours (e.g., 24):",
+            tr: "⏱️ Gerekli soğuma süresi nedir (saat cinsinden)?\n\nBu, ürünlerin giriş sıcaklığından depolama sıcaklığına soğutulması için gereken süredir.\n\nYaygın süreler:\n• Hızlı soğutma (4-8 saat)\n• Standart soğutma (12-24 saat)\n• Yavaş soğutma (24-48 saat)\n\nLütfen süreyi saat cinsinden girin (örn: 24):",
+            de: "⏱️ Welche Kühldauer ist erforderlich (in Stunden)?\n\nDies ist die Zeit, die benötigt wird, um Produkte von der Eingangstemperatur auf die Lagertemperatur zu kühlen.\n\nÜbliche Dauern:\n• Schnellkühlung (4-8 Stunden)\n• Standardkühlung (12-24 Stunden)\n• Langsamkühlung (24-48 Stunden)\n\nBitte geben Sie die Dauer in Stunden ein (z.B. 24):"
+        },
+        validate: (value) => {
+            const duration = parseFloat(value);
+            return !isNaN(duration) && duration > 0 && duration <= 168;
+        },
+        errorMessage: {
+            en: "❌ Please enter a valid duration between 1 and 168 hours",
+            tr: "❌ Lütfen 1 ile 168 saat arasında geçerli bir süre girin",
+            de: "❌ Bitte geben Sie eine gültige Dauer zwischen 1 und 168 Stunden ein"
+        }
+    },
+    {
+        id: 'coolingType',
+        question: {
+            en: "❄️ What type of cooling system do you prefer?\n\nOptions:\n• Air cooling (Forced air circulation)\n• Direct expansion (DX system)\n• Evaporative cooling (Water-based)\n• Glycol cooling (Indirect system)\n\nPlease select your preferred cooling type:",
+            tr: "❄️ Hangi tip soğutma sistemi tercih ediyorsunuz?\n\nSeçenekler:\n• Hava soğutmalı (Zorlanmış hava sirkülasyonu)\n• Direkt ekspansiyonlu (DX sistem)\n• Evaporatif soğutma (Su bazlı)\n• Glikol soğutma (İndirekt sistem)\n\nLütfen tercih ettiğiniz soğutma tipini seçin:",
+            de: "❄️ Welchen Kühlungstyp bevorzugen Sie?\n\nOptionen:\n• Luftkühlung (Forcierte Luftzirkulation)\n• Direktexpansion (DX-System)\n• Verdunstungskühlung (Wasserbasiert)\n• Glykolkühlung (Indirektes System)\n\nBitte wählen Sie Ihren bevorzugten Kühlungstyp:"
+        },
+        validate: (value) => {
+            const coolingType = value.toLowerCase();
+            return coolingType.includes('air') || coolingType.includes('hava') || coolingType.includes('luft') ||
+                   coolingType.includes('direct') || coolingType.includes('direkt') ||
+                   coolingType.includes('evap') || coolingType.includes('verdun') ||
+                   coolingType.includes('glycol') || coolingType.includes('glikol');
+        },
+        errorMessage: {
+            en: "❌ Please select: Air cooling, Direct expansion, Evaporative, or Glycol cooling",
+            tr: "❌ Lütfen şunlardan birini seçin: Hava soğutmalı, Direkt ekspansiyonlu, Evaporatif, veya Glikol soğutma",
+            de: "❌ Bitte wählen Sie: Luftkühlung, Direktexpansion, Verdunstung oder Glykolkühlung"
+        }
+    },
+    {
+        id: 'unitPreference',
+        question: {
+            en: "🏭 What type of cooling unit do you prefer?\n\nOptions:\n• Monoblock (All-in-one unit)\n• Split system (Indoor/outdoor units)\n• Modular system (Multiple units)\n• Central system (Large capacity)\n\nPlease select your preferred unit type:",
+            tr: "🏭 Hangi tip soğutma ünitesi tercih ediyorsunuz?\n\nSeçenekler:\n• Monoblock (Tek parça ünite)\n• Split sistem (İç/dış üniteler)\n• Modüler sistem (Çoklu üniteler)\n• Merkezi sistem (Büyük kapasite)\n\nLütfen tercih ettiğiniz ünite tipini seçin:",
+            de: "🏭 Welchen Kühlgerätetyp bevorzugen Sie?\n\nOptionen:\n• Monoblock (All-in-One-Gerät)\n• Split-System (Innen-/Außengeräte)\n• Modulares System (Mehrere Geräte)\n• Zentralsystem (Große Kapazität)\n\nBitte wählen Sie Ihren bevorzugten Gerätetyp:"
+        },
+        validate: (value) => {
+            const unitType = value.toLowerCase();
+            return unitType.includes('mono') || unitType.includes('split') || 
+                   unitType.includes('modul') || unitType.includes('central') || unitType.includes('merkezi');
+        },
+        errorMessage: {
+            en: "❌ Please select: Monoblock, Split system, Modular system, or Central system",
+            tr: "❌ Lütfen şunlardan birini seçin: Monoblock, Split sistem, Modüler sistem, veya Merkezi sistem",
+            de: "❌ Bitte wählen Sie: Monoblock, Split-System, Modulares System oder Zentralsystem"
+        }
+    },
+    {
+        id: 'electricityType',
+        question: {
+            en: "⚡ What type of electricity supply is available?\n\nOptions:\n• Single phase (220V/230V)\n• Three phase (380V/400V/415V)\n• Both available\n\nElectrical supply affects equipment selection and efficiency.\n\nPlease specify your electrical supply:",
+            tr: "⚡ Hangi tip elektrik beslemesi mevcut?\n\nSeçenekler:\n• Tek faz (220V/230V)\n• Üç faz (380V/400V/415V)\n• İkisi de mevcut\n\nElektrik beslemesi ekipman seçimini ve verimliliği etkiler.\n\nLütfen elektrik beslemenizi belirtin:",
+            de: "⚡ Welche Art der Stromversorgung ist verfügbar?\n\nOptionen:\n• Einphasig (220V/230V)\n• Dreiphasig (380V/400V/415V)\n• Beide verfügbar\n\nStromversorgung beeinflusst Geräteauswahl und Effizienz.\n\nBitte geben Sie Ihre Stromversorgung an:"
+        },
+        validate: (value) => {
+            const elecType = value.toLowerCase();
+            return elecType.includes('single') || elecType.includes('tek') || elecType.includes('einphasig') ||
+                   elecType.includes('three') || elecType.includes('üç') || elecType.includes('drei') ||
+                   elecType.includes('both') || elecType.includes('ikisi') || elecType.includes('beide') ||
+                   elecType.includes('220') || elecType.includes('380') || elecType.includes('400');
+        },
+        errorMessage: {
+            en: "❌ Please specify: Single phase, Three phase, or Both available",
+            tr: "❌ Lütfen belirtin: Tek faz, Üç faz, veya İkisi de mevcut",
+            de: "❌ Bitte geben Sie an: Einphasig, Dreiphasig oder Beide verfügbar"
+        }
+    },
+    {
+        id: 'installationCity',
+        question: {
+            en: "🏙️ In which city will the installation be located?\n\nCity affects:\n• Ambient temperature calculations\n• Local regulations\n• Service availability\n• Transportation costs\n\nPlease enter the installation city:",
+            tr: "🏙️ Kurulum hangi şehirde yapılacak?\n\nŞehir şunları etkiler:\n• Çevre sıcaklığı hesaplamaları\n• Yerel düzenlemeler\n• Servis mevcudiyeti\n• Nakliye maliyetleri\n\nLütfen kurulum şehrini girin:",
+            de: "🏙️ In welcher Stadt erfolgt die Installation?\n\nStadt beeinflusst:\n• Umgebungstemperatur-Berechnungen\n• Lokale Vorschriften\n• Service-Verfügbarkeit\n• Transportkosten\n\nBitte geben Sie die Installationsstadt ein:"
+        },
+        validate: (value) => value && value.trim().length >= 2,
+        errorMessage: {
+            en: "❌ Please enter a valid city name",
+            tr: "❌ Lütfen geçerli bir şehir adı girin",
+            de: "❌ Bitte geben Sie einen gültigen Stadtnamen ein"
+        }
+    },
+    {
+        id: 'ambientHeatSource',
+        question: {
+            en: "🌡️ Are there any heat sources near the cold room?\n\nPotential heat sources:\n• Ovens or cooking equipment\n• Boilers or heating systems\n• Direct sunlight exposure\n• Other machinery\n• None\n\nHeat sources increase cooling load significantly.\n\nPlease describe any nearby heat sources:",
+            tr: "🌡️ Soğuk odanın yakınında ısı kaynağı var mı?\n\nPotansiyel ısı kaynakları:\n• Fırınlar veya pişirme ekipmanları\n• Kazanlar veya ısıtma sistemleri\n• Doğrudan güneş ışığı\n• Diğer makineler\n• Yok\n\nIsı kaynakları soğutma yükünü önemli ölçüde artırır.\n\nLütfen yakındaki ısı kaynaklarını açıklayın:",
+            de: "🌡️ Gibt es Wärmequellen in der Nähe des Kühlraums?\n\nMögliche Wärmequellen:\n• Öfen oder Kochgeräte\n• Kessel oder Heizsysteme\n• Direkte Sonneneinstrahlung\n• Andere Maschinen\n• Keine\n\nWärmequellen erhöhen die Kühllast erheblich.\n\nBitte beschreiben Sie nahegelegene Wärmequellen:"
+        },
+        validate: (value) => value && value.trim().length > 0,
+        errorMessage: {
+            en: "❌ Please describe heat sources or enter 'none'",
+            tr: "❌ Lütfen ısı kaynaklarını açıklayın veya 'yok' girin",
+            de: "❌ Bitte beschreiben Sie Wärmequellen oder geben Sie 'keine' ein"
+        }
+    },
+    {
+        id: 'usageArea',
+        question: {
+            en: "📐 What is the usable storage area or capacity?\n\nSpecify either:\n• Usable floor area (in m²)\n• Number of pallets\n• Storage capacity (in tons)\n• Percentage of total volume used\n\nThis helps optimize the cooling system design.\n\nPlease specify your storage capacity:",
+            tr: "📐 Kullanılabilir depolama alanı veya kapasitesi nedir?\n\nŞunlardan birini belirtin:\n• Kullanılabilir zemin alanı (m² cinsinden)\n• Palet sayısı\n• Depolama kapasitesi (ton cinsinden)\n• Toplam hacmin kullanılan yüzdesi\n\nBu, soğutma sistemi tasarımını optimize etmeye yardımcı olur.\n\nLütfen depolama kapasitenizi belirtin:",
+            de: "📐 Wie groß ist die nutzbare Lagerfläche oder -kapazität?\n\nGeben Sie entweder an:\n• Nutzbare Bodenfläche (in m²)\n• Anzahl der Paletten\n• Lagerkapazität (in Tonnen)\n• Prozentsatz des genutzten Gesamtvolumens\n\nDies hilft bei der Optimierung des Kühlsystem-Designs.\n\nBitte geben Sie Ihre Lagerkapazität an:"
+        },
+        validate: (value) => value && value.trim().length > 0,
+        errorMessage: {
+            en: "❌ Please specify storage area, pallets, tonnage, or percentage",
+            tr: "❌ Lütfen depolama alanı, palet, tonaj veya yüzde belirtin",
+            de: "❌ Bitte geben Sie Lagerfläche, Paletten, Tonnage oder Prozentsatz an"
+        }
+    },
+    {
+        id: 'drawingPhoto',
+        question: {
+            en: "📋 Do you have technical drawings or photos of the space?\n\nHelpful documentation:\n• Floor plans\n• Technical drawings\n• Photos of the space\n• Existing equipment layouts\n• Site measurements\n\nThese help with accurate system design and installation planning.\n\nPlease answer Yes or No:",
+            tr: "📋 Mekanın teknik çizimi veya fotoğrafı var mı?\n\nYardımcı belgeler:\n• Kat planları\n• Teknik çizimler\n• Mekan fotoğrafları\n• Mevcut ekipman düzenleri\n• Saha ölçümleri\n\nBunlar doğru sistem tasarımı ve kurulum planlaması için yardımcı olur.\n\nLütfen Evet veya Hayır cevabını verin:",
+            de: "📋 Haben Sie technische Zeichnungen oder Fotos des Raums?\n\nHilfreiche Dokumentation:\n• Grundrisse\n• Technische Zeichnungen\n• Fotos des Raums\n• Bestehende Geräteanordnungen\n• Standortmessungen\n\nDiese helfen bei der präzisen Systemplanung und Installationsplanung.\n\nBitte antworten Sie mit Ja oder Nein:"
+        },
+        validate: (value) => {
+            const answer = value.toLowerCase().trim();
+            return ['yes', 'no', 'evet', 'hayır', 'hayir', 'ja', 'nein'].includes(answer);
+        },
+        errorMessage: {
+            en: "❌ Please answer with 'Yes' or 'No'",
+            tr: "❌ Lütfen 'Evet' veya 'Hayır' ile cevap verin",
+            de: "❌ Bitte antworten Sie mit 'Ja' oder 'Nein'"
+        }
     }
 ];
 
@@ -259,7 +393,25 @@ function getCurrentQuestion(session) {
     }
     
     const question = COLD_STORAGE_QUESTIONS[currentStep];
-    return question.question[language] || question.question.en;
+    const questionText = question.question[language] || question.question.en;
+    
+    // Add progress indicator and helpful commands
+    const progressTexts = {
+        en: `📊 Question ${currentStep + 1} of ${COLD_STORAGE_QUESTIONS.length}`,
+        tr: `📊 Soru ${currentStep + 1} / ${COLD_STORAGE_QUESTIONS.length}`,
+        de: `📊 Frage ${currentStep + 1} von ${COLD_STORAGE_QUESTIONS.length}`
+    };
+    
+    const commandTexts = {
+        en: "\n\n💬 Commands: 'wrong' | 'show' | 'restart' | 'stop'",
+        tr: "\n\n💬 Komutlar: 'yanlış' | 'göster' | 'restart' | 'dur'",
+        de: "\n\n💬 Befehle: 'falsch' | 'zeigen' | 'restart' | 'stopp'"
+    };
+    
+    const progressText = progressTexts[language] || progressTexts.en;
+    const commandText = commandTexts[language] || commandTexts.en;
+    
+    return `${progressText}\n\n${questionText}${commandText}`;
 }
 
 /**
@@ -386,22 +538,81 @@ function calculateColdStorageCapacity(session) {
             baseCapacity *= 1.15; // 15% penalty for no floor insulation
         }
         
+        // Additional loads from new questions
+        let additionalFactors = 1.0;
+        
+        // Cooling duration factor
+        if (answers.coolingDuration) {
+            const duration = parseFloat(answers.coolingDuration);
+            if (duration <= 8) {
+                additionalFactors *= 1.3; // Fast cooling requires more capacity
+            } else if (duration <= 24) {
+                additionalFactors *= 1.1; // Standard cooling
+            }
+            // Slow cooling (>24h) uses base factor
+        }
+        
+        // Cooling type factor
+        if (answers.coolingType) {
+            const coolingType = answers.coolingType.toLowerCase();
+            if (coolingType.includes('direct') || coolingType.includes('direkt')) {
+                additionalFactors *= 0.95; // Direct expansion is more efficient
+            } else if (coolingType.includes('evap') || coolingType.includes('verdun')) {
+                additionalFactors *= 1.1; // Evaporative cooling less efficient in humid conditions
+            } else if (coolingType.includes('glycol') || coolingType.includes('glikol')) {
+                additionalFactors *= 1.15; // Indirect systems have heat exchanger losses
+            }
+        }
+        
+        // Heat source penalty
+        if (answers.ambientHeatSource) {
+            const heatSource = answers.ambientHeatSource.toLowerCase();
+            if (!heatSource.includes('none') && !heatSource.includes('yok') && !heatSource.includes('keine')) {
+                if (heatSource.includes('oven') || heatSource.includes('fırın') || heatSource.includes('sun') || heatSource.includes('güneş')) {
+                    additionalFactors *= 1.2; // Significant heat sources
+                } else {
+                    additionalFactors *= 1.1; // Other heat sources
+                }
+            }
+        }
+        
+        // Apply additional factors
+        baseCapacity *= additionalFactors;
+        
         // Safety factor
         const safetyFactor = 1.2;
         const finalCapacity = Math.round(baseCapacity * safetyFactor);
         
-        // System recommendation
+        // System recommendation based on unit preference and capacity
         let systemType = 'Custom System';
         let systemDescription = 'Contact us for detailed specifications';
         
-        Object.keys(SYSTEM_RECOMMENDATIONS).forEach(key => {
-            const rec = SYSTEM_RECOMMENDATIONS[key];
-            if (finalCapacity <= rec.maxKW) {
-                systemType = rec.type;
-                systemDescription = rec.description;
-                return;
+        if (answers.unitPreference) {
+            const unitPref = answers.unitPreference.toLowerCase();
+            if (unitPref.includes('mono') && finalCapacity <= 5000) {
+                systemType = 'Monoblock Unit';
+                systemDescription = 'Compact all-in-one solution, easy installation';
+            } else if (unitPref.includes('split') && finalCapacity <= 15000) {
+                systemType = 'Split System';
+                systemDescription = 'Indoor/outdoor configuration, flexible installation';
+            } else if (unitPref.includes('modul') && finalCapacity <= 50000) {
+                systemType = 'Modular System';
+                systemDescription = 'Multiple units for redundancy and efficiency';
+            } else if (unitPref.includes('central') || unitPref.includes('merkezi')) {
+                systemType = 'Central Cooling System';
+                systemDescription = 'Large capacity centralized solution';
             }
-        });
+        } else {
+            // Default recommendations based on capacity
+            Object.keys(SYSTEM_RECOMMENDATIONS).forEach(key => {
+                const rec = SYSTEM_RECOMMENDATIONS[key];
+                if (finalCapacity <= rec.maxKW * 1000) { // Convert kW to W
+                    systemType = rec.type;
+                    systemDescription = rec.description;
+                    return;
+                }
+            });
+        }
         
         // End cold storage session
         session.coldStorage.active = false;
@@ -429,7 +640,16 @@ function calculateColdStorageCapacity(session) {
                 doorOpenings: doorOpenings,
                 loadingAmount: loadingAmount,
                 productTemperature: productTemperature,
-                products: answers.products
+                products: answers.products,
+                coolingDuration: answers.coolingDuration || 'Not specified',
+                coolingType: answers.coolingType || 'Not specified',
+                unitPreference: answers.unitPreference || 'Not specified',
+                electricityType: answers.electricityType || 'Not specified',
+                installationCity: answers.installationCity || 'Not specified',
+                ambientHeatSource: answers.ambientHeatSource || 'Not specified',
+                usageArea: answers.usageArea || 'Not specified',
+                drawingPhoto: answers.drawingPhoto || 'Not specified',
+                additionalFactors: additionalFactors
             }
         };
         
@@ -606,11 +826,61 @@ function handleColdStorageRequest(session, message) {
         
         // Check if there's an active cold storage session
         if (session.coldStorage && session.coldStorage.active) {
-            // Process the answer
+            // Check for special commands first
+            if (isCancelRequest(message)) {
+                return cancelColdStorageSession(session);
+            }
+            
+            if (isBackRequest(message)) {
+                const backResult = goBackToPreviousQuestion(session);
+                return backResult || "❌ Unable to go back.";
+            }
+            
+            if (isRestartRequest(message)) {
+                // Cancel current session and start new one
+                cancelColdStorageSession(session);
+                initializeColdStorageSession(session, language);
+                const restartMessages = {
+                    en: `🔄 Restarting cold storage calculation...\n\n${getCurrentQuestion(session)}`,
+                    tr: `🔄 Soğuk depo hesaplaması yeniden başlatılıyor...\n\n${getCurrentQuestion(session)}`,
+                    de: `🔄 Kältelagerberechnung wird neu gestartet...\n\n${getCurrentQuestion(session)}`
+                };
+                return restartMessages[language] || restartMessages.en;
+            }
+            
+            if (isReviewRequest(message)) {
+                const reviewResult = showCurrentAnswers(session);
+                return reviewResult || "❌ Unable to show answers.";
+            }
+            
+            const editRequest = isEditRequest(message);
+            if (editRequest) {
+                if (editRequest.questionNumber === null) {
+                    const helpMessages = {
+                        en: "❌ Please specify which question to edit:\n• 'edit question 3' - Edit question by number\n• 'edit temperature' - Edit by topic\n• 'review' - See all your answers",
+                        tr: "❌ Lütfen hangi soruyu düzenlemek istediğinizi belirtin:\n• 'edit question 3' - Soru numarasıyla düzenle\n• 'edit temperature' - Konuya göre düzenle\n• 'review' - Tüm cevaplarınızı görün",
+                        de: "❌ Bitte geben Sie an, welche Frage bearbeitet werden soll:\n• 'edit question 3' - Nach Nummer bearbeiten\n• 'edit temperature' - Nach Thema bearbeiten\n• 'review' - Alle Ihre Antworten anzeigen"
+                    };
+                    return helpMessages[language] || helpMessages.en;
+                } else {
+                    const editResult = editSpecificQuestion(session, editRequest.questionNumber);
+                    return editResult || "❌ Unable to edit question.";
+                }
+            }
+            
+            // Process the answer normally
             const result = processAnswer(session, message);
             
             if (!result.success) {
-                return result.message;
+                // Add helpful commands reminder when there's an error
+                const language = session.coldStorage.language;
+                const helpTexts = {
+                    en: "\n\n💡 Need help? Type 'wrong' to go back, 'show' to see answers, or 'restart' to start over.",
+                    tr: "\n\n💡 Yardım mı lazım? 'yanlış' yazarak geri gidin, 'göster' ile cevapları görün, ya da 'restart' ile yeniden başlayın.",
+                    de: "\n\n💡 Hilfe benötigt? Geben Sie 'falsch' ein um zurückzugehen, 'zeigen' für Antworten, oder 'restart' für Neustart."
+                };
+                const helpText = helpTexts[language] || helpTexts.en;
+                return result.message + helpText;
             }
             
             if (result.completed) {
@@ -633,9 +903,9 @@ function handleColdStorageRequest(session, message) {
             // Start new cold storage calculation
             initializeColdStorageSession(session, language);
             const welcomeMessages = {
-                en: `🏗️ Welcome to Cold Storage Capacity Calculator!\n\nI'll guide you through 10 questions to calculate the optimal cooling capacity for your cold storage room.\n\n${getCurrentQuestion(session)}`,
-                tr: `🏗️ Soğuk Depo Kapasite Hesaplayıcıya Hoş Geldiniz!\n\nSoğuk depo odanız için optimal soğutma kapasitesini hesaplamak için 10 soruda size rehberlik edeceğim.\n\n${getCurrentQuestion(session)}`,
-                de: `🏗️ Willkommen zum Kältelager-Kapazitätsrechner!\n\nIch führe Sie durch 10 Fragen, um die optimale Kühlkapazität für Ihren Kühlraum zu berechnen.\n\n${getCurrentQuestion(session)}`
+                en: `🏗️ Welcome to Cold Storage Capacity Calculator!\n\nI'll guide you through 18 comprehensive questions to calculate the optimal cooling capacity for your cold storage room.\n\n📋 **HELPFUL COMMANDS YOU CAN USE:**\n✅ Type **'wrong'** or **'back'** if you made a mistake\n✅ Type **'restart'** to start over completely\n✅ Type **'show'** or **'review'** to see all your answers\n✅ Type **'stop'** or **'cancel'** to exit\n\n💡 You can use these commands at any time during the questions!\n\n${getCurrentQuestion(session)}`,
+                tr: `🏗️ Soğuk Depo Kapasite Hesaplayıcıya Hoş Geldiniz!\n\nSoğuk depo odanız için optimal soğutma kapasitesini hesaplamak için 18 kapsamlı soruda size rehberlik edeceğim.\n\n📋 **KULLANABİLECEĞİNİZ YARDIMCI KOMUTLAR:**\n✅ Hata yaptıysanız **'yanlış'** veya **'geri'** yazın\n✅ Tamamen yeniden başlamak için **'restart'** yazın\n✅ Tüm cevaplarınızı görmek için **'göster'** yazın\n✅ Çıkmak için **'dur'** veya **'iptal'** yazın\n\n💡 Bu komutları sorular sırasında istediğiniz zaman kullanabilirsiniz!\n\n${getCurrentQuestion(session)}`,
+                de: `🏗️ Willkommen zum Kältelager-Kapazitätsrechner!\n\nIch führe Sie durch 18 umfassende Fragen, um die optimale Kühlkapazität für Ihren Kühlraum zu berechnen.\n\n📋 **HILFREICHE BEFEHLE DIE SIE VERWENDEN KÖNNEN:**\n✅ Geben Sie **'falsch'** oder **'zurück'** ein, wenn Sie einen Fehler gemacht haben\n✅ Geben Sie **'restart'** ein, um komplett neu zu beginnen\n✅ Geben Sie **'zeigen'** ein, um alle Ihre Antworten zu sehen\n✅ Geben Sie **'stopp'** oder **'abbrechen'** ein, um zu beenden\n\n💡 Sie können diese Befehle jederzeit während der Fragen verwenden!\n\n${getCurrentQuestion(session)}`
             };
             
             return welcomeMessages[language] || welcomeMessages.en;
@@ -692,11 +962,257 @@ function isCancelRequest(message) {
     return cancelKeywords.includes(lowerMessage);
 }
 
+/**
+ * Check if user wants to go back to previous question
+ * @param {string} message - User message
+ * @returns {boolean} - True if user wants to go back
+ */
+function isBackRequest(message) {
+    const backKeywords = [
+        'back', 'previous', 'go back', 'geri', 'önceki', 'zurück', 'vorherige', 'früher',
+        'wrong', 'mistake', 'error', 'yanlış', 'hata', 'falsch', 'fehler'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    return backKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Check if user wants to restart calculation
+ * @param {string} message - User message
+ * @returns {boolean} - True if user wants to restart
+ */
+function isRestartRequest(message) {
+    const restartKeywords = [
+        'restart', 'start over', 'begin again', 'yeniden başla', 'tekrar başla', 'neu starten', 'von vorne'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    return restartKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Check if user wants to review current answers
+ * @param {string} message - User message
+ * @returns {boolean} - True if user wants to review
+ */
+function isReviewRequest(message) {
+    const reviewKeywords = [
+        'review', 'show answers', 'my answers', 'show', 'cevaplarım', 'göster', 'überprüfen', 'anzeigen', 'zeigen'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    return reviewKeywords.some(keyword => lowerMessage.includes(keyword));
+}
+
+/**
+ * Check if user wants to edit a specific question
+ * @param {string} message - User message
+ * @returns {Object|null} - Edit request details or null
+ */
+function isEditRequest(message) {
+    const editKeywords = [
+        'edit', 'change', 'modify', 'düzenle', 'değiştir', 'bearbeiten', 'ändern'
+    ];
+    
+    const lowerMessage = message.toLowerCase().trim();
+    
+    // Check for edit keywords
+    const hasEditKeyword = editKeywords.some(keyword => lowerMessage.includes(keyword));
+    if (!hasEditKeyword) return null;
+    
+    // Check for question number (e.g., "edit question 3", "change answer 5")
+    const questionMatch = lowerMessage.match(/(?:question|answer|soru|cevap|frage|antwort)\s*(\d+)/);
+    if (questionMatch) {
+        const questionNumber = parseInt(questionMatch[1]);
+        if (questionNumber >= 1 && questionNumber <= COLD_STORAGE_QUESTIONS.length) {
+            return { questionNumber: questionNumber - 1 }; // Convert to 0-based index
+        }
+    }
+    
+    // Check for question keywords (e.g., "edit temperature", "change length")
+    const questionKeywords = {
+        'temperature': 0, 'sıcaklık': 0, 'temperatur': 0,
+        'product': 1, 'products': 1, 'ürün': 1, 'produkt': 1,
+        'length': 2, 'uzunluk': 2, 'länge': 2,
+        'width': 3, 'genişlik': 3, 'breite': 3,
+        'height': 4, 'yükseklik': 4, 'höhe': 4,
+        'insulation': 5, 'yalıtım': 5, 'isolierung': 5,
+        'floor': 6, 'zemin': 6, 'boden': 6,
+        'door': 7, 'kapı': 7, 'tür': 7,
+        'loading': 8, 'yükleme': 8, 'beladen': 8,
+        'entry': 9, 'giriş': 9, 'eingang': 9,
+        'cooling': 10, 'soğutma': 10, 'kühlung': 10,
+        'unit': 12, 'ünite': 12, 'gerät': 12,
+        'electricity': 13, 'elektrik': 13, 'strom': 13,
+        'city': 14, 'şehir': 14, 'stadt': 14,
+        'heat': 15, 'ısı': 15, 'wärme': 15,
+        'area': 16, 'alan': 16, 'fläche': 16,
+        'drawing': 17, 'çizim': 17, 'zeichnung': 17
+    };
+    
+    for (const [keyword, index] of Object.entries(questionKeywords)) {
+        if (lowerMessage.includes(keyword)) {
+            return { questionNumber: index };
+        }
+    }
+    
+    return { questionNumber: null }; // Edit request but no specific question identified
+}
+
+/**
+ * Go back to previous question
+ * @param {Object} session - User session
+ * @returns {string} - Previous question or error message
+ */
+function goBackToPreviousQuestion(session) {
+    if (!session.coldStorage || !session.coldStorage.active) {
+        return null;
+    }
+    
+    const language = session.coldStorage.language;
+    
+    if (session.coldStorage.currentStep <= 0) {
+        const messages = {
+            en: "❌ You're already at the first question. Type 'restart' to start over.",
+            tr: "❌ Zaten ilk sorudasınız. Yeniden başlamak için 'restart' yazın.",
+            de: "❌ Sie sind bereits bei der ersten Frage. Geben Sie 'restart' ein, um von vorne zu beginnen."
+        };
+        return messages[language] || messages.en;
+    }
+    
+    // Go back one step and remove the previous answer
+    session.coldStorage.currentStep--;
+    const previousQuestionKey = COLD_STORAGE_QUESTIONS[session.coldStorage.currentStep].id;
+    delete session.coldStorage.answers[previousQuestionKey];
+    
+    const backMessages = {
+        en: "⬅️ Going back to previous question:",
+        tr: "⬅️ Önceki soruya dönülüyor:",
+        de: "⬅️ Zurück zur vorherigen Frage:"
+    };
+    
+    const backMessage = backMessages[language] || backMessages.en;
+    const question = getCurrentQuestion(session);
+    
+    return `${backMessage}\n\n${question}`;
+}
+
+/**
+ * Edit a specific question answer
+ * @param {Object} session - User session
+ * @param {number} questionIndex - Question index to edit
+ * @returns {string} - Question to re-answer
+ */
+function editSpecificQuestion(session, questionIndex) {
+    if (!session.coldStorage || !session.coldStorage.active) {
+        return null;
+    }
+    
+    const language = session.coldStorage.language;
+    
+    if (questionIndex < 0 || questionIndex >= COLD_STORAGE_QUESTIONS.length) {
+        const messages = {
+            en: `❌ Invalid question number. Please choose between 1 and ${COLD_STORAGE_QUESTIONS.length}.`,
+            tr: `❌ Geçersiz soru numarası. Lütfen 1 ile ${COLD_STORAGE_QUESTIONS.length} arasında seçin.`,
+            de: `❌ Ungültige Fragennummer. Bitte wählen Sie zwischen 1 und ${COLD_STORAGE_QUESTIONS.length}.`
+        };
+        return messages[language] || messages.en;
+    }
+    
+    if (questionIndex >= session.coldStorage.currentStep) {
+        const messages = {
+            en: "❌ You haven't answered that question yet. Continue with the current question.",
+            tr: "❌ Bu soruyu henüz cevaplamadınız. Mevcut soruyla devam edin.",
+            de: "❌ Sie haben diese Frage noch nicht beantwortet. Setzen Sie mit der aktuellen Frage fort."
+        };
+        return messages[language] || messages.en;
+    }
+    
+    // Remove the answer for this question and all subsequent questions
+    for (let i = questionIndex; i < session.coldStorage.currentStep; i++) {
+        const questionKey = COLD_STORAGE_QUESTIONS[i].id;
+        delete session.coldStorage.answers[questionKey];
+    }
+    
+    // Set current step to the question being edited
+    session.coldStorage.currentStep = questionIndex;
+    
+    const editMessages = {
+        en: `✏️ Editing question ${questionIndex + 1}:`,
+        tr: `✏️ ${questionIndex + 1}. soru düzenleniyor:`,
+        de: `✏️ Bearbeitung von Frage ${questionIndex + 1}:`
+    };
+    
+    const editMessage = editMessages[language] || editMessages.en;
+    const question = getCurrentQuestion(session);
+    
+    return `${editMessage}\n\n${question}`;
+}
+
+/**
+ * Show current answers for review
+ * @param {Object} session - User session
+ * @returns {string} - Formatted list of current answers
+ */
+function showCurrentAnswers(session) {
+    if (!session.coldStorage || !session.coldStorage.active) {
+        return null;
+    }
+    
+    const language = session.coldStorage.language;
+    const answers = session.coldStorage.answers;
+    
+    const headers = {
+        en: {
+            title: "📋 Your Current Answers:",
+            noAnswers: "❌ No answers recorded yet.",
+            commands: "\n💡 Commands:\n• Type 'back' to go to previous question\n• Type 'edit question X' to edit a specific question\n• Type 'restart' to start over\n• Continue answering to proceed"
+        },
+        tr: {
+            title: "📋 Mevcut Cevaplarınız:",
+            noAnswers: "❌ Henüz hiç cevap kaydedilmedi.",
+            commands: "\n💡 Komutlar:\n• Önceki soruya dönmek için 'back' yazın\n• Belirli bir soruyu düzenlemek için 'edit question X' yazın\n• Yeniden başlamak için 'restart' yazın\n• Devam etmek için cevaplamaya devam edin"
+        },
+        de: {
+            title: "📋 Ihre aktuellen Antworten:",
+            noAnswers: "❌ Noch keine Antworten aufgezeichnet.",
+            commands: "\n💡 Befehle:\n• Geben Sie 'back' ein, um zur vorherigen Frage zu gehen\n• Geben Sie 'edit question X' ein, um eine bestimmte Frage zu bearbeiten\n• Geben Sie 'restart' ein, um von vorne zu beginnen\n• Setzen Sie das Beantworten fort, um fortzufahren"
+        }
+    };
+    
+    const h = headers[language] || headers.en;
+    
+    if (Object.keys(answers).length === 0) {
+        return h.noAnswers + h.commands;
+    }
+    
+    let response = h.title + "\n\n";
+    
+    for (let i = 0; i < session.coldStorage.currentStep; i++) {
+        const question = COLD_STORAGE_QUESTIONS[i];
+        const answer = answers[question.id];
+        if (answer !== undefined) {
+            response += `${i + 1}. ${question.id}: ${answer}\n`;
+        }
+    }
+    
+    response += h.commands;
+    return response;
+}
+
 module.exports = {
     isColdStorageRequest,
     handleColdStorageRequest,
     cancelColdStorageSession,
     isCancelRequest,
+    isBackRequest,
+    isRestartRequest,
+    isReviewRequest,
+    isEditRequest,
+    goBackToPreviousQuestion,
+    editSpecificQuestion,
+    showCurrentAnswers,
     detectLanguage,
     getCurrentQuestion,
     processAnswer,
