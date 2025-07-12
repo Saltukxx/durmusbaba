@@ -19,7 +19,15 @@ QUESTIONS = {
         'floor_insulation': "Is there floor insulation?\n\nReply: Yes or No",
         'door_frequency': "How often will the door be opened daily?\n\nExample: 10 times, rarely, frequently",
         'loading_amount': "What is the daily loading/unloading amount? (in kg)\n\nExample: 500 kg",
-        'entry_temperature': "What is the temperature of products when they enter the room? (°C)\n\nExample: 20°C"
+        'entry_temperature': "What is the temperature of products when they enter the room? (°C)\n\nExample: 20°C",
+        'cooling_duration': "What is the required cooling duration? (in hours)\n\nExample: 24 hours, 48 hours",
+        'cooling_type': "What type of cooling system do you prefer?\n\nOptions: Air cooling, Direct expansion, Evaporative",
+        'unit_preference': "What type of unit do you prefer?\n\nOptions: Monoblock, Split system, Modular system",
+        'electricity_type': "What type of electricity supply?\n\nOptions: Single phase (220V), Three phase (380V/400V)",
+        'installation_city': "In which city will the installation be?\n\nExample: Istanbul, Berlin, London",
+        'ambient_heat_source': "Are there any ambient heat sources nearby?\n\nExample: Ovens, boilers, direct sunlight",
+        'usage_area': "What is the usable area or number of pallets?\n\nExample: 50 m² or 20 pallets",
+        'drawing_photo': "Do you have technical drawings or photos of the space?\n\nReply: Yes or No (you can send them later)"
     },
     'tr': {
         'temperature': "Gerekli soğuk oda sıcaklığı nedir? (°C)\n\nDesteklenen sıcaklıklar: 12, 5, 0, -5, -15, -18, -20, -25°C",
@@ -31,7 +39,15 @@ QUESTIONS = {
         'floor_insulation': "Zemin yalıtımı var mı?\n\nCevap: Evet veya Hayır",
         'door_frequency': "Kapı günde kaç kez açılacak?\n\nÖrnek: 10 kez, nadir, sık sık",
         'loading_amount': "Günlük yükleme/boşaltma miktarı nedir? (kg cinsinden)\n\nÖrnek: 500 kg",
-        'entry_temperature': "Ürünler odaya girdiğinde sıcaklığı nedir? (°C)\n\nÖrnek: 20°C"
+        'entry_temperature': "Ürünler odaya girdiğinde sıcaklığı nedir? (°C)\n\nÖrnek: 20°C",
+        'cooling_duration': "Gerekli soğuma süresi nedir? (saat cinsinden)\n\nÖrnek: 24 saat, 48 saat",
+        'cooling_type': "Hangi tip soğutma sistemi tercih ediyorsunuz?\n\nSeçenekler: Hava soğutmalı, Direkt ekspansiyonlu, Evaporatif",
+        'unit_preference': "Hangi tip ünite tercih ediyorsunuz?\n\nSeçenekler: Monoblock, Split sistem, Modüler sistem",
+        'electricity_type': "Elektrik tipi nedir?\n\nSeçenekler: Tek faz (220V), Üç faz (380V/400V)",
+        'installation_city': "Kurulum hangi şehirde yapılacak?\n\nÖrnek: İstanbul, Ankara, İzmir",
+        'ambient_heat_source': "Çevrede ısı kaynağı var mı?\n\nÖrnek: Fırınlar, kazanlar, doğrudan güneş ışığı",
+        'usage_area': "Kullanım alanı veya palet sayısı nedir?\n\nÖrnek: 50 m² veya 20 palet",
+        'drawing_photo': "Mekanın teknik çizimi veya fotoğrafı var mı?\n\nCevap: Evet veya Hayır (daha sonra gönderebilirsiniz)"
     },
     'de': {
         'temperature': "Welche Kühlraumtemperatur ist erforderlich? (°C)\n\nUnterstützte Temperaturen: 12, 5, 0, -5, -15, -18, -20, -25°C",
@@ -43,7 +59,15 @@ QUESTIONS = {
         'floor_insulation': "Gibt es eine Bodenisolierung?\n\nAntwort: Ja oder Nein",
         'door_frequency': "Wie oft wird die Tür täglich geöffnet?\n\nBeispiel: 10 mal, selten, häufig",
         'loading_amount': "Wie viel wird täglich be-/entladen? (in kg)\n\nBeispiel: 500 kg",
-        'entry_temperature': "Welche Temperatur haben die Produkte beim Einlagern? (°C)\n\nBeispiel: 20°C"
+        'entry_temperature': "Welche Temperatur haben die Produkte beim Einlagern? (°C)\n\nBeispiel: 20°C",
+        'cooling_duration': "Wie lange soll die Kühlung dauern? (in Stunden)\n\nBeispiel: 24 Stunden, 48 Stunden",
+        'cooling_type': "Welchen Kühlungstyp bevorzugen Sie?\n\nOptionen: Luftkühlung, Direktexpansion, Verdunstungskühlung",
+        'unit_preference': "Welchen Gerätetyp bevorzugen Sie?\n\nOptionen: Monoblock, Split-System, Modulares System",
+        'electricity_type': "Welcher Stromtyp?\n\nOptionen: Einphasig (220V), Dreiphasig (380V/400V)",
+        'installation_city': "In welcher Stadt erfolgt die Installation?\n\nBeispiel: Berlin, München, Hamburg",
+        'ambient_heat_source': "Gibt es Wärmequellen in der Umgebung?\n\nBeispiel: Öfen, Kessel, direktes Sonnenlicht",
+        'usage_area': "Wie groß ist die Nutzfläche oder wie viele Paletten?\n\nBeispiel: 50 m² oder 20 Paletten",
+        'drawing_photo': "Haben Sie technische Zeichnungen oder Fotos des Raums?\n\nAntwort: Ja oder Nein (können später gesendet werden)"
     }
 }
 
@@ -69,7 +93,7 @@ PROGRESS_MESSAGES = {
     }
 }
 
-# Question flow order
+# Question flow order - Updated to match JavaScript version with 18 questions
 QUESTION_ORDER = [
     'temperature',
     'products',
@@ -80,7 +104,15 @@ QUESTION_ORDER = [
     'floor_insulation',
     'door_frequency',
     'loading_amount',
-    'entry_temperature'
+    'entry_temperature',
+    'cooling_duration',
+    'cooling_type',
+    'unit_preference',
+    'electricity_type',
+    'installation_city',
+    'ambient_heat_source',
+    'usage_area',
+    'drawing_photo'
 ]
 
 # In-memory storage for user sessions (in production, use a database)
@@ -93,7 +125,7 @@ def initialize_cold_storage_flow(user_id, language='en'):
         user_id (str): User ID
         language (str): Language code (en/tr/de)
     Returns:
-        str: First question
+        str: Welcome message and first question
     """
     USER_SESSIONS[user_id] = {
         'active': True,
@@ -103,7 +135,17 @@ def initialize_cold_storage_flow(user_id, language='en'):
         'start_time': None
     }
     
-    return ask_current_question(user_id)
+    # Welcome messages with commands
+    welcome_messages = {
+        'en': "❄️ Welcome to the Cold Room Calculator! 🧊\n\nI'll help you calculate the exact cooling capacity needed for your cold storage room. We'll go through 18 comprehensive questions to get accurate results.\n\n📋 **HELPFUL COMMANDS YOU CAN USE:**\n✅ Type **'wrong'** if you made a mistake\n✅ Type **'show'** to see all your answers\n✅ Type **'restart'** to start over completely\n✅ Type **'stop'** to exit\n\n💡 You can use these commands at any time during the questions!\n\n🎯 Let's get started!",
+        'tr': "❄️ Soğuk Oda Hesaplayıcısına Hoş Geldiniz! 🧊\n\nSoğuk hava deponuz için gereken tam soğutma kapasitesini hesaplamanıza yardımcı olacağım. Doğru sonuçlar için 18 kapsamlı soru soracağım.\n\n📋 **KULLANABİLECEĞİNİZ YARDIMCI KOMUTLAR:**\n✅ Hata yaptıysanız **'yanlış'** yazın\n✅ Tüm cevaplarınızı görmek için **'göster'** yazın\n✅ Tamamen yeniden başlamak için **'restart'** yazın\n✅ Çıkmak için **'dur'** yazın\n\n💡 Bu komutları sorular sırasında istediğiniz zaman kullanabilirsiniz!\n\n🎯 Hadi başlayalım!",
+        'de': "❄️ Willkommen beim Kühlraum-Rechner! 🧊\n\nIch helfe Ihnen bei der Berechnung der exakten Kühlkapazität für Ihren Kühlraum. Wir gehen 18 umfassende Fragen durch, um genaue Ergebnisse zu erhalten.\n\n📋 **HILFREICHE BEFEHLE DIE SIE VERWENDEN KÖNNEN:**\n✅ Geben Sie **'falsch'** ein, wenn Sie einen Fehler gemacht haben\n✅ Geben Sie **'zeigen'** ein, um alle Ihre Antworten zu sehen\n✅ Geben Sie **'restart'** ein, um komplett neu zu beginnen\n✅ Geben Sie **'stopp'** ein, um zu beenden\n\n💡 Sie können diese Befehle jederzeit während der Fragen verwenden!\n\n🎯 Los geht's!"
+    }
+    
+    welcome_message = welcome_messages.get(language, welcome_messages['en'])
+    first_question = ask_current_question(user_id)
+    
+    return f"{welcome_message}\n\n{first_question}"
 
 def process_answer(user_id, answer):
     """
@@ -118,12 +160,41 @@ def process_answer(user_id, answer):
         return "No active session found. Please start a new calculation."
     
     session = USER_SESSIONS[user_id]
+    
+    # Check for special commands first
+    if is_cancel_request(answer):
+        return cancel_cold_storage_flow(user_id)
+    
+    if is_back_request(answer):
+        return go_back_to_previous_question(user_id)
+    
+    if is_restart_request(answer):
+        # Reset the flow
+        session['current_step'] = 0
+        session['answers'] = {}
+        restart_messages = {
+            'en': f"🔄 Restarting cold storage calculation...\n\n{ask_current_question(user_id)}",
+            'tr': f"🔄 Soğuk depo hesaplaması yeniden başlatılıyor...\n\n{ask_current_question(user_id)}",
+            'de': f"🔄 Kältelagerberechnung wird neu gestartet...\n\n{ask_current_question(user_id)}"
+        }
+        return restart_messages.get(session['language'], restart_messages['en'])
+    
+    if is_show_request(answer):
+        return show_current_answers(user_id)
+    
     current_question_key = QUESTION_ORDER[session['current_step']]
     
     # Validate and store answer
     validation_result = validate_answer(current_question_key, answer)
     if validation_result['error']:
-        return validation_result['error'] + "\n\n" + QUESTIONS[session['language']][current_question_key]
+        # Add helpful commands reminder when there's an error
+        help_texts = {
+            'en': "\n\n💡 Need help? Type 'wrong' to go back, 'show' to see answers, or 'restart' to start over.",
+            'tr': "\n\n💡 Yardım mı lazım? 'yanlış' yazarak geri gidin, 'göster' ile cevapları görün, ya da 'restart' ile yeniden başlayın.",
+            'de': "\n\n💡 Hilfe benötigt? Geben Sie 'falsch' ein um zurückzugehen, 'zeigen' für Antworten, oder 'restart' für Neustart."
+        }
+        help_text = help_texts.get(session['language'], help_texts['en'])
+        return validation_result['error'] + "\n\n" + QUESTIONS[session['language']][current_question_key] + help_text
     
     session['answers'][current_question_key] = validation_result['value']
     session['current_step'] += 1
@@ -140,7 +211,7 @@ def ask_current_question(user_id):
     Args:
         user_id (str): User ID
     Returns:
-        str: Current question
+        str: Current question with commands
     """
     session = USER_SESSIONS[user_id]
     current_question_key = QUESTION_ORDER[session['current_step']]
@@ -151,7 +222,16 @@ def ask_current_question(user_id):
         total=len(QUESTION_ORDER)
     )
     
-    return f"{progress}\n\n{question}"
+    # Add helpful commands
+    command_texts = {
+        'en': "\n\n💬 Commands: 'wrong' | 'show' | 'restart' | 'stop'",
+        'tr': "\n\n💬 Komutlar: 'yanlış' | 'göster' | 'restart' | 'dur'",
+        'de': "\n\n💬 Befehle: 'falsch' | 'zeigen' | 'restart' | 'stopp'"
+    }
+    
+    command_text = command_texts.get(session['language'], command_texts['en'])
+    
+    return f"{progress}\n\n{question}{command_text}"
 
 def validate_answer(question_key, answer):
     """
@@ -240,7 +320,179 @@ def validate_answer(question_key, answer):
         except ValueError:
             return {'error': "❌ Please enter product entry temperature in °C (-30 to 60).", 'value': None}
     
+    elif question_key == 'cooling_duration':
+        try:
+            duration = float(re.sub(r'(hours|hour|saat|stunden)', '', clean_answer, flags=re.IGNORECASE))
+            if duration < 1 or duration > 168:
+                return {'error': "❌ Please enter cooling duration in hours (1-168 hours).", 'value': None}
+            return {'error': None, 'value': duration}
+        except ValueError:
+            return {'error': "❌ Please enter cooling duration in hours (1-168 hours).", 'value': None}
+    
+    elif question_key == 'cooling_type':
+        lower_answer = clean_answer.lower()
+        if any(word in lower_answer for word in ['air', 'hava', 'luft']):
+            return {'error': None, 'value': 'air'}
+        elif any(word in lower_answer for word in ['direct', 'direkt']):
+            return {'error': None, 'value': 'direct'}
+        elif any(word in lower_answer for word in ['evap', 'verdun']):
+            return {'error': None, 'value': 'evaporative'}
+        else:
+            return {'error': "❌ Please select: Air cooling, Direct expansion, or Evaporative.", 'value': None}
+    
+    elif question_key == 'unit_preference':
+        lower_answer = clean_answer.lower()
+        if 'mono' in lower_answer:
+            return {'error': None, 'value': 'monoblock'}
+        elif 'split' in lower_answer:
+            return {'error': None, 'value': 'split'}
+        elif 'modul' in lower_answer:
+            return {'error': None, 'value': 'modular'}
+        else:
+            return {'error': "❌ Please select: Monoblock, Split system, or Modular system.", 'value': None}
+    
+    elif question_key == 'electricity_type':
+        lower_answer = clean_answer.lower()
+        if any(word in lower_answer for word in ['single', 'tek', '220']):
+            return {'error': None, 'value': 'single'}
+        elif any(word in lower_answer for word in ['three', 'üç', 'drei', '380', '400']):
+            return {'error': None, 'value': 'three'}
+        else:
+            return {'error': "❌ Please select: Single phase (220V) or Three phase (380V/400V).", 'value': None}
+    
+    elif question_key == 'installation_city':
+        if len(clean_answer) < 2:
+            return {'error': "❌ Please enter the installation city name.", 'value': None}
+        return {'error': None, 'value': clean_answer}
+    
+    elif question_key == 'ambient_heat_source':
+        return {'error': None, 'value': clean_answer}
+    
+    elif question_key == 'usage_area':
+        return {'error': None, 'value': clean_answer}
+    
+    elif question_key == 'drawing_photo':
+        lower_answer = clean_answer.lower()
+        if any(word in lower_answer for word in ['yes', 'evet', 'ja']):
+            return {'error': None, 'value': True}
+        elif any(word in lower_answer for word in ['no', 'hayır', 'nein']):
+            return {'error': None, 'value': False}
+        else:
+            return {'error': "❌ Please answer 'Yes'/'Evet'/'Ja' or 'No'/'Hayır'/'Nein'.", 'value': None}
+    
     return {'error': "❌ Invalid question type.", 'value': None}
+
+def is_cancel_request(message):
+    """Check if user wants to cancel current session"""
+    cancel_keywords = ['cancel', 'stop', 'quit', 'exit', 'iptal', 'dur', 'çık', 'abbrechen', 'stopp', 'beenden']
+    return message.lower().strip() in cancel_keywords
+
+def is_back_request(message):
+    """Check if user wants to go back to previous question"""
+    back_keywords = ['back', 'previous', 'go back', 'geri', 'önceki', 'zurück', 'vorherige', 'wrong', 'mistake', 'error', 'yanlış', 'hata', 'falsch', 'fehler']
+    return any(keyword in message.lower() for keyword in back_keywords)
+
+def is_restart_request(message):
+    """Check if user wants to restart calculation"""
+    restart_keywords = ['restart', 'start over', 'begin again', 'yeniden başla', 'tekrar başla', 'neu starten', 'von vorne']
+    return any(keyword in message.lower() for keyword in restart_keywords)
+
+def is_show_request(message):
+    """Check if user wants to show current answers"""
+    show_keywords = ['show', 'display', 'review', 'answers', 'göster', 'cevaplar', 'zeigen', 'antworten']
+    return any(keyword in message.lower() for keyword in show_keywords)
+
+def cancel_cold_storage_flow(user_id):
+    """Cancel active cold storage session"""
+    if user_id in USER_SESSIONS:
+        language = USER_SESSIONS[user_id].get('language', 'en')
+        del USER_SESSIONS[user_id]
+        
+        messages = {
+            'en': "❌ Cold storage calculation cancelled. Type 'cold storage' to start again.",
+            'tr': "❌ Soğuk depo hesaplaması iptal edildi. Tekrar başlamak için 'soğuk depo' yazın.",
+            'de': "❌ Kältelagerberechnung abgebrochen. Geben Sie 'Kühlraum' ein, um erneut zu beginnen."
+        }
+        
+        return messages.get(language, messages['en'])
+    
+    return None
+
+def go_back_to_previous_question(user_id):
+    """Go back to previous question"""
+    if user_id not in USER_SESSIONS:
+        return "No active session found."
+    
+    session = USER_SESSIONS[user_id]
+    language = session['language']
+    
+    if session['current_step'] <= 0:
+        messages = {
+            'en': "❌ You're already at the first question. Type 'restart' to start over.",
+            'tr': "❌ Zaten ilk sorudasınız. Yeniden başlamak için 'restart' yazın.",
+            'de': "❌ Sie sind bereits bei der ersten Frage. Geben Sie 'restart' ein, um von vorne zu beginnen."
+        }
+        return messages.get(language, messages['en'])
+    
+    # Go back one step and remove the previous answer
+    session['current_step'] -= 1
+    previous_question_key = QUESTION_ORDER[session['current_step']]
+    if previous_question_key in session['answers']:
+        del session['answers'][previous_question_key]
+    
+    back_messages = {
+        'en': "⬅️ Going back to previous question:",
+        'tr': "⬅️ Önceki soruya dönülüyor:",
+        'de': "⬅️ Zurück zur vorherigen Frage:"
+    }
+    
+    back_message = back_messages.get(language, back_messages['en'])
+    question = ask_current_question(user_id)
+    
+    return f"{back_message}\n\n{question}"
+
+def show_current_answers(user_id):
+    """Show current answers for review"""
+    if user_id not in USER_SESSIONS:
+        return "No active session found."
+    
+    session = USER_SESSIONS[user_id]
+    language = session['language']
+    answers = session['answers']
+    
+    headers = {
+        'en': {
+            'title': "📋 Your Current Answers:",
+            'noAnswers': "❌ No answers recorded yet.",
+            'commands': "\n💡 Commands:\n• Type 'back' to go to previous question\n• Type 'restart' to start over\n• Continue answering to proceed"
+        },
+        'tr': {
+            'title': "📋 Mevcut Cevaplarınız:",
+            'noAnswers': "❌ Henüz hiç cevap kaydedilmedi.",
+            'commands': "\n💡 Komutlar:\n• Önceki soruya dönmek için 'back' yazın\n• Yeniden başlamak için 'restart' yazın\n• Devam etmek için cevaplamaya devam edin"
+        },
+        'de': {
+            'title': "📋 Ihre aktuellen Antworten:",
+            'noAnswers': "❌ Noch keine Antworten aufgezeichnet.",
+            'commands': "\n💡 Befehle:\n• Geben Sie 'back' ein, um zur vorherigen Frage zu gehen\n• Geben Sie 'restart' ein, um von vorne zu beginnen\n• Setzen Sie das Beantworten fort, um fortzufahren"
+        }
+    }
+    
+    h = headers.get(language, headers['en'])
+    
+    if len(answers) == 0:
+        return h['noAnswers'] + h['commands']
+    
+    response = h['title'] + "\n\n"
+    
+    for i in range(session['current_step']):
+        question_key = QUESTION_ORDER[i]
+        answer = answers.get(question_key)
+        if answer is not None:
+            response += f"{i + 1}. {question_key}: {answer}\n"
+    
+    response += h['commands']
+    return response
 
 def calculate_and_finish(user_id):
     """
