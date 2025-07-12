@@ -13,6 +13,13 @@ from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 from conversation_context import conversation_context
 from cold_room_calculator import is_cold_room_calculation_request, handle_cold_room_calculation
+from cold_storage_flow_python import (
+    initialize_cold_storage_flow, 
+    process_answer, 
+    has_active_cold_storage_flow, 
+    cancel_cold_storage_flow,
+    detect_language
+)
 import time
 import threading
 from order_notification import handle_order_webhook, notify_new_order, check_for_new_orders
@@ -178,6 +185,21 @@ def get_gemini_response(user_id, text):
             welcome_message = generate_welcome_message()
             CHAT_HISTORY[user_id].send_message(welcome_message)
         
+        # PRIORITY 1: Check if there's an active cold storage flow FIRST
+        if has_active_cold_storage_flow(user_id):
+            # Check for cancel request first
+            if any(word in text.lower() for word in ['cancel', 'iptal', 'stop', 'dur', 'quit', 'exit']):
+                cancel_cold_storage_flow(user_id)
+                language = detect_language(text)
+                messages = {
+                    'en': "✅ Cold storage calculation cancelled. How can I help you?",
+                    'tr': "✅ Soğuk hava deposu hesaplaması iptal edildi. Size nasıl yardımcı olabilirim?",
+                    'de': "✅ Kühlraum-Berechnung abgebrochen. Wie kann ich Ihnen helfen?"
+                }
+                return messages.get(language, messages['en'])
+            # Otherwise, process as answer to current question
+            return process_answer(user_id, text)
+        
         # Check if this is a follow-up request for more products
         if is_more_products_request(text):
             return handle_more_products_request(user_id, text)
@@ -198,7 +220,9 @@ def get_gemini_response(user_id, text):
         if is_cold_room_calculation_request(text):
             context = conversation_context.get_context(user_id)
             context['current_topic'] = 'cold_room_calculation'
-            return handle_cold_room_calculation(text, user_id)
+            # Use guided questionnaire flow instead of direct calculation
+            language = detect_language(text)
+            return initialize_cold_storage_flow(user_id, language)
         
         # First check if the message is just a product name (direct product query)
         exact_product = find_exact_product(text)
