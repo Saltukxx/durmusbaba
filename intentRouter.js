@@ -352,8 +352,76 @@ async function handleColdStorageCalculation(session, message) {
     // Detect language from message
     const language = detectLanguage(message);
     
-    // Initialize new cold storage flow
-    return coldStorageFlow.initializeColdStorageFlow(session.userId, language);
+    // Check if user is choosing a specific calculation method
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('step') || lowerMessage.includes('guide') || lowerMessage.includes('detailed') ||
+        lowerMessage.includes('adım') || lowerMessage.includes('rehber') || lowerMessage.includes('detaylı') ||
+        lowerMessage.includes('schritt') || lowerMessage.includes('anleitung') || lowerMessage.includes('detailliert')) {
+      // Start step-by-step flow
+      return coldStorageFlow.initializeColdStorageFlow(session.userId, language);
+    }
+    
+    // Check if user wants quick calculation and has provided parameters
+    if (lowerMessage.includes('quick') || lowerMessage.includes('hızlı') || lowerMessage.includes('schnell') ||
+        lowerMessage.includes('calculate') || lowerMessage.includes('hesapla') || lowerMessage.includes('berechnen') ||
+        (lowerMessage.includes('m³') || lowerMessage.includes('°c'))) {
+      // Use legacy quick calculation handler
+      return await handleColdRoomCalculation(session, message);
+    }
+    
+    // Show options menu instead of immediately starting questions
+    const optionsMenu = {
+      en: `❄️ **Cold Room Calculation Options**
+
+I can help you calculate cold room capacity in two ways:
+
+🔹 **Quick Calculation** - Provide all parameters at once
+   Example: "Calculate for 330m³ room at -20°C with 35°C ambient"
+
+🔹 **Step-by-Step Guide** - I'll ask detailed questions one by one
+   Reply: "step by step" or "guide me"
+
+📊 **Available Commands:**
+• *Quick calc* - Fast calculation with your parameters
+• *Step by step* - Guided questionnaire  
+• *Help* - More information about calculations
+
+Which method would you prefer?`,
+      tr: `❄️ **Soğuk Oda Hesaplama Seçenekleri**
+
+Soğuk oda kapasitesini iki şekilde hesaplayabilirim:
+
+🔹 **Hızlı Hesaplama** - Tüm parametreleri bir kerede verin
+   Örnek: "330m³ oda için -20°C sıcaklıkta 35°C dış ortam sıcaklığında hesapla"
+
+🔹 **Adım Adım Rehber** - Detaylı soruları teker teker soracağım
+   Cevap: "adım adım" veya "rehber et"
+
+📊 **Kullanılabilir Komutlar:**
+• *Hızlı hesap* - Parametrelerinizle hızlı hesaplama
+• *Adım adım* - Rehberli anket
+• *Yardım* - Hesaplamalar hakkında daha fazla bilgi
+
+Hangi yöntemi tercih edersiniz?`,
+      de: `❄️ **Kühlraum-Berechnungsoptionen**
+
+Ich kann Ihnen bei der Kühlraumkapazität auf zwei Arten helfen:
+
+🔹 **Schnelle Berechnung** - Alle Parameter auf einmal angeben
+   Beispiel: "Berechnen für 330m³ Raum bei -20°C mit 35°C Umgebung"
+
+🔹 **Schritt-für-Schritt Anleitung** - Ich stelle detaillierte Fragen einzeln
+   Antwort: "schritt für schritt" oder "anleitung"
+
+📊 **Verfügbare Befehle:**
+• *Schnelle Berechnung* - Schnelle Berechnung mit Ihren Parametern
+• *Schritt für Schritt* - Geführter Fragebogen
+• *Hilfe* - Mehr Informationen über Berechnungen
+
+Welche Methode bevorzugen Sie?`
+    };
+    
+    return optionsMenu[language] || optionsMenu.en;
   } catch (error) {
     logger.error('Error in cold storage calculation:', error);
     return "I'm sorry, I encountered an error with the cold storage calculation. Please try again.";
