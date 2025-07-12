@@ -20,7 +20,15 @@ const questions = {
         floorInsulation: "🏠 Is there floor insulation?\n\n✅ Reply: Yes or No",
         doorFrequency: "🚪 How often will the door be opened daily?\n\n🔢 Example: 10 times, rarely, frequently",
         loadingAmount: "⚖️ What is the daily loading/unloading amount? (in kg)\n\n📦 Example: 500 kg",
-        entryTemperature: "🌡️ What is the temperature of products when they enter the room? (°C)\n\n📊 Example: 20°C"
+        entryTemperature: "🌡️ What is the temperature of products when they enter the room? (°C)\n\n📊 Example: 20°C",
+        coolingDuration: "⏱️ What is the required cooling duration? (in hours)\n\n🕐 Example: 24 hours, 48 hours",
+        coolingType: "❄️ What type of cooling system do you prefer?\n\n🔧 Options: Air cooling, Direct expansion, Evaporative",
+        unitPreference: "🏭 What type of unit do you prefer?\n\n⚙️ Options: Monoblock, Split system, Modular system",
+        electricityType: "⚡ What type of electricity supply?\n\n🔌 Options: Single phase (220V), Three phase (380V/400V)",
+        installationCity: "🏙️ In which city will the installation be?\n\n📍 Example: Istanbul, Berlin, London",
+        ambientHeatSource: "🌡️ Are there any ambient heat sources nearby?\n\n🔥 Example: Ovens, boilers, direct sunlight",
+        usageArea: "📐 What is the usable area or number of pallets?\n\n📦 Example: 50 m² or 20 pallets",
+        drawingPhoto: "📋 Do you have technical drawings or photos of the space?\n\n📸 Reply: Yes or No (you can send them later)"
     },
     tr: {
         temperature: "🌡️ Gerekli soğuk oda sıcaklığı nedir? (°C)\n\n❄️ Desteklenen sıcaklıklar: 12, 5, 0, -5, -15, -18, -20, -25°C",
@@ -32,7 +40,15 @@ const questions = {
         floorInsulation: "🏠 Zemin yalıtımı var mı?\n\n✅ Cevap: Evet veya Hayır",
         doorFrequency: "🚪 Kapı günde kaç kez açılacak?\n\n🔢 Örnek: 10 kez, nadir, sık sık",
         loadingAmount: "⚖️ Günlük yükleme/boşaltma miktarı nedir? (kg cinsinden)\n\n📦 Örnek: 500 kg",
-        entryTemperature: "🌡️ Ürünler odaya girdiğinde sıcaklığı nedir? (°C)\n\n📊 Örnek: 20°C"
+        entryTemperature: "🌡️ Ürünler odaya girdiğinde sıcaklığı nedir? (°C)\n\n📊 Örnek: 20°C",
+        coolingDuration: "⏱️ Gerekli soğuma süresi nedir? (saat cinsinden)\n\n🕐 Örnek: 24 saat, 48 saat",
+        coolingType: "❄️ Hangi tip soğutma sistemi tercih ediyorsunuz?\n\n🔧 Seçenekler: Hava soğutmalı, Direkt ekspansiyonlu, Evaporatif",
+        unitPreference: "🏭 Hangi tip ünite tercih ediyorsunuz?\n\n⚙️ Seçenekler: Monoblock, Split sistem, Modüler sistem",
+        electricityType: "⚡ Elektrik tipi nedir?\n\n🔌 Seçenekler: Tek faz (220V), Üç faz (380V/400V)",
+        installationCity: "🏙️ Kurulum hangi şehirde yapılacak?\n\n📍 Örnek: İstanbul, Ankara, İzmir",
+        ambientHeatSource: "🌡️ Çevrede ısı kaynağı var mı?\n\n🔥 Örnek: Fırınlar, kazanlar, doğrudan güneş ışığı",
+        usageArea: "📐 Kullanım alanı veya palet sayısı nedir?\n\n📦 Örnek: 50 m² veya 20 palet",
+        drawingPhoto: "📋 Mekanın teknik çizimi veya fotoğrafı var mı?\n\n📸 Cevap: Evet veya Hayır (daha sonra gönderebilirsiniz)"
     },
     de: {
         temperature: "🌡️ Welche Kühlraumtemperatur ist erforderlich? (°C)\n\n❄️ Unterstützte Temperaturen: 12, 5, 0, -5, -15, -18, -20, -25°C",
@@ -44,7 +60,15 @@ const questions = {
         floorInsulation: "🏠 Gibt es eine Bodenisolierung?\n\n✅ Antwort: Ja oder Nein",
         doorFrequency: "🚪 Wie oft wird die Tür täglich geöffnet?\n\n🔢 Beispiel: 10 mal, selten, häufig",
         loadingAmount: "⚖️ Wie viel wird täglich be-/entladen? (in kg)\n\n📦 Beispiel: 500 kg",
-        entryTemperature: "🌡️ Welche Temperatur haben die Produkte beim Einlagern? (°C)\n\n📊 Beispiel: 20°C"
+        entryTemperature: "🌡️ Welche Temperatur haben die Produkte beim Einlagern? (°C)\n\n📊 Beispiel: 20°C",
+        coolingDuration: "⏱️ Wie lange soll die Kühlung dauern? (in Stunden)\n\n🕐 Beispiel: 24 Stunden, 48 Stunden",
+        coolingType: "❄️ Welchen Kühlungstyp bevorzugen Sie?\n\n🔧 Optionen: Luftkühlung, Direktexpansion, Verdunstungskühlung",
+        unitPreference: "🏭 Welchen Gerätetyp bevorzugen Sie?\n\n⚙️ Optionen: Monoblock, Split-System, Modulares System",
+        electricityType: "⚡ Welcher Stromtyp?\n\n🔌 Optionen: Einphasig (220V), Dreiphasig (380V/400V)",
+        installationCity: "🏙️ In welcher Stadt erfolgt die Installation?\n\n📍 Beispiel: Berlin, München, Hamburg",
+        ambientHeatSource: "🌡️ Gibt es Wärmequellen in der Umgebung?\n\n🔥 Beispiel: Öfen, Kessel, direktes Sonnenlicht",
+        usageArea: "📐 Wie groß ist die Nutzfläche oder wie viele Paletten?\n\n📦 Beispiel: 50 m² oder 20 Paletten",
+        drawingPhoto: "📋 Haben Sie technische Zeichnungen oder Fotos des Raums?\n\n📸 Antwort: Ja oder Nein (können später gesendet werden)"
     }
 };
 
@@ -81,7 +105,15 @@ const questionOrder = [
     'floorInsulation',
     'doorFrequency',
     'loadingAmount',
-    'entryTemperature'
+    'entryTemperature',
+    'coolingDuration',
+    'coolingType',
+    'unitPreference',
+    'electricityType',
+    'installationCity',
+    'ambientHeatSource',
+    'usageArea',
+    'drawingPhoto'
 ];
 
 /**
@@ -102,9 +134,9 @@ function initializeColdStorageFlow(userId, language = 'en') {
     
     // Welcome messages for different languages
     const welcomeMessages = {
-        en: "❄️ Welcome to the Cold Room Calculator! 🧊\n\nI'll help you calculate the exact cooling capacity needed for your cold storage room. We'll go through 10 quick questions to get accurate results.\n\n🎯 Let's get started!",
-        tr: "❄️ Soğuk Oda Hesaplayıcısına Hoş Geldiniz! 🧊\n\nSoğuk hava deponuz için gereken tam soğutma kapasitesini hesaplamanıza yardımcı olacağım. Doğru sonuçlar için 10 hızlı soru soracağım.\n\n🎯 Hadi başlayalım!",
-        de: "❄️ Willkommen beim Kühlraum-Rechner! 🧊\n\nIch helfe Ihnen bei der Berechnung der exakten Kühlkapazität für Ihren Kühlraum. Wir gehen 10 kurze Fragen durch, um genaue Ergebnisse zu erhalten.\n\n🎯 Los geht's!"
+        en: "❄️ Welcome to the Cold Room Calculator! 🧊\n\nI'll help you calculate the exact cooling capacity needed for your cold storage room. We'll go through 18 comprehensive questions to get accurate results.\n\n🎯 Let's get started!",
+        tr: "❄️ Soğuk Oda Hesaplayıcısına Hoş Geldiniz! 🧊\n\nSoğuk hava deponuz için gereken tam soğutma kapasitesini hesaplamanıza yardımcı olacağım. Doğru sonuçlar için 18 kapsamlı soru soracağım.\n\n🎯 Hadi başlayalım!",
+        de: "❄️ Willkommen beim Kühlraum-Rechner! 🧊\n\nIch helfe Ihnen bei der Berechnung der exakten Kühlkapazität für Ihren Kühlraum. Wir gehen 18 umfassende Fragen durch, um genaue Ergebnisse zu erhalten.\n\n🎯 Los geht's!"
     };
     
     logger.info(`Initialized cold storage flow for user ${userId} in ${language}`);
@@ -242,6 +274,95 @@ function validateAnswer(questionKey, answer) {
                 return { error: "❌ Please enter product entry temperature in °C (-30 to 60)." };
             }
             return { value: entryTemp };
+            
+        case 'coolingDuration':
+            const duration = parseFloat(cleanAnswer.replace(/[hours|hour|saat|stunden]/gi, ''));
+            if (isNaN(duration) || duration < 1 || duration > 168) {
+                return { error: "❌ Please enter cooling duration in hours (1-168 hours)." };
+            }
+            return { value: duration };
+            
+        case 'coolingType':
+            const coolingType = cleanAnswer.toLowerCase();
+            if (coolingType.includes('air') || coolingType.includes('hava') || coolingType.includes('luft')) {
+                return { value: 'air' };
+            } else if (coolingType.includes('direct') || coolingType.includes('direkt')) {
+                return { value: 'direct' };
+            } else if (coolingType.includes('evap') || coolingType.includes('verdun')) {
+                return { value: 'evaporative' };
+            } else {
+                return { error: "❌ Please select: Air cooling, Direct expansion, or Evaporative." };
+            }
+            
+        case 'unitPreference':
+            const unitType = cleanAnswer.toLowerCase();
+            if (unitType.includes('mono')) {
+                return { value: 'monoblock' };
+            } else if (unitType.includes('split')) {
+                return { value: 'split' };
+            } else if (unitType.includes('modul')) {
+                return { value: 'modular' };
+            } else {
+                return { error: "❌ Please select: Monoblock, Split system, or Modular system." };
+            }
+            
+        case 'electricityType':
+            const elecType = cleanAnswer.toLowerCase();
+            if (elecType.includes('single') || elecType.includes('tek') || elecType.includes('220')) {
+                return { value: 'single' };
+            } else if (elecType.includes('three') || elecType.includes('üç') || elecType.includes('drei') || elecType.includes('380') || elecType.includes('400')) {
+                return { value: 'three' };
+            } else {
+                return { error: "❌ Please select: Single phase (220V) or Three phase (380V/400V)." };
+            }
+            
+        case 'installationCity':
+            if (cleanAnswer.length < 2) {
+                return { error: "❌ Please enter the installation city name." };
+            }
+            return { value: cleanAnswer };
+            
+        case 'ambientHeatSource':
+            const heatSource = cleanAnswer.toLowerCase();
+            if (heatSource.includes('yes') || heatSource.includes('evet') || heatSource.includes('ja') || 
+                heatSource.includes('oven') || heatSource.includes('fırın') || heatSource.includes('sun') || 
+                heatSource.includes('güneş') || heatSource.includes('sonne')) {
+                return { value: true };
+            } else if (heatSource.includes('no') || heatSource.includes('hayır') || heatSource.includes('nein')) {
+                return { value: false };
+            } else {
+                return { value: cleanAnswer };
+            }
+            
+        case 'usageArea':
+            const usageInput = cleanAnswer.toLowerCase();
+            if (usageInput.includes('m²') || usageInput.includes('m2') || usageInput.includes('square')) {
+                const area = parseFloat(cleanAnswer.replace(/[^0-9.]/g, ''));
+                if (!isNaN(area) && area > 0) {
+                    return { value: `${area} m²` };
+                }
+            } else if (usageInput.includes('palet') || usageInput.includes('pallet')) {
+                const pallets = parseInt(cleanAnswer.replace(/[^0-9]/g, ''));
+                if (!isNaN(pallets) && pallets > 0) {
+                    return { value: `${pallets} pallets` };
+                }
+            } else {
+                const number = parseFloat(cleanAnswer);
+                if (!isNaN(number) && number > 0) {
+                    return { value: cleanAnswer };
+                }
+            }
+            return { error: "❌ Please specify usable area (m²) or number of pallets." };
+            
+        case 'drawingPhoto':
+            const hasDrawing = cleanAnswer.toLowerCase();
+            if (hasDrawing.includes('yes') || hasDrawing.includes('evet') || hasDrawing.includes('ja')) {
+                return { value: true };
+            } else if (hasDrawing.includes('no') || hasDrawing.includes('hayır') || hasDrawing.includes('nein')) {
+                return { value: false };
+            } else {
+                return { error: "❌ Please answer 'Yes'/'Evet'/'Ja' or 'No'/'Hayır'/'Nein'." };
+            }
             
         default:
             return { error: "❌ Invalid question type." };
