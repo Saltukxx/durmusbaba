@@ -12,9 +12,91 @@ import re
 from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 from conversation_context import conversation_context
-# from cold_room_calculator import is_cold_room_calculation_request, handle_cold_room_calculation
-# Cold storage flow now handled by Node.js server with coldStorageService.js
-# Removed old Python implementation import
+# Cold room calculation functions
+def is_cold_room_calculation_request(text):
+    """Check if the message is requesting cold room calculation"""
+    text_lower = text.lower()
+    keywords = [
+        'cold room', 'cold storage', 'refrigeration', 'cooling capacity',
+        'freezer room', 'chiller', 'cooling room', 'refrigerated storage',
+        'calculate cold', 'cold requirements', 'cooling load',
+        'soğuk oda', 'soğuk depo', 'soğutma kapasitesi', 'dondurucu oda',
+        'soğutucu', 'soğuk alan', 'soğutma yükü', 'soğuk hesap',
+        'kühlraum', 'kältekammer', 'kühlhaus', 'kühllager',
+        'kühlkapazität', 'kälteanlage', 'tiefkühlraum', 'kühlzelle',
+        'calculate', 'hesapla', 'berechnen', 'capacity', 'kapasite', 'kapazität'
+    ]
+    return any(keyword in text_lower for keyword in keywords)
+
+def handle_cold_room_calculation(text, user_id):
+    """Handle cold room calculation requests"""
+    # Detect language
+    text_lower = text.lower()
+    if any(word in text_lower for word in ['soğuk', 'oda', 'hesapla', 'kapasite']):
+        language = 'tr'
+    elif any(word in text_lower for word in ['kühlraum', 'berechnen', 'kapazität']):
+        language = 'de'
+    else:
+        language = 'en'
+    
+    # Response based on language
+    responses = {
+        'tr': """❄️ **Soğuk Oda Kapasite Hesaplayıcısı**
+
+Soğutma kapasitesini hesaplamak için aşağıdaki bilgileri verin:
+
+**Gerekli Bilgiler:**
+• Oda boyutları (uzunluk × genişlik × yükseklik) veya hacim (m³)
+• Depolama sıcaklığı (-25°C ile +12°C arası)
+
+**Ek Bilgiler (isteğe bağlı):**
+• Ortam sıcaklığı (varsayılan: 35°C)
+• Ürün tipi (et, balık, süt ürünleri, meyve, sebze, donmuş)
+• Yalıtım kalınlığı (varsayılan: 100mm)
+• Günlük kapı açılış sayısı (varsayılan: 10)
+
+**Örnek:** "10m × 6m × 3m oda için -18°C'de hesapla"
+
+**Desteklenen Sıcaklıklar:** -25, -20, -18, -15, -5, 0, 5, 12°C""",
+        
+        'de': """❄️ **Kühlraum-Kapazitätsrechner**
+
+Zur Berechnung der Kühlkapazität geben Sie folgende Informationen an:
+
+**Erforderliche Informationen:**
+• Raumabmessungen (Länge × Breite × Höhe) oder Volumen (m³)
+• Lagertemperatur (-25°C bis +12°C)
+
+**Zusätzliche Informationen (optional):**
+• Umgebungstemperatur (Standard: 35°C)
+• Produkttyp (Fleisch, Fisch, Milchprodukte, Obst, Gemüse, gefroren)
+• Isolationsdicke (Standard: 100mm)
+• Tägliche Türöffnungen (Standard: 10)
+
+**Beispiel:** "Berechnen für 10m × 6m × 3m Raum bei -18°C"
+
+**Unterstützte Temperaturen:** -25, -20, -18, -15, -5, 0, 5, 12°C""",
+        
+        'en': """❄️ **Cold Room Capacity Calculator**
+
+To calculate cooling capacity, please provide:
+
+**Required Information:**
+• Room dimensions (length × width × height) or volume (m³)
+• Storage temperature (-25°C to +12°C)
+
+**Optional Information:**
+• Ambient temperature (default: 35°C)
+• Product type (meat, fish, dairy, fruits, vegetables, frozen)
+• Insulation thickness (default: 100mm)
+• Daily door openings (default: 10)
+
+**Example:** "Calculate for 10m × 6m × 3m room at -18°C"
+
+**Supported Temperatures:** -25, -20, -18, -15, -5, 0, 5, 12°C"""
+    }
+    
+    return responses.get(language, responses['en'])
 import time
 import threading
 from order_notification import handle_order_webhook, notify_new_order, check_for_new_orders
@@ -197,12 +279,11 @@ def get_gemini_response(user_id, text):
             context['current_topic'] = 'sales_inquiry'
             return handle_sales_inquiry(text, user_id)
         
-        # Cold room calculation requests are now handled by Node.js server
-        # Legacy cold room calculator disabled - all cold room requests go to Node.js service
-        # if is_cold_room_calculation_request(text):
-        #     context = conversation_context.get_context(user_id)
-        #     context['current_topic'] = 'cold_room_calculation'
-        #     return handle_cold_room_calculation(text, user_id)
+        # Check for cold room calculation requests
+        if is_cold_room_calculation_request(text):
+            context = conversation_context.get_context(user_id)
+            context['current_topic'] = 'cold_room_calculation'
+            return handle_cold_room_calculation(text, user_id)
         
         # First check if the message is just a product name (direct product query)
         exact_product = find_exact_product(text)
