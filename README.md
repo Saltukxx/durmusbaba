@@ -10,28 +10,13 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 - WooCommerce integration for e-commerce functionality
 - Multilingual support (English, German, Turkish)
 - Media message handling
-- **Cold Room Capacity Calculator** - Professional refrigeration system sizing
+
 - Product search and recommendation
 - Order status queries
 - Automatic order notifications via WhatsApp
 - **Snap-to-Shop**: Image recognition for product search (send a photo to find matching products)
 
-## Cold Room Capacity Calculator
 
-The chatbot includes a professional cold room capacity calculation system that:
-
-- Calculates required cooling capacity based on room volume and temperature
-- Supports multiple temperature ranges: 12°C, 5°C, 0°C, -5°C, -15°C, -18°C, -20°C, -25°C
-- Accounts for ambient temperature corrections
-- Includes climate zone adjustments (hot/cool regions)
-- Applies safety factors (0%, 10%, 20%, 30%)
-- Provides comparison tables for different volumes
-- Multi-language support for calculations
-
-### Usage Examples:
-- "Calculate cold room capacity for 330m³ at -20°C with 35°C ambient"
-- "Soğuk oda kapasitesi hesapla 200m³ oda -5°C sıcaklık 30°C dış ortam"
-- "Kühlraum Kapazität berechnen für 150m³ bei 0°C mit 45°C Umgebungstemperatur"
 
 ## Prerequisites
 
@@ -115,10 +100,7 @@ The chatbot includes a professional cold room capacity calculation system that:
    npm run test:whatsapp
    ```
 
-3. Test the cold room calculator:
-   ```
-   npm run test:cold-room
-   ```
+
 
 4. Test other components:
    ```
@@ -126,6 +108,7 @@ The chatbot includes a professional cold room capacity calculation system that:
    npm run test:woocommerce
    npm run test:language
    npm run test:intent
+   npm run test:cold-room
    ```
 
 ## Deployment
@@ -172,9 +155,11 @@ The chatbot includes a professional cold room capacity calculation system that:
 - `geminiService.js` - Gemini AI integration
 - `sessionManager.js` - Conversation management
 - `woocommerceService.js` - WooCommerce integration
-- `coldRoomCalculator.js` - Cold room capacity calculations
+
 - `intentRouter.js` - Intent detection and routing
 - `languageProcessor.js` - Multilingual support
+- `coldRoomCalculator.js` - Cold room capacity calculations
+- `coldRoomFlow.js` - Cold room calculation flow management
 - `routes.js` - API routes
 - `logger.js` - Logging service
 
@@ -196,6 +181,25 @@ The bot maintains intelligent conversation context:
 - Smart matching by price range, brand, features
 - Multi-language support (German, English, Turkish)
 - Professional sales communication
+
+### Cold Room Capacity Calculator
+
+Professional refrigeration system sizing with step-by-step guidance:
+
+- **Interactive Flow**: Guided questions to collect all required parameters
+- **Multi-language Support**: English, Turkish, German
+- **Comprehensive Calculations**: 
+  - Transmission load (heat through walls)
+  - Product load (heat from products)
+  - Infiltration load (heat from door openings)
+  - Internal load (lights, people, equipment)
+- **Professional Results**: Detailed breakdown with system recommendations
+- **Navigation Commands**: Show answers, go back, edit previous answers, restart
+
+**Usage Examples:**
+- "Calculate cold room capacity for 10m × 6m × 3m at -20°C"
+- "Soğuk oda kapasitesi hesapla 8m × 5m × 2.5m -5°C sıcaklık"
+- "Kühlraum Kapazität berechnen für 12m × 7m × 3.5m bei 0°C"
 
 ### Snap-to-Shop Feature
 

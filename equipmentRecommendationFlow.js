@@ -734,15 +734,7 @@ Das hilft mir, vorrätige Artikel zu priorisieren.`
     return messages[language] || messages.en;
   }
 
-  /**
-   * Estimate capacity based on room size and temperature
-   */
-  estimateCapacity(roomSize, temperature) {
-    // Simple estimation - should use coldRoomCalculator for accuracy
-    const baseCapacity = roomSize * 50; // W/m³ base
-    const tempFactor = temperature < -10 ? 1.5 : temperature < 0 ? 1.2 : 1.0;
-    return Math.round(baseCapacity * tempFactor);
-  }
+
 
   /**
    * Check if user has active flow

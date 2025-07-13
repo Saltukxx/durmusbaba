@@ -50,9 +50,7 @@ function getSession(userId) {
       },
       activeFlow: null, // 'cold_storage', 'equipment_recommendation', null
       flowData: {}, // Flow-specific data storage
-      // Legacy compatibility - keep existing properties for backward compatibility
-      coldStorage: null,
-      lastColdRoomResult: null  // Renamed from lastColdStorageResult
+
     };
     logger.debug(`Created new session for user ${userId}`);
   } else {

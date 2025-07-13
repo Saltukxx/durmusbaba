@@ -1,400 +1,317 @@
 const logger = require('./logger');
 
 /**
- * Modern Cold Room Capacity Calculator
- * Implements industry-standard calculation methods for cold storage systems
+ * Cold Room Capacity Calculator
+ * Professional refrigeration system sizing calculations
  */
-
-// Standard refrigeration temperature points with heat load coefficients (W/m³)
-const TEMPERATURE_COEFFICIENTS = {
-    12: { base: 45, infiltration: 0.8, product: 0.6 },    // Medium temp storage
-    5: { base: 55, infiltration: 1.0, product: 0.8 },     // Fresh produce
-    0: { base: 65, infiltration: 1.2, product: 1.0 },     // Meat/dairy
-    [-5]: { base: 75, infiltration: 1.4, product: 1.2 },  // Short-term frozen
-    [-15]: { base: 85, infiltration: 1.6, product: 1.4 }, // Frozen storage
-    [-18]: { base: 90, infiltration: 1.8, product: 1.6 }, // Standard freezer
-    [-20]: { base: 95, infiltration: 2.0, product: 1.8 }, // Deep freeze
-    [-25]: { base: 105, infiltration: 2.2, product: 2.0 } // Ultra-low temp
-};
-
-// Product-specific heat load factors (kJ/kg·K)
-const PRODUCT_HEAT_LOADS = {
-    meat: { specific_heat: 3.2, density: 800 },
-    fish: { specific_heat: 3.8, density: 750 },
-    dairy: { specific_heat: 3.5, density: 850 },
-    fruits: { specific_heat: 3.9, density: 600 },
-    vegetables: { specific_heat: 4.0, density: 550 },
-    frozen: { specific_heat: 2.1, density: 900 },
-    beverages: { specific_heat: 4.1, density: 950 },
-    general: { specific_heat: 3.5, density: 700 }
-};
-
-// Climate zone factors
-const CLIMATE_FACTORS = {
-    arctic: 0.85,     // Very cold climate
-    temperate: 1.0,   // Moderate climate
-    subtropical: 1.15, // Warm humid climate
-    tropical: 1.3,    // Hot humid climate
-    desert: 1.25      // Hot dry climate
-};
-
-/**
- * Calculate transmission heat load through walls, ceiling, and floor
- * @param {Object} dimensions - Room dimensions {length, width, height}
- * @param {Object} insulation - Insulation specs {wall_thickness, ceiling_thickness, floor_thickness}
- * @param {number} temp_diff - Temperature difference (ambient - room)
- * @returns {number} Transmission load in watts
- */
-function calculateTransmissionLoad(dimensions, insulation, temp_diff) {
-    const { length, width, height } = dimensions;
+class ColdRoomCalculator {
+  constructor() {
+    // Supported temperature ranges (°C)
+    this.supportedTemperatures = [-25, -20, -18, -15, -5, 0, 5, 12];
     
-    // Surface areas
-    const wall_area = 2 * (length * height + width * height);
-    const ceiling_area = length * width;
-    const floor_area = length * width;
-    
-    // U-values for different insulation thicknesses (W/m²·K)
-    const getUValue = (thickness_mm) => {
-        // Typical polyurethane insulation thermal conductivity: 0.026 W/m·K
-        const thermal_conductivity = 0.026;
-        const thickness_m = thickness_mm / 1000;
-        return thermal_conductivity / thickness_m;
+    // Base cooling load factors (W/m³) for different temperature ranges
+    this.baseLoadFactors = {
+      '-25': 80,   // Deep freeze
+      '-20': 70,   // Freezing
+      '-18': 65,   // Freezing
+      '-15': 60,   // Freezing
+      '-5': 45,    // Chilling
+      '0': 40,     // Chilling
+      '5': 35,     // Chilling
+      '12': 30     // Cooling
     };
     
-    const wall_u = getUValue(insulation.wall_thickness || 100);
-    const ceiling_u = getUValue(insulation.ceiling_thickness || 120);
-    const floor_u = insulation.floor_thickness ? getUValue(insulation.floor_thickness) : 0.5; // No insulation penalty
-    
-    // Calculate heat loads
-    const wall_load = wall_area * wall_u * temp_diff;
-    const ceiling_load = ceiling_area * ceiling_u * temp_diff;
-    const floor_load = floor_area * floor_u * temp_diff;
-    
-    return wall_load + ceiling_load + floor_load;
-}
-
-/**
- * Calculate infiltration heat load from door openings and air leakage
- * @param {Object} dimensions - Room dimensions
- * @param {number} door_openings - Daily door openings
- * @param {number} temp_diff - Temperature difference
- * @param {number} room_temp - Room temperature
- * @returns {number} Infiltration load in watts
- */
-function calculateInfiltrationLoad(dimensions, door_openings, temp_diff, room_temp) {
-    const volume = dimensions.length * dimensions.width * dimensions.height;
-    
-    // Air properties at room temperature
-    const air_density = 1.225 - (room_temp * 0.004); // kg/m³
-    const air_specific_heat = 1.006; // kJ/kg·K
-    
-    // Infiltration rate based on door openings (air changes per day)
-    const base_air_changes = 0.5; // Natural leakage
-    const door_air_changes = door_openings * 0.1; // 0.1 air change per opening
-    const total_air_changes = base_air_changes + door_air_changes;
-    
-    // Convert to watts
-    const infiltration_volume_per_second = (volume * total_air_changes) / (24 * 3600);
-    const infiltration_load = infiltration_volume_per_second * air_density * air_specific_heat * temp_diff * 1000;
-    
-    return Math.max(infiltration_load, 0);
-}
-
-/**
- * Calculate product heat load from cooling warm products
- * @param {number} daily_load_kg - Daily product load in kg
- * @param {number} entry_temp - Product entry temperature
- * @param {number} room_temp - Room storage temperature
- * @param {string} product_type - Type of product
- * @param {number} cooling_time_hours - Time to cool products
- * @returns {number} Product load in watts
- */
-function calculateProductLoad(daily_load_kg, entry_temp, room_temp, product_type, cooling_time_hours) {
-    const product_props = PRODUCT_HEAT_LOADS[product_type] || PRODUCT_HEAT_LOADS.general;
-    const temp_diff = Math.max(0, entry_temp - room_temp);
-    
-    if (temp_diff === 0 || daily_load_kg === 0) return 0;
-    
-    // Energy required to cool products (kJ)
-    const cooling_energy = daily_load_kg * product_props.specific_heat * temp_diff;
-    
-    // Convert to average power over cooling period (watts)
-    const cooling_time_seconds = cooling_time_hours * 3600;
-    const average_power = (cooling_energy * 1000) / cooling_time_seconds;
-    
-    return average_power;
-}
-
-/**
- * Calculate equipment heat load from fans, lights, defrost systems
- * @param {Object} dimensions - Room dimensions
- * @param {Object} equipment - Equipment specifications
- * @returns {number} Equipment load in watts
- */
-function calculateEquipmentLoad(dimensions, equipment = {}) {
-    const volume = dimensions.length * dimensions.width * dimensions.height;
-    const floor_area = dimensions.length * dimensions.width;
-    
-    let total_load = 0;
-    
-    // Evaporator fans (typical: 15-25 W per kW of cooling capacity)
-    // Estimate: 5 W/m³ for small rooms, 3 W/m³ for large rooms
-    const fan_load = volume < 100 ? volume * 5 : volume * 3;
-    total_load += fan_load;
-    
-    // Lighting (LED: 10-15 W/m²)
-    const lighting_load = floor_area * (equipment.lighting_watts_per_sqm || 12);
-    total_load += lighting_load;
-    
-    // Defrost heaters (for freezer rooms only, typically 30% of evaporator capacity)
-    // This is handled separately in the main calculation
-    
-    return total_load;
-}
-
-/**
- * Calculate total cooling capacity for a cold room
- * @param {Object} params - Calculation parameters
- * @returns {Object} Detailed calculation results
- */
-function calculateColdRoomCapacity(params) {
-    const {
-        // Room specifications
-        length = 10,
-        width = 6,
-        height = 3,
-        temperature = -18,
-        
-        // Environmental conditions
-        ambient_temperature = 35,
-        climate_zone = 'temperate',
-        humidity_factor = 1.0,
-        
-        // Insulation specifications
-        wall_insulation = 100,    // mm
-        ceiling_insulation = 120, // mm
-        floor_insulation = 80,    // mm
-        
-        // Operational parameters
-        door_openings_per_day = 10,
-        daily_product_load = 500,  // kg
-        product_entry_temperature = 20,
-        product_type = 'general',
-        cooling_time_hours = 24,
-        
-        // Safety and design factors
-        safety_factor = 1.2,
-        defrost_factor = 1.0,     // Additional factor for defrost cycles
-        future_expansion = 1.0     // Factor for future capacity needs
-    } = params;
-    
-    // Validate inputs
-    if (!TEMPERATURE_COEFFICIENTS[temperature]) {
-        throw new Error(`Unsupported temperature: ${temperature}°C. Supported: ${Object.keys(TEMPERATURE_COEFFICIENTS).join(', ')}`);
-    }
-    
-    const dimensions = { length, width, height };
-    const volume = length * width * height;
-    const temp_diff = ambient_temperature - temperature;
-    
-    // Calculate individual heat loads
-    const transmission_load = calculateTransmissionLoad(
-        dimensions,
-        {
-            wall_thickness: wall_insulation,
-            ceiling_thickness: ceiling_insulation,
-            floor_thickness: floor_insulation
-        },
-        temp_diff
-    );
-    
-    const infiltration_load = calculateInfiltrationLoad(
-        dimensions,
-        door_openings_per_day,
-        temp_diff,
-        temperature
-    );
-    
-    const product_load = calculateProductLoad(
-        daily_product_load,
-        product_entry_temperature,
-        temperature,
-        product_type,
-        cooling_time_hours
-    );
-    
-    const equipment_load = calculateEquipmentLoad(dimensions);
-    
-    // Calculate base cooling load
-    const base_load = transmission_load + infiltration_load + product_load + equipment_load;
-    
-    // Apply correction factors
-    const climate_factor = CLIMATE_FACTORS[climate_zone] || CLIMATE_FACTORS.temperate;
-    const corrected_load = base_load * climate_factor * humidity_factor;
-    
-    // Add defrost load for freezer rooms
-    let defrost_load = 0;
-    if (temperature <= 0) {
-        defrost_load = corrected_load * 0.15 * defrost_factor; // 15% additional for defrost
-    }
-    
-    // Calculate final capacity with safety factors
-    const total_load = corrected_load + defrost_load;
-    const final_capacity = total_load * safety_factor * future_expansion;
-    
-    // Calculate specific loads per unit
-    const load_per_m3 = final_capacity / volume;
-    const load_per_m2 = final_capacity / (length * width);
-    
-    return {
-        // Main results
-        total_capacity_watts: Math.round(final_capacity),
-        total_capacity_kw: Math.round(final_capacity / 1000 * 100) / 100,
-        load_per_m3: Math.round(load_per_m3),
-        load_per_m2: Math.round(load_per_m2),
-        
-        // Detailed breakdown
-        loads: {
-            transmission: Math.round(transmission_load),
-            infiltration: Math.round(infiltration_load),
-            product: Math.round(product_load),
-            equipment: Math.round(equipment_load),
-            defrost: Math.round(defrost_load),
-            base_total: Math.round(base_load),
-            corrected_total: Math.round(corrected_load)
-        },
-        
-        // Applied factors
-        factors: {
-            climate: climate_factor,
-            humidity: humidity_factor,
-            safety: safety_factor,
-            defrost: defrost_factor,
-            expansion: future_expansion,
-            final_multiplier: climate_factor * humidity_factor * safety_factor * future_expansion
-        },
-        
-        // Room specifications
-        room: {
-            volume: Math.round(volume * 100) / 100,
-            dimensions: `${length}m × ${width}m × ${height}m`,
-            temperature: temperature,
-            ambient_temperature: ambient_temperature,
-            temperature_difference: temp_diff
-        },
-        
-        // System recommendations
-        recommendations: generateSystemRecommendations(final_capacity, temperature, volume),
-        
-        // Input parameters (for reference)
-        inputs: params
+    // Product load factors (W/kg) for different product types
+    this.productLoadFactors = {
+      'meat': 0.8,
+      'fish': 0.9,
+      'dairy': 0.6,
+      'vegetables': 0.4,
+      'fruits': 0.4,
+      'frozen': 1.2,
+      'general': 0.7
     };
-}
-
-/**
- * Generate system recommendations based on calculated capacity
- * @param {number} capacity_watts - Required cooling capacity
- * @param {number} temperature - Storage temperature
- * @param {number} volume - Room volume
- * @returns {Object} System recommendations
- */
-function generateSystemRecommendations(capacity_watts, temperature, volume) {
-    const capacity_kw = capacity_watts / 1000;
     
-    let system_type;
-    let compressor_type;
-    let refrigerant_suggestion;
-    let additional_notes = [];
-    
-    // System type recommendation
-    if (capacity_kw < 5) {
-        system_type = 'Monoblock Unit';
-        additional_notes.push('Compact solution, easy installation');
-    } else if (capacity_kw < 15) {
-        system_type = 'Split System';
-        additional_notes.push('Flexible installation, lower noise');
-    } else if (capacity_kw < 50) {
-        system_type = 'Multi-Split or Modular System';
-        additional_notes.push('Redundancy and staged capacity control');
-    } else {
-        system_type = 'Central Refrigeration System';
-        additional_notes.push('Custom engineered solution required');
-    }
-    
-    // Compressor type recommendation
-    if (capacity_kw < 3) {
-        compressor_type = 'Hermetic Reciprocating';
-    } else if (capacity_kw < 20) {
-        compressor_type = 'Semi-hermetic Reciprocating';
-    } else if (capacity_kw < 100) {
-        compressor_type = 'Screw Compressor';
-    } else {
-        compressor_type = 'Centrifugal or Large Screw';
-    }
-    
-    // Refrigerant suggestion
-    if (temperature >= 0) {
-        refrigerant_suggestion = 'R-134a, R-513A, or R-1234yf (HFO)';
-    } else if (temperature >= -25) {
-        refrigerant_suggestion = 'R-404A, R-448A, or R-449A';
-        additional_notes.push('Consider natural refrigerants (CO2, NH3) for larger systems');
-    } else {
-        refrigerant_suggestion = 'R-404A or cascade system with CO2';
-        additional_notes.push('Ultra-low temperature requires specialized design');
-    }
-    
-    // Energy efficiency recommendations
-    if (capacity_kw > 10) {
-        additional_notes.push('Consider variable speed drives for energy efficiency');
-    }
-    
-    if (temperature <= -15) {
-        additional_notes.push('Electric or hot gas defrost system required');
-    }
-    
-    return {
-        system_type,
-        compressor_type,
-        refrigerant_suggestion,
-        estimated_power_consumption: `${Math.round(capacity_kw * 0.8)}-${Math.round(capacity_kw * 1.2)} kW`,
-        additional_notes
+    // Insulation U-values (W/m²K) for different thicknesses
+    this.insulationUValues = {
+      '50': 0.6,
+      '75': 0.4,
+      '100': 0.3,
+      '120': 0.25,
+      '150': 0.2,
+      '200': 0.15
     };
-}
+  }
 
-/**
- * Quick calculation with simplified parameters
- * @param {number} volume - Room volume in m³
- * @param {number} temperature - Storage temperature in °C
- * @param {number} ambient_temp - Ambient temperature in °C
- * @returns {Object} Basic calculation results
- */
-function quickCalculation(volume, temperature, ambient_temp = 35) {
-    // Simplified calculation for quick estimates
-    const temp_coeff = TEMPERATURE_COEFFICIENTS[temperature];
-    if (!temp_coeff) {
-        throw new Error(`Unsupported temperature: ${temperature}°C`);
+  /**
+   * Calculate total cooling capacity
+   * @param {Object} parameters - Calculation parameters
+   * @returns {Object} - Calculation results
+   */
+  calculateCapacity(parameters) {
+    try {
+      const {
+        length, width, height,
+        temperature, ambientTemperature = 35,
+        productType = 'general', dailyLoad = 0,
+        entryTemperature = 20, insulationThickness = 100,
+        doorOpenings = 10, coolingTime = 24,
+        safetyFactor = 10, climateZone = 'temperate'
+      } = parameters;
+
+      // Calculate room volume
+      const volume = length * width * height;
+      const surfaceArea = 2 * (length * width + length * height + width * height);
+
+      // 1. Transmission Load (heat through walls)
+      const transmissionLoad = this.calculateTransmissionLoad(
+        surfaceArea, temperature, ambientTemperature, insulationThickness
+      );
+
+      // 2. Product Load (heat from products)
+      const productLoad = this.calculateProductLoad(
+        dailyLoad, temperature, entryTemperature, productType
+      );
+
+      // 3. Infiltration Load (heat from door openings)
+      const infiltrationLoad = this.calculateInfiltrationLoad(
+        volume, temperature, ambientTemperature, doorOpenings
+      );
+
+      // 4. Internal Load (lights, people, equipment)
+      const internalLoad = this.calculateInternalLoad(volume);
+
+      // 5. Cooling Time Factor
+      const coolingTimeFactor = this.calculateCoolingTimeFactor(coolingTime);
+
+      // 6. Climate Zone Factor
+      const climateFactor = this.getClimateFactor(climateZone);
+
+      // Calculate total load
+      const totalLoad = (transmissionLoad + productLoad + infiltrationLoad + internalLoad) 
+                       * coolingTimeFactor * climateFactor;
+
+      // Apply safety factor
+      const finalCapacity = totalLoad * (1 + safetyFactor / 100);
+
+      // Calculate load breakdown percentages
+      const breakdown = {
+        transmission: totalLoad > 0 ? Math.round((transmissionLoad / totalLoad) * 100) : 0,
+        product: totalLoad > 0 ? Math.round((productLoad / totalLoad) * 100) : 0,
+        infiltration: totalLoad > 0 ? Math.round((infiltrationLoad / totalLoad) * 100) : 0,
+        internal: totalLoad > 0 ? Math.round((internalLoad / totalLoad) * 100) : 0
+      };
+
+      return {
+        volume: Math.round(volume),
+        surfaceArea: Math.round(surfaceArea),
+        totalLoad: Math.round(totalLoad),
+        finalCapacity: Math.round(finalCapacity),
+        breakdown,
+        parameters: {
+          ...parameters,
+          volume: Math.round(volume),
+          surfaceArea: Math.round(surfaceArea)
+        }
+      };
+
+    } catch (error) {
+      logger.error('Error calculating cold room capacity:', error);
+      throw new Error('Calculation failed');
     }
+  }
+
+  /**
+   * Calculate transmission load through walls
+   */
+  calculateTransmissionLoad(surfaceArea, temperature, ambientTemperature, insulationThickness) {
+    const uValue = this.insulationUValues[insulationThickness] || 0.3;
+    const tempDifference = ambientTemperature - temperature;
+    return surfaceArea * uValue * tempDifference;
+  }
+
+  /**
+   * Calculate product load
+   */
+  calculateProductLoad(dailyLoad, temperature, entryTemperature, productType) {
+    if (dailyLoad <= 0) return 0;
     
-    const temp_diff = ambient_temp - temperature;
-    const base_load_per_m3 = temp_coeff.base + (temp_diff - 35) * 0.5;
-    const base_capacity = volume * base_load_per_m3;
+    const productFactor = this.productLoadFactors[productType] || 0.7;
+    const tempDifference = entryTemperature - temperature;
+    const specificHeat = 3.6; // kJ/kgK for most products
     
-    // Apply standard factors
-    const safety_factor = 1.2;
-    const final_capacity = base_capacity * safety_factor;
+    return (dailyLoad * specificHeat * tempDifference * productFactor) / 24; // Convert to hourly
+  }
+
+  /**
+   * Calculate infiltration load from door openings
+   */
+  calculateInfiltrationLoad(volume, temperature, ambientTemperature, doorOpenings) {
+    const airDensity = 1.2; // kg/m³
+    const specificHeat = 1.005; // kJ/kgK
+    const infiltrationRate = 0.1; // m³ per opening
     
-    return {
-        total_capacity_watts: Math.round(final_capacity),
-        total_capacity_kw: Math.round(final_capacity / 1000 * 100) / 100,
-        load_per_m3: Math.round(final_capacity / volume),
-        calculation_method: 'simplified'
+    const tempDifference = ambientTemperature - temperature;
+    const hourlyInfiltration = (doorOpenings * infiltrationRate) / 24;
+    
+    return hourlyInfiltration * airDensity * specificHeat * tempDifference;
+  }
+
+  /**
+   * Calculate internal load (lights, people, equipment)
+   */
+  calculateInternalLoad(volume) {
+    // Base internal load: 5 W/m³
+    return volume * 5;
+  }
+
+  /**
+   * Calculate cooling time factor
+   */
+  calculateCoolingTimeFactor(coolingTime) {
+    // Standard is 24 hours, factor increases for shorter times
+    return 24 / coolingTime;
+  }
+
+  /**
+   * Get climate zone factor
+   */
+  getClimateFactor(climateZone) {
+    const factors = {
+      'hot': 1.3,
+      'warm': 1.15,
+      'temperate': 1.0,
+      'cool': 0.9
     };
+    return factors[climateZone] || 1.0;
+  }
+
+  /**
+   * Validate calculation parameters
+   */
+  validateParameters(parameters) {
+    const errors = [];
+
+    // Check required parameters
+    if (!parameters.length || parameters.length <= 0) {
+      errors.push('Room length is required');
+    }
+    if (!parameters.width || parameters.width <= 0) {
+      errors.push('Room width is required');
+    }
+    if (!parameters.height || parameters.height <= 0) {
+      errors.push('Room height is required');
+    }
+    if (!parameters.temperature) {
+      errors.push('Storage temperature is required');
+    }
+
+    // Validate temperature
+    if (parameters.temperature && !this.supportedTemperatures.includes(parameters.temperature)) {
+      errors.push(`Temperature must be one of: ${this.supportedTemperatures.join(', ')}°C`);
+    }
+
+    // Validate dimensions
+    if (parameters.length && (parameters.length < 1 || parameters.length > 50)) {
+      errors.push('Length must be between 1 and 50 meters');
+    }
+    if (parameters.width && (parameters.width < 1 || parameters.width > 50)) {
+      errors.push('Width must be between 1 and 50 meters');
+    }
+    if (parameters.height && (parameters.height < 1 || parameters.height > 10)) {
+      errors.push('Height must be between 1 and 10 meters');
+    }
+
+    // Validate other parameters
+    if (parameters.ambientTemperature && (parameters.ambientTemperature < 20 || parameters.ambientTemperature > 50)) {
+      errors.push('Ambient temperature must be between 20 and 50°C');
+    }
+    if (parameters.dailyLoad && parameters.dailyLoad < 0) {
+      errors.push('Daily load cannot be negative');
+    }
+    if (parameters.doorOpenings && (parameters.doorOpenings < 0 || parameters.doorOpenings > 100)) {
+      errors.push('Door openings must be between 0 and 100 per day');
+    }
+
+    return errors;
+  }
+
+  /**
+   * Format calculation results for display
+   */
+  formatResults(results, language = 'en') {
+    const texts = {
+      en: {
+        title: '❄️ **Cold Room Capacity Calculation Results**',
+        volume: 'Room Volume',
+        capacity: 'Required Cooling Capacity',
+        breakdown: 'Load Breakdown',
+        transmission: 'Transmission Load',
+        product: 'Product Load',
+        infiltration: 'Infiltration Load',
+        internal: 'Internal Load',
+        recommendations: 'System Recommendations',
+        nextSteps: "What's Next?",
+        contact: 'Contact our technical team for detailed system design',
+        disclaimer: 'This calculation provides an estimate. Professional engineering review is recommended.'
+      },
+      tr: {
+        title: '❄️ **Soğuk Oda Kapasite Hesaplama Sonuçları**',
+        volume: 'Oda Hacmi',
+        capacity: 'Gerekli Soğutma Kapasitesi',
+        breakdown: 'Yük Dağılımı',
+        transmission: 'İletim Yükü',
+        product: 'Ürün Yükü',
+        infiltration: 'Sızıntı Yükü',
+        internal: 'İç Yük',
+        recommendations: 'Sistem Önerileri',
+        nextSteps: 'Sonraki Adımlar',
+        contact: 'Detaylı sistem tasarımı için teknik ekibimizle iletişime geçin',
+        disclaimer: 'Bu hesaplama bir tahmin sağlar. Profesyonel mühendislik incelemesi önerilir.'
+      },
+      de: {
+        title: '❄️ **Kühlraum-Kapazitätsberechnung Ergebnisse**',
+        volume: 'Raumvolumen',
+        capacity: 'Erforderliche Kühlkapazität',
+        breakdown: 'Lastaufteilung',
+        transmission: 'Transmissionslast',
+        product: 'Produktlast',
+        infiltration: 'Infiltrationslast',
+        internal: 'Innere Last',
+        recommendations: 'Systemempfehlungen',
+        nextSteps: 'Nächste Schritte',
+        contact: 'Kontaktieren Sie unser technisches Team für detaillierte Systemplanung',
+        disclaimer: 'Diese Berechnung liefert eine Schätzung. Professionelle technische Überprüfung wird empfohlen.'
+      }
+    };
+
+    const t = texts[language] || texts.en;
+
+    let response = `${t.title}\n\n`;
+    response += `📏 **${t.volume}:** ${results.volume} m³\n`;
+    response += `🔧 **${t.capacity}:** ${(results.finalCapacity / 1000).toFixed(1)} kW (${results.finalCapacity.toLocaleString()} W)\n\n`;
+
+    response += `📊 **${t.breakdown}:**\n`;
+    response += `• ${t.transmission}: ${results.breakdown.transmission}%\n`;
+    response += `• ${t.product}: ${results.breakdown.product}%\n`;
+    response += `• ${t.infiltration}: ${results.breakdown.infiltration}%\n`;
+    response += `• ${t.internal}: ${results.breakdown.internal}%\n\n`;
+
+    response += `💡 **${t.recommendations}:**\n`;
+    response += `• Cooling Unit: ${(results.finalCapacity / 1000).toFixed(1)} kW capacity\n`;
+    response += `• Evaporator: ${(results.finalCapacity * 0.8 / 1000).toFixed(1)} kW capacity\n`;
+    response += `• Insulation: ${results.parameters.insulationThickness}mm thickness\n`;
+    response += `• Door: Standard cold room door\n\n`;
+
+    response += `🚀 **${t.nextSteps}:**\n`;
+    response += `• ${t.contact}\n`;
+    response += `• Request detailed quotation\n`;
+    response += `• Schedule site visit\n\n`;
+
+    response += `⚠️ ${t.disclaimer}`;
+
+    return response;
+  }
 }
 
-module.exports = {
-    calculateColdRoomCapacity,
-    quickCalculation,
-    TEMPERATURE_COEFFICIENTS,
-    PRODUCT_HEAT_LOADS,
-    CLIMATE_FACTORS
-};
+module.exports = new ColdRoomCalculator(); 

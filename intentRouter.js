@@ -1,9 +1,9 @@
 const geminiService = require('./geminiService');
 const woocommerceService = require('./woocommerceService');
 const languageProcessor = require('./languageProcessor');
-const coldRoomFlow = require('./coldRoomFlow');
 const equipmentRecommendationService = require('./equipmentRecommendationService');
 const equipmentRecommendationFlow = require('./equipmentRecommendationFlow');
+const coldRoomFlow = require('./coldRoomFlow');
 const sessionManager = require('./sessionManager');
 const errorHandler = require('./errorHandler');
 const logger = require('./logger');
@@ -132,14 +132,7 @@ async function detectIntent(message) {
       return { type: 'language_change', confidence: 0.95, languageCode };
     }
     
-    // Additional check: If message contains ANY cold room related content, force cold room calculation
-    // This catches cases where previous checks might have missed cold room intent
-    if (lowerMessage.includes('cold') || lowerMessage.includes('cool') || lowerMessage.includes('freez') ||
-        lowerMessage.includes('soğuk') || lowerMessage.includes('kühl') || lowerMessage.includes('kälte') ||
-        lowerMessage.includes('capacity') || lowerMessage.includes('kapasite') || lowerMessage.includes('kapazität') ||
-        lowerMessage.includes('temperature') || lowerMessage.includes('sıcaklık') || lowerMessage.includes('temperatur')) {
-      return { type: 'cold_room_calculation', confidence: 0.8 };
-    }
+
     
     // Default to general query
     return { type: 'general_query', confidence: 0.5 };
@@ -221,16 +214,14 @@ async function handleActiveFlow(session, message) {
   }
 
   switch (flowType) {
-    case 'cold_storage':
     case 'cold_room':
       // Handle active cold room flow
       if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
         return coldRoomFlow.processInput(session, message);
       } else {
-        // Start new flow (shouldn't normally reach here, but safety fallback)
+        // Flow ended externally, clean up session
         sessionManager.endFlow(session);
-        const language = detectLanguage(message);
-        return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+        return handleGreeting(session);
       }
       
     case 'equipment_recommendation':
@@ -259,6 +250,9 @@ async function handleActiveFlow(session, message) {
  */
 async function routeIntent(session, intent, message) {
   switch (intent.type) {
+    case 'cold_room_calculation':
+      return await handleColdRoomCalculation(session, message);
+      
     case 'equipment_recommendation':
       return await handleEquipmentRecommendation(session, message);
       
@@ -274,45 +268,13 @@ async function routeIntent(session, intent, message) {
     case 'language_change':
       return handleLanguageChange(session, intent.languageCode);
       
-    case 'cold_storage_calculation':
-    case 'cold_room_calculation':
-      // Check if user already has an active cold room flow
-      if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
-        // Process the input as part of the existing flow
-        return coldRoomFlow.processInput(session, message);
-      } else {
-        // Start new cold room flow
-        sessionManager.startFlow(session, 'cold_room');
-        const language = detectLanguage(message, session);
-        return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
-      }
-      
     case 'cancel_session':
       return handleCancelSession(session, message);
       
     case 'customer_support':
     case 'general_query':
     default:
-      // SAFETY CHECK: If message contains cold room related keywords but reached general query,
-      // redirect to cold room flow instead of using Gemini
-      const lowerMsg = message.toLowerCase();
-      if (lowerMsg.includes('cold') || lowerMsg.includes('cool') || lowerMsg.includes('freez') ||
-          lowerMsg.includes('soğuk') || lowerMsg.includes('kühl') || lowerMsg.includes('kälte') ||
-          lowerMsg.includes('capacity') || lowerMsg.includes('kapasite') || lowerMsg.includes('kapazität') ||
-          lowerMsg.includes('temperature') || lowerMsg.includes('sıcaklık') || lowerMsg.includes('temperatur')) {
-        // Check if user already has an active cold room flow
-        if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
-          // Process the input as part of the existing flow
-          return coldRoomFlow.processInput(session, message);
-        } else {
-          // Force redirect to cold room calculation
-          sessionManager.startFlow(session, 'cold_room');
-          const language = detectLanguage(message, session);
-          return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
-        }
-      }
-      
-      // For non-cold-room general queries, use multilingual response
+      // For general queries, use multilingual response
       return await languageProcessor.generateMultilingualResponse(session, message);
   }
 }
@@ -436,19 +398,38 @@ function handleLanguageChange(session, languageCode) {
   return responses[languageCode] || responses['en'];
 }
 
-/*
-// DISABLED: This function used the old coldStorageFlow system
-// Now using only coldStorageService for consistency
-//
-// * Handle cold storage calculation intent (new step-by-step version)
-// * @param {Object} session - User session
-// * @param {string} message - User message
-// * @returns {Promise<string>} - Response with calculation results
-//
-async function handleColdStorageCalculation(session, message) {
-  // Function disabled - all cold storage routing now goes through coldStorageService
+/**
+ * Handle cold room calculation intent
+ * @param {Object} session - User session
+ * @param {string} message - User message
+ * @returns {Promise<string>} - Response with calculation flow
+ */
+async function handleColdRoomCalculation(session, message) {
+  try {
+    // Check if user already has an active cold room flow
+    if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
+      // Process the input as part of the existing flow
+      return coldRoomFlow.processInput(session, message);
+    } else {
+      // Start new cold room flow
+      sessionManager.startFlow(session, 'cold_room');
+      const language = detectLanguage(message, session);
+      return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+    }
+    
+  } catch (error) {
+    logger.error('Error handling cold room calculation:', error);
+    
+    const errorMessages = {
+      en: "❌ I encountered an error while starting the cold room calculation. Please try again or contact our support team.",
+      tr: "❌ Soğuk oda hesaplaması başlatılırken bir hata oluştu. Lütfen tekrar deneyin veya destek ekibimizle iletişime geçin.",
+      de: "❌ Beim Starten der Kühlraum-Berechnung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie unser Support-Team."
+    };
+    
+    const language = detectLanguage(message, session);
+    return errorMessages[language] || errorMessages.en;
+  }
 }
-*/
 
 /**
  * Handle cancel session intent with unified flow management
@@ -464,9 +445,8 @@ function handleCancelSession(session, message) {
     const flowType = session.activeFlow;
     
     switch (flowType) {
-      case 'cold_storage':
       case 'cold_room':
-        // Cancel active cold room flow
+        // Cancel cold room flow
         return coldRoomFlow.cancelFlow(session);
         
       case 'equipment_recommendation':
@@ -554,14 +534,10 @@ async function handleEquipmentRecommendation(session, message) {
     // Detect language
     const language = detectLanguage(message);
     
-    // Check if we have a previous cold room calculation to use as initial data
-    let initialData = null;
-    if (session.lastColdRoomResult) {
-      initialData = session.lastColdRoomResult;
-    }
+
     
     // Start the guided equipment recommendation flow
-    const response = equipmentRecommendationFlow.initializeFlow(session.userId, language, initialData);
+    const response = equipmentRecommendationFlow.initializeFlow(session.userId, language);
     
     logger.info(`Started guided equipment recommendation for user ${session.userId} in ${language}`);
     return response;

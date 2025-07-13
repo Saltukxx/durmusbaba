@@ -44,7 +44,7 @@ def test_no_brand_scenario():
 
         5. **Technical Specifications:** Not visible in the image.
 
-        This appears to be a standard digital thermostat or temperature controller commonly used in refrigeration, HVAC, or cold storage applications. Without brand or model information, it's difficult to provide more specific details.
+        This appears to be a standard digital thermostat or temperature controller commonly used in refrigeration or HVAC applications. Without brand or model information, it's difficult to provide more specific details.
         """
         
         print("\n=== Testing No Brand Scenario ===")
@@ -90,7 +90,7 @@ def test_no_brand_scenario():
                     'price': '65.50',
                     'permalink': 'https://durmusbaba.de/product/drc-dcb-112',
                     'stock_status': 'instock',
-                    'short_description': 'Compact digital thermostat with temperature range -40°C to +99°C, ideal for cold rooms and freezers.'
+                    'short_description': 'Compact digital thermostat with temperature range -40°C to +99°C, ideal for refrigeration applications.'
                 },
                 {
                     'id': 1003,
