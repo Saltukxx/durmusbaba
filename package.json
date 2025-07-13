@@ -16,9 +16,7 @@
     "test:woocommerce": "node test-woocommerce.js",
     "test:language": "node test-language.js",
     "test:intent": "node test-intent.js",
-    "test:cold-room": "node test-cold-room.js",
-    "test:cold-storage": "node test-cold-storage-flow.js",
-    "test:cold-storage-new": "node test-cold-storage-flow-new.js",
+    "test:cold-room": "node test-cold-room-flow.js",
     "logs": "node view-conversations.js"
   },
   "dependencies": {

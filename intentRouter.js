@@ -1,11 +1,11 @@
 const geminiService = require('./geminiService');
 const woocommerceService = require('./woocommerceService');
 const languageProcessor = require('./languageProcessor');
-const coldRoomCalculator = require('./coldRoomCalculator');
-const coldStorageService = require('./coldStorageService');
-// const coldStorageFlow = require('./coldStorageFlow'); // Disabled - using coldStorageService as primary
+const coldRoomFlow = require('./coldRoomFlow');
 const equipmentRecommendationService = require('./equipmentRecommendationService');
 const equipmentRecommendationFlow = require('./equipmentRecommendationFlow');
+const sessionManager = require('./sessionManager');
+const errorHandler = require('./errorHandler');
 const logger = require('./logger');
 
 /**
@@ -18,27 +18,21 @@ async function detectIntent(message) {
     // Simple keyword-based intent detection
     const lowerMessage = message.toLowerCase();
     
-    // Cold storage calculation intent - CHECK THIS FIRST - Always use step-by-step flow
-    // Enhanced multi-language detection for cold room calculation requests
-    // PRIORITY: Simple trigger phrases for easy initialization
-    const coldRoomKeywords = {
-      en: ['cold room', 'cold storage', 'refrigeration', 'cooling capacity', 'cold calculation', 
-           'freezer room', 'chiller', 'cooling room', 'refrigerated storage', 'cold chamber',
-           'calculate cold', 'cold requirements', 'cooling load', 'refrigeration capacity'],
-      tr: ['soguk oda', 'soğuk oda', 'soğuk hava', 'soğutma kapasitesi', 'soğuk hesap', 'dondurucu oda',
-           'soğutucu', 'soğuk depo', 'soğuk alan', 'soğutma yükü', 'soğutma hesabı',
-           'soğuk oda hesapla', 'soğuk gereksinimleri', 'soğutma ihtiyacı'],
-      de: ['kühlraum', 'kältekammer', 'kühlhaus', 'kühllager', 'kühlung', 'kühlkapazität',
-           'kälteanlage', 'tiefkühlraum', 'kühlzelle', 'kühlraum berechnen',
-           'kühllast', 'kühlleistung', 'kältebedarf', 'kühlraum auslegung']
-    };
+    // Cold room/storage calculation intent detection
+    const coldRoomKeywords = [
+      // English
+      'cold room', 'cold storage', 'refrigeration', 'cooling capacity', 'freezer room',
+      'chiller', 'cooling room', 'refrigerated storage', 'calculate cold', 'cooling load',
+      // Turkish
+      'soğuk oda', 'soğuk depo', 'soğutma kapasitesi', 'dondurucu oda', 'soğutucu',
+      'soğuk alan', 'soğutma yükü', 'soğuk hesap',
+      // German
+      'kühlraum', 'kältekammer', 'kühlhaus', 'kühllager', 'kühlkapazität',
+      'kälteanlage', 'tiefkühlraum', 'kühlzelle'
+    ];
     
-    const hasKeyword = Object.values(coldRoomKeywords).flat().some(keyword => 
-      lowerMessage.includes(keyword)
-    );
-    
-    if (hasKeyword) {
-      return { type: 'cold_storage_calculation', confidence: 0.95 };
+    if (coldRoomKeywords.some(keyword => lowerMessage.includes(keyword))) {
+      return { type: 'cold_room_calculation', confidence: 0.95 };
     }
     
     // Check for cancel/stop request - Enhanced multi-language support
@@ -152,74 +146,146 @@ function extractProductKeywords(message) {
 }
 
 /**
- * Handle a user message based on detected intent
+ * Handle a user message with consistent priority and flow management
  * @param {Object} session - User session
  * @param {string} message - User message
  * @returns {Promise<string>} - Response to user
  */
 async function handleMessage(session, message) {
   try {
-    // PRIORITY 1: Check if there's an active cold storage session FIRST
-    if (session.coldStorage && session.coldStorage.active) {
-      // Use the service that has edit commands functionality
-      return coldStorageService.handleColdStorageRequest(session, message);
+    // CONSISTENCY FIX: Ensure session has proper structure
+    if (!session.preferences) {
+      session.preferences = { language: null };
     }
 
-    // PRIORITY 2: Check if there's an active equipment recommendation flow
-    if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
-      // Check for cancel/stop request first - Enhanced multi-language support  
-      const lowerMessage = message.toLowerCase();
-      const stopKeywords = ['cancel', 'stop', 'quit', 'exit', 'abort', 'end', 'iptal', 'dur', 'durdur', 'bitir', 'çık', 'son', 'stopp', 'abbrechen', 'beenden', 'aufhören'];
-      
-      const hasStopKeyword = stopKeywords.some(keyword => lowerMessage.includes(keyword));
-      
-      if (hasStopKeyword) {
-        return handleCancelSession(session, message);
-      }
-      // Otherwise, process as answer to current question
-      return equipmentRecommendationFlow.processAnswer(session, message);
+    // Auto-detect and persist language if not set
+    if (!session.preferences.language) {
+      const detectedLanguage = detectLanguage(message, session);
+      sessionManager.setUserLanguage(session, detectedLanguage);
     }
-    
-    // PRIORITY 3: Detect intent only if no active flow
+
+    // PRIORITY 1: Handle active flows FIRST - prevents conflicts
+    if (sessionManager.hasActiveFlow(session)) {
+      return await handleActiveFlow(session, message);
+    }
+
+    // PRIORITY 2: Check for cancel/stop requests (global)
+    if (isCancelRequest(message)) {
+      return handleCancelSession(session, message);
+    }
+
+    // PRIORITY 3: Detect intent for new requests only
     const intent = await detectIntent(message);
     logger.debug(`Detected intent: ${intent.type} (confidence: ${intent.confidence})`);
     
-    // Handle based on intent type
-    switch (intent.type) {
-      case 'equipment_recommendation':
-        return await handleEquipmentRecommendation(session, message);
-        
-      case 'product_search':
-        return await handleProductSearch(session, message);
-        
-      case 'order_status':
-        return await handleOrderStatus(session, message);
-        
-      case 'greeting':
-        return handleGreeting(session);
-        
-      case 'language_change':
-        return handleLanguageChange(session, intent.languageCode);
-        
-      case 'cold_storage_calculation':
-      case 'cold_room_calculation':
-        // Use the primary cold storage service for both cases
-        return coldStorageService.handleColdStorageRequest(session, message);
-        
-      case 'cancel_session':
-        return handleCancelSession(session, message);
-        
-      case 'customer_support':
-      case 'general_query':
-      default:
-        // For general queries, use multilingual response
-        return await languageProcessor.generateMultilingualResponse(session, message);
-    }
+    // PRIORITY 4: Route to appropriate handler
+    return await routeIntent(session, intent, message);
     
   } catch (error) {
-    logger.error('Error handling message:', error);
-    return "I'm sorry, I'm having trouble processing your request right now. Could you try again later?";
+    return errorHandler.handleError(error, session, 'handleMessage');
   }
+}
+
+/**
+ * Handle active flows with proper state management
+ * @param {Object} session - User session
+ * @param {string} message - User message
+ * @returns {Promise<string>} - Response from active flow
+ */
+async function handleActiveFlow(session, message) {
+  const flowType = session.activeFlow;
+  
+  // Check for flow-specific cancel requests first
+  if (isCancelRequest(message)) {
+    return handleCancelSession(session, message);
+  }
+
+  switch (flowType) {
+    case 'cold_storage':
+    case 'cold_room':
+      // Handle active cold room flow
+      if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
+        return coldRoomFlow.processInput(session, message);
+      } else {
+        // Start new flow (shouldn't normally reach here, but safety fallback)
+        sessionManager.endFlow(session);
+        const language = detectLanguage(message);
+        return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+      }
+      
+    case 'equipment_recommendation':
+      // Check if equipment flow is still active
+      if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
+        return equipmentRecommendationFlow.processAnswer(session, message);
+      } else {
+        // Flow ended externally, clean up session
+        sessionManager.endFlow(session);
+        return handleGreeting(session);
+      }
+      
+    default:
+      logger.warn(`Unknown active flow type: ${flowType} for user ${session.userId}`);
+      sessionManager.endFlow(session);
+      return handleGreeting(session);
+  }
+}
+
+/**
+ * Route intent to appropriate handler
+ * @param {Object} session - User session
+ * @param {Object} intent - Detected intent
+ * @param {string} message - User message
+ * @returns {Promise<string>} - Response
+ */
+async function routeIntent(session, intent, message) {
+  switch (intent.type) {
+    case 'equipment_recommendation':
+      return await handleEquipmentRecommendation(session, message);
+      
+    case 'product_search':
+      return await handleProductSearch(session, message);
+      
+    case 'order_status':
+      return await handleOrderStatus(session, message);
+      
+    case 'greeting':
+      return handleGreeting(session);
+      
+    case 'language_change':
+      return handleLanguageChange(session, intent.languageCode);
+      
+    case 'cold_storage_calculation':
+    case 'cold_room_calculation':
+      // Start new cold room flow
+      sessionManager.startFlow(session, 'cold_room');
+      const language = detectLanguage(message, session);
+      return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+      
+    case 'cancel_session':
+      return handleCancelSession(session, message);
+      
+    case 'customer_support':
+    case 'general_query':
+    default:
+      // For general queries, use multilingual response
+      return await languageProcessor.generateMultilingualResponse(session, message);
+  }
+}
+
+/**
+ * Check if message is a cancel/stop request
+ * @param {string} message - User message
+ * @returns {boolean} - True if cancel request
+ */
+function isCancelRequest(message) {
+  const cancelKeywords = [
+    'cancel', 'stop', 'quit', 'exit', 'abort', 'end',
+    'iptal', 'dur', 'durdur', 'bitir', 'çık', 'son',
+    'stopp', 'abbrechen', 'beenden', 'aufhören'
+  ];
+  
+  const lowerMessage = message.toLowerCase().trim();
+  return cancelKeywords.some(keyword => lowerMessage.includes(keyword));
 }
 
 /**
@@ -340,79 +406,91 @@ async function handleColdStorageCalculation(session, message) {
 */
 
 /**
- * Handle cancel session intent
+ * Handle cancel session intent with unified flow management
  * @param {Object} session - User session
  * @param {string} message - User message
  * @returns {string} - Response confirming cancellation
  */
 function handleCancelSession(session, message) {
-  const language = detectLanguage(message);
+  const language = sessionManager.getUserLanguage(session);
   
-  // Check if there's an active cold storage session to cancel
-  if (session.coldStorage && session.coldStorage.active) {
-    return coldStorageService.cancelColdStorageSession(session);
-  }
-  
-  // Check if there's an active equipment recommendation flow to cancel
-  if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
-    equipmentRecommendationFlow.cancelFlow(session.userId);
-    const messages = {
-      en: "✅ Equipment recommendation cancelled. How can I help you?",
-      tr: "✅ Ekipman önerisi iptal edildi. Size nasıl yardımcı olabilirim?",
-      de: "✅ Geräteempfehlung abgebrochen. Wie kann ich Ihnen helfen?"
+  // CONSISTENCY FIX: Unified cancellation handling
+  if (sessionManager.hasActiveFlow(session)) {
+    const flowType = session.activeFlow;
+    
+    switch (flowType) {
+      case 'cold_storage':
+      case 'cold_room':
+        // Cancel active cold room flow
+        return coldRoomFlow.cancelFlow(session);
+        
+      case 'equipment_recommendation':
+        // Cancel equipment recommendation flow
+        if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
+          equipmentRecommendationFlow.cancelFlow(session.userId);
+        }
+        sessionManager.endFlow(session);
+        
+        const equipmentMessages = {
+          en: "✅ Equipment recommendation cancelled. How can I help you?",
+          tr: "✅ Ekipman önerisi iptal edildi. Size nasıl yardımcı olabilirim?",
+          de: "✅ Geräteempfehlung abgebrochen. Wie kann ich Ihnen helfen?"
+        };
+        return equipmentMessages[language] || equipmentMessages.en;
+    }
+    
+    // Generic flow cancellation
+    sessionManager.endFlow(session);
+    const genericMessages = {
+      en: "✅ Current process cancelled. How can I help you?",
+      tr: "✅ Mevcut işlem iptal edildi. Size nasıl yardımcı olabilirim?",
+      de: "✅ Aktueller Prozess abgebrochen. Wie kann ich Ihnen helfen?"
     };
-    return messages[language] || messages.en;
+    return genericMessages[language] || genericMessages.en;
   }
   
-  // If no active session to cancel
-  const messages = {
+  // No active session to cancel
+  const noActiveMessages = {
     en: "There's no active session to cancel. How can I help you?",
     tr: "İptal edilecek aktif oturum yok. Size nasıl yardımcı olabilirim?",
     de: "Es gibt keine aktive Sitzung zum Abbrechen. Wie kann ich Ihnen helfen?"
   };
   
-  return messages[language] || messages.en;
+  return noActiveMessages[language] || noActiveMessages.en;
 }
 
 /**
- * Detect language from message
+ * Detect language from message using centralized language processor
  * @param {string} message - User message
+ * @param {Object} session - User session (for language preference)
  * @returns {string} - Language code
  */
-function detectLanguage(message) {
+function detectLanguage(message, session = null) {
+  // CONSISTENCY FIX: Use centralized language detection from languageProcessor
+  // Check session language preference first
+  if (session?.preferences?.language) {
+    return session.preferences.language;
+  }
+  
+  // Fall back to simple keyword-based detection for reliability
   const lowerMessage = message.toLowerCase();
   
-  // Enhanced Turkish detection
+  // Turkish keywords (most specific first)
   const turkishKeywords = ['soğuk', 'oda', 'sıcaklık', 'hesapla', 'evet', 'hayır', 'iptal', 'dur',
-                          'soğutma', 'kapasitesi', 'hava', 'dondurucu', 'soğutucu', 'depo',
-                          'yalıtım', 'zemin', 'uzunluk', 'genişlik', 'yükseklik', 'günde',
-                          'nadir', 'sık', 'yükleme', 'boşaltma', 'ürün', 'meyve', 'sebze',
-                          'et', 'süt', 'giriş', 'paneelleri', 'kalınlığı', 'metre'];
+                          'soğutma', 'kapasitesi', 'dondurucu', 'yalıtım', 'günde', 'ürün'];
   
-  // Enhanced German detection  
-  const germanKeywords = ['kühlraum', 'temperatur', 'berechnen', 'berechnung', 'kühlung',
-                         'isolierung', 'häufig', 'selten', 'ja', 'nein', 'abbrechen',
-                         'meter', 'produkte', 'fleisch', 'obst', 'gemüse', 'kältekammer',
-                         'kühlhaus', 'kühllager', 'kälteanlage', 'tiefkühlraum', 'kühlzelle',
-                         'kühllast', 'kühlleistung', 'kältebedarf', 'bodenisolierung',
-                         'türöffnung', 'beladung', 'entladung', 'einlagern', 'milchprodukte'];
+  // German keywords
+  const germanKeywords = ['kühlraum', 'temperatur', 'berechnen', 'kühlung', 'isolierung', 
+                         'häufig', 'selten', 'ja', 'nein', 'abbrechen', 'kältekammer'];
   
-  // Enhanced English detection
-  const englishKeywords = ['cold', 'room', 'temperature', 'calculate', 'yes', 'no', 'cancel',
-                          'stop', 'storage', 'capacity', 'refrigeration', 'freezer', 'chiller',
-                          'insulation', 'floor', 'length', 'width', 'height', 'daily',
-                          'rarely', 'frequently', 'loading', 'unloading', 'product', 'fruits',
-                          'vegetables', 'meat', 'dairy', 'entry', 'panels', 'thickness', 'meters'];
-  
-  // Count keyword matches for each language
+  // Count matches
   const turkishMatches = turkishKeywords.filter(keyword => lowerMessage.includes(keyword)).length;
   const germanMatches = germanKeywords.filter(keyword => lowerMessage.includes(keyword)).length;
-  const englishMatches = englishKeywords.filter(keyword => lowerMessage.includes(keyword)).length;
   
-  // Return language with most matches
-  if (turkishMatches > germanMatches && turkishMatches > englishMatches) {
+  // Return most likely language
+  if (turkishMatches > 0 && turkishMatches >= germanMatches) {
     return 'tr';
-  } else if (germanMatches > englishMatches && germanMatches > turkishMatches) {
+  } else if (germanMatches > 0) {
     return 'de';
   }
   
@@ -431,10 +509,10 @@ async function handleEquipmentRecommendation(session, message) {
     // Detect language
     const language = detectLanguage(message);
     
-    // Check if we have a previous cold storage calculation to use as initial data
+    // Check if we have a previous cold room calculation to use as initial data
     let initialData = null;
-    if (session.lastColdStorageResult) {
-      initialData = session.lastColdStorageResult;
+    if (session.lastColdRoomResult) {
+      initialData = session.lastColdRoomResult;
     }
     
     // Start the guided equipment recommendation flow

@@ -1,6 +1,6 @@
 require('dotenv').config();
 const woocommerceService = require('./woocommerceService');
-const coldRoomCalculator = require('./coldRoomCalculator');
+// Note: coldRoomCalculator removed - will be replaced with new implementation
 const logger = require('./logger');
 
 /**
