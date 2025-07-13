@@ -1353,8 +1353,12 @@ def webhook():
                         message_text = msg["text"]["body"]
                         print(f"Message text: {message_text}")
                         
-                        # Use Node.js intent router for better handling
-                        response_text = handle_message_with_intent_router(sender, message_text)
+                        # Route to Python cold room flow if active
+                        if cold_room_flow_python.has_active_flow(sender):
+                            response_text = cold_room_flow_python.process_input(sender, message_text)
+                        else:
+                            # Use Node.js intent router for better handling
+                            response_text = handle_message_with_intent_router(sender, message_text)
                         print(f"Response from intent router: {response_text}")
                     
                     elif message_type == "image" and "image" in msg:

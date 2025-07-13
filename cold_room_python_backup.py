@@ -107,6 +107,11 @@ class ColdRoomFlowPython:
         if not processed:
             return self.get_invalid_answer_message(flow_data) + '\n\n' + self.get_current_question(flow_data)
         
+        # Check if we have complete dimensions (special case for dimensions question)
+        if current_question == 'dimensions':
+            if not self.has_complete_dimensions(flow_data):
+                return self.get_follow_up_dimension_question(flow_data)
+        
         # Move to next question or complete calculation
         flow_data['current_step'] += 1
         
@@ -150,7 +155,35 @@ class ColdRoomFlowPython:
 
     def process_dimensions(self, flow_data: Dict, answer: str) -> bool:
         """Process room dimensions"""
-        # Support formats: "10x6x3", "10m x 6m x 3m", "10 6 3"
+        # Check if we already have partial dimensions and this is a follow-up
+        params = flow_data['parameters']
+        
+        # If we have length and width but no height, expect just height
+        if 'length' in params and 'width' in params and 'height' not in params:
+            height_match = re.search(r'(\d+(?:\.\d+)?)', answer)
+            if height_match:
+                height = float(height_match.group(1))
+                if 1 <= height <= 10:
+                    flow_data['parameters']['height'] = height
+                    flow_data['answers']['dimensions'] = f"{params['length']}m × {params['width']}m × {height}m"
+                    return True
+        
+        # If we have length but no width, expect width and height
+        elif 'length' in params and 'width' not in params:
+            two_dim_pattern = r'(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)'
+            two_dim_match = re.search(two_dim_pattern, answer, re.IGNORECASE)
+            
+            if two_dim_match:
+                width = float(two_dim_match.group(1))
+                height = float(two_dim_match.group(2))
+                
+                if 1 <= width <= 50 and 1 <= height <= 10:
+                    flow_data['parameters']['width'] = width
+                    flow_data['parameters']['height'] = height
+                    flow_data['answers']['dimensions'] = f"{params['length']}m × {width}m × {height}m"
+                    return True
+        
+        # Full dimension input (3 dimensions) - check this first for new inputs
         dimension_pattern = r'(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)'
         space_pattern = r'(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)'
         
@@ -161,12 +194,42 @@ class ColdRoomFlowPython:
             width = float(match.group(2))
             height = float(match.group(3))
             
-            if length > 0 and width > 0 and height > 0:
+            if 1 <= length <= 50 and 1 <= width <= 50 and 1 <= height <= 10:
                 flow_data['parameters']['length'] = length
                 flow_data['parameters']['width'] = width
                 flow_data['parameters']['height'] = height
                 flow_data['answers']['dimensions'] = f"{length}m × {width}m × {height}m"
                 return True
+        
+        # Check if user provided only 2 dimensions (missing height) - only for new inputs
+        if not params:  # Only if no parameters exist yet
+            two_dim_pattern = r'(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)'
+            two_dim_match = re.search(two_dim_pattern, answer, re.IGNORECASE)
+            
+            if two_dim_match:
+                length = float(two_dim_match.group(1))
+                width = float(two_dim_match.group(2))
+                
+                if 1 <= length <= 50 and 1 <= width <= 50:
+                    # Store partial dimensions and ask for height
+                    flow_data['parameters']['length'] = length
+                    flow_data['parameters']['width'] = width
+                    flow_data['answers']['dimensions'] = f"{length}m × {width}m (height needed)"
+                    return True
+        
+        # Check if user provided only 1 dimension - only for new inputs
+        if not params:  # Only if no parameters exist yet
+            single_dim_pattern = r'(\d+(?:\.\d+)?)'
+            single_dim_match = re.search(single_dim_pattern, answer, re.IGNORECASE)
+            
+            if single_dim_match:
+                length = float(single_dim_match.group(1))
+                
+                if 1 <= length <= 50:
+                    # Store partial dimension and ask for width and height
+                    flow_data['parameters']['length'] = length
+                    flow_data['answers']['dimensions'] = f"{length}m (width and height needed)"
+                    return True
         
         return False
 
@@ -282,6 +345,43 @@ class ColdRoomFlowPython:
                 flow_data['answers']['climateZone'] = zone
                 return True
         return False
+
+    def has_complete_dimensions(self, flow_data: Dict) -> bool:
+        """Check if we have complete dimensions (length, width, height)"""
+        return all(key in flow_data['parameters'] for key in ['length', 'width', 'height'])
+
+    def get_follow_up_dimension_question(self, flow_data: Dict) -> str:
+        """Get follow-up question for missing dimensions"""
+        params = flow_data['parameters']
+        
+        if 'length' in params and 'width' in params and 'height' not in params:
+            return f"""✅ Length ({params['length']}m) and Width ({params['width']}m) recorded!
+
+📏 **Missing: Height**
+
+What is the height of your cold room?
+
+Please provide just the height value:
+Examples: "3m" or "3" or "3.5"
+
+**Supported range:** 1-10 meters"""
+        
+        elif 'length' in params and 'width' not in params:
+            return f"""✅ Length ({params['length']}m) recorded!
+
+📏 **Missing: Width and Height**
+
+What are the width and height of your cold room?
+
+Please provide in format: **Width × Height**
+Examples: "6m × 3m" or "6x3" or "6 3"
+
+**Supported ranges:**
+• Width: 1-50 meters
+• Height: 1-10 meters"""
+        
+        else:
+            return "❌ Please provide complete dimensions. Format: Length × Width × Height"
 
     def is_navigation_command(self, input_text: str) -> bool:
         """Check if input is a navigation command"""
