@@ -12,29 +12,76 @@ import re
 from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 from conversation_context import conversation_context
+from cold_room_python_backup import cold_room_flow_python
 
 
 def handle_message_with_intent_router(user_id, message_text):
     """Handle message using Node.js intent router for better flow management"""
     try:
-        # Call the Node.js intent router
+        # Check for cold room calculation request first (Python-side check)
+        if is_cold_room_calculation_request(message_text):
+            print(f"Cold room calculation detected for user {user_id}")
+            
+            # Check if user has active cold room flow
+            if cold_room_flow_python.has_active_flow(user_id):
+                return cold_room_flow_python.process_input(user_id, message_text)
+            
+            # Try to start the cold room flow via Node.js first
+            try:
+                result = subprocess.run([
+                    'node', '-e', f'''
+                    try {{
+                        require('dotenv').config();
+                        const coldRoomFlow = require('./coldRoomFlow');
+                        const sessionManager = require('./sessionManager');
+                        
+                        const session = sessionManager.getSession("{user_id}");
+                        sessionManager.startFlow(session, 'cold_room');
+                        const response = coldRoomFlow.initializeColdRoomFlow("{user_id}", 'en');
+                        console.log(response);
+                    }} catch (error) {{
+                        console.error("Node.js cold room error:", error.message);
+                        // Fallback to Python cold room response
+                        console.log("❄️ **Cold Room Capacity Calculator**\\n\\nI'll help you calculate the required cooling capacity for your cold room. I need to ask you a few questions to get accurate results.\\n\\n**Commands you can use:**\\n• Type \\"show\\" to see your current answers\\n• Type \\"back\\" to go to previous question\\n• Type \\"edit [number]\\" to edit a specific answer\\n• Type \\"restart\\" to start over\\n• Type \\"cancel\\" to exit\\n\\nLet's begin!\\n\\n📏 **Question 1/11: Room Dimensions**\\n\\nWhat are the dimensions of your cold room?\\n\\nPlease provide in format: **Length × Width × Height**\\nExamples: \\"10m × 6m × 3m\\" or \\"10x6x3\\" or \\"10 6 3\\"\\n\\n**Supported ranges:**\\n• Length: 1-50 meters\\n• Width: 1-50 meters  \\n• Height: 1-10 meters");
+                    }}
+                    '''
+                ], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    return result.stdout.strip()
+                else:
+                    print(f"Node.js cold room flow error: {result.stderr}")
+                    # Fallback to Python cold room flow
+                    return cold_room_flow_python.initialize_flow(user_id, 'en')
+            except Exception as e:
+                print(f"Error starting cold room flow: {e}")
+                # Fallback to Python cold room flow
+                return cold_room_flow_python.initialize_flow(user_id, 'en')
+        
+        # Call the Node.js intent router for other requests
         result = subprocess.run([
             'node', '-e', f'''
-            const intentRouter = require('./intentRouter');
-            const sessionManager = require('./sessionManager');
-            
-            async function processMessage() {{
-                try {{
-                    const session = sessionManager.getSession("{user_id}");
-                    const response = await intentRouter.handleMessage(session, "{message_text.replace('"', '\\"')}");
-                    console.log(response);
-                }} catch (error) {{
-                    console.error("Error:", error.message);
-                    console.log("I'm sorry, there was an error processing your request. Please try again.");
+            try {{
+                require('dotenv').config();
+                const intentRouter = require('./intentRouter');
+                const sessionManager = require('./sessionManager');
+                
+                async function processMessage() {{
+                    try {{
+                        const session = sessionManager.getSession("{user_id}");
+                        const response = await intentRouter.handleMessage(session, "{message_text.replace('"', '\\"')}");
+                        console.log(response);
+                    }} catch (error) {{
+                        console.error("Error:", error.message);
+                        console.log("I'm sorry, there was an error processing your request. Please try again.");
+                    }}
                 }}
+                
+                processMessage();
+            }} catch (error) {{
+                console.error("Node.js module error:", error.message);
+                console.log("I'm sorry, there was an error processing your request. Please try again.");
             }}
-            
-            processMessage();
             '''
         ], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
         

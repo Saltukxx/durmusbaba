@@ -17,6 +17,7 @@
     "test:language": "node test-language.js",
     "test:intent": "node test-intent.js",
     "test:cold-room": "node test-cold-room.js",
+    "install-deps": "node install_dependencies.js",
 
     "logs": "node view-conversations.js"
   },
