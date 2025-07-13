@@ -18,7 +18,7 @@ async function detectIntent(message) {
     // Simple keyword-based intent detection
     const lowerMessage = message.toLowerCase();
     
-    // Cold room/storage calculation intent detection
+    // Cold room/storage calculation intent detection - ENHANCED
     const coldRoomKeywords = [
       // English
       'cold room', 'cold storage', 'refrigeration', 'cooling capacity', 'freezer room',
@@ -30,19 +30,40 @@ async function detectIntent(message) {
       'soğuk oda', 'soğuk depo', 'soğutma kapasitesi', 'dondurucu oda', 'soğutucu',
       'soğuk alan', 'soğutma yükü', 'soğuk hesap', 'soğuk', 'soğutma', 'kapasite',
       'hesapla', 'boyut', 'hacim',
-      // German
+      // German - ENHANCED with more conversational phrases
       'kühlraum', 'kältekammer', 'kühlhaus', 'kühllager', 'kühlkapazität',
       'kälteanlage', 'tiefkühlraum', 'kühlzelle', 'kälte', 'kühlung', 'kapazität',
-      'berechnen', 'abmessungen', 'volumen'
+      'berechnen', 'abmessungen', 'volumen', 'berechnung', 'kühlräume', 'kühlräumen',
+      'kühlraum berechnung', 'kühlraum-berechnung', 'kühlraum berechnen',
+      'kühlraum kapazität', 'kühlraum kapazität berechnen', 'kühlraum dimensionierung',
+      'kühlraum planung', 'kühlraum auslegung', 'kühlraum projektierung'
     ];
     
     // Also check for dimension patterns that typically indicate cold room calculation
     const dimensionPattern = /\d+m?\s*[×x]\s*\d+m?\s*[×x]\s*\d+m?/i;
     const temperaturePattern = /-?\d+°?c/i;
     
-    if (coldRoomKeywords.some(keyword => lowerMessage.includes(keyword)) || 
-        dimensionPattern.test(lowerMessage) || 
-        (temperaturePattern.test(lowerMessage) && lowerMessage.includes('room'))) {
+    // Enhanced detection: Check for any cold room related keywords
+    const hasColdRoomKeyword = coldRoomKeywords.some(keyword => lowerMessage.includes(keyword));
+    
+    // Enhanced detection: Check for German conversational phrases about cold room calculation
+    const germanColdRoomPhrases = [
+      'bei der berechnung für kühlräume', 'kühlraum berechnung', 'kühlraum kapazität',
+      'kühlraum dimensionierung', 'kühlraum auslegung', 'kühlraum projektierung',
+      'kühlraum planung', 'kühlraum berechnen', 'kühlraum kapazität berechnen',
+      'kühlraum dimensionierung', 'kühlraum auslegung', 'kühlraum projektierung'
+    ];
+    
+    const hasGermanColdRoomPhrase = germanColdRoomPhrases.some(phrase => 
+      lowerMessage.includes(phrase)
+    );
+    
+    // Enhanced detection: Check for dimension patterns or temperature patterns with room context
+    const hasDimensionPattern = dimensionPattern.test(lowerMessage);
+    const hasTemperatureWithRoom = temperaturePattern.test(lowerMessage) && 
+      (lowerMessage.includes('room') || lowerMessage.includes('raum') || lowerMessage.includes('oda'));
+    
+    if (hasColdRoomKeyword || hasGermanColdRoomPhrase || hasDimensionPattern || hasTemperatureWithRoom) {
       return { type: 'cold_room_calculation', confidence: 0.95 };
     }
     
@@ -133,6 +154,16 @@ async function detectIntent(message) {
     }
     
 
+    
+    // SAFETY CHECK: If message contains cold room related keywords but reached general query,
+    // redirect to cold room flow instead of using Gemini
+    const lowerMsg = message.toLowerCase();
+    if (lowerMsg.includes('kühlraum') || lowerMsg.includes('berechnung') || 
+        lowerMsg.includes('cold room') || lowerMsg.includes('soğuk oda') ||
+        lowerMsg.includes('kälte') || lowerMsg.includes('kühlung') ||
+        lowerMsg.includes('kapazität') || lowerMsg.includes('kapasite')) {
+      return { type: 'cold_room_calculation', confidence: 0.8 };
+    }
     
     // Default to general query
     return { type: 'general_query', confidence: 0.5 };
