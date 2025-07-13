@@ -256,7 +256,15 @@ function initializeColdRoomFlow(userId, language = 'en') {
     
     logger.info(`Initialized cold room flow for user ${userId} in ${language}`);
     
-    return getWelcomeMessage(language) + '\n\n' + getCurrentQuestion(session);
+    // Return brief intro and first question instead of full welcome message
+    const briefIntros = {
+        en: "❄️ **Cold Room Capacity Calculator**\n\nI'll guide you through 10 questions to calculate your cooling capacity.\n\n💬 *Available commands: help | back | edit | show | restart | cancel*",
+        tr: "❄️ **Soğuk Oda Kapasite Hesaplayıcısı**\n\nSoğutma kapasitenizi hesaplamak için 10 soru ile size rehberlik edeceğim.\n\n💬 *Komutlar: yardım | geri | düzenle | göster | yeniden | iptal*",
+        de: "❄️ **Kühlraum-Kapazitätsrechner**\n\nIch führe Sie durch 10 Fragen zur Berechnung Ihrer Kühlkapazität.\n\n💬 *Befehle: hilfe | zurück | bearbeiten | zeigen | neustart | abbrechen*"
+    };
+    
+    const briefIntro = briefIntros[language] || briefIntros.en;
+    return briefIntro + '\n\n' + getCurrentQuestion(session);
 }
 
 /**

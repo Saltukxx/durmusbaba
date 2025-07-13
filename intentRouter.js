@@ -276,10 +276,16 @@ async function routeIntent(session, intent, message) {
       
     case 'cold_storage_calculation':
     case 'cold_room_calculation':
-      // Start new cold room flow
-      sessionManager.startFlow(session, 'cold_room');
-      const language = detectLanguage(message, session);
-      return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+      // Check if user already has an active cold room flow
+      if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
+        // Process the input as part of the existing flow
+        return coldRoomFlow.processInput(session, message);
+      } else {
+        // Start new cold room flow
+        sessionManager.startFlow(session, 'cold_room');
+        const language = detectLanguage(message, session);
+        return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+      }
       
     case 'cancel_session':
       return handleCancelSession(session, message);
@@ -294,10 +300,16 @@ async function routeIntent(session, intent, message) {
           lowerMsg.includes('soğuk') || lowerMsg.includes('kühl') || lowerMsg.includes('kälte') ||
           lowerMsg.includes('capacity') || lowerMsg.includes('kapasite') || lowerMsg.includes('kapazität') ||
           lowerMsg.includes('temperature') || lowerMsg.includes('sıcaklık') || lowerMsg.includes('temperatur')) {
-        // Force redirect to cold room calculation
-        sessionManager.startFlow(session, 'cold_room');
-        const language = detectLanguage(message, session);
-        return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+        // Check if user already has an active cold room flow
+        if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
+          // Process the input as part of the existing flow
+          return coldRoomFlow.processInput(session, message);
+        } else {
+          // Force redirect to cold room calculation
+          sessionManager.startFlow(session, 'cold_room');
+          const language = detectLanguage(message, session);
+          return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+        }
       }
       
       // For non-cold-room general queries, use multilingual response
