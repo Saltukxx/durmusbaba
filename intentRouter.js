@@ -23,15 +23,26 @@ async function detectIntent(message) {
       // English
       'cold room', 'cold storage', 'refrigeration', 'cooling capacity', 'freezer room',
       'chiller', 'cooling room', 'refrigerated storage', 'calculate cold', 'cooling load',
+      'cold', 'freezer', 'refrigerator', 'cooling', 'temperature', 'capacity',
+      // Dimension-related that often indicate cold room calculation
+      'calculate for', 'room at', 'dimensions', 'volume', 'm³', 'm3', 'cubic',
       // Turkish
       'soğuk oda', 'soğuk depo', 'soğutma kapasitesi', 'dondurucu oda', 'soğutucu',
-      'soğuk alan', 'soğutma yükü', 'soğuk hesap',
+      'soğuk alan', 'soğutma yükü', 'soğuk hesap', 'soğuk', 'soğutma', 'kapasite',
+      'hesapla', 'boyut', 'hacim',
       // German
       'kühlraum', 'kältekammer', 'kühlhaus', 'kühllager', 'kühlkapazität',
-      'kälteanlage', 'tiefkühlraum', 'kühlzelle'
+      'kälteanlage', 'tiefkühlraum', 'kühlzelle', 'kälte', 'kühlung', 'kapazität',
+      'berechnen', 'abmessungen', 'volumen'
     ];
     
-    if (coldRoomKeywords.some(keyword => lowerMessage.includes(keyword))) {
+    // Also check for dimension patterns that typically indicate cold room calculation
+    const dimensionPattern = /\d+m?\s*[×x]\s*\d+m?\s*[×x]\s*\d+m?/i;
+    const temperaturePattern = /-?\d+°?c/i;
+    
+    if (coldRoomKeywords.some(keyword => lowerMessage.includes(keyword)) || 
+        dimensionPattern.test(lowerMessage) || 
+        (temperaturePattern.test(lowerMessage) && lowerMessage.includes('room'))) {
       return { type: 'cold_room_calculation', confidence: 0.95 };
     }
     
@@ -119,6 +130,15 @@ async function detectIntent(message) {
     const languageCode = languageProcessor.checkLanguageChangeRequest(message);
     if (languageCode) {
       return { type: 'language_change', confidence: 0.95, languageCode };
+    }
+    
+    // Additional check: If message contains ANY cold room related content, force cold room calculation
+    // This catches cases where previous checks might have missed cold room intent
+    if (lowerMessage.includes('cold') || lowerMessage.includes('cool') || lowerMessage.includes('freez') ||
+        lowerMessage.includes('soğuk') || lowerMessage.includes('kühl') || lowerMessage.includes('kälte') ||
+        lowerMessage.includes('capacity') || lowerMessage.includes('kapasite') || lowerMessage.includes('kapazität') ||
+        lowerMessage.includes('temperature') || lowerMessage.includes('sıcaklık') || lowerMessage.includes('temperatur')) {
+      return { type: 'cold_room_calculation', confidence: 0.8 };
     }
     
     // Default to general query
@@ -267,7 +287,20 @@ async function routeIntent(session, intent, message) {
     case 'customer_support':
     case 'general_query':
     default:
-      // For general queries, use multilingual response
+      // SAFETY CHECK: If message contains cold room related keywords but reached general query,
+      // redirect to cold room flow instead of using Gemini
+      const lowerMsg = message.toLowerCase();
+      if (lowerMsg.includes('cold') || lowerMsg.includes('cool') || lowerMsg.includes('freez') ||
+          lowerMsg.includes('soğuk') || lowerMsg.includes('kühl') || lowerMsg.includes('kälte') ||
+          lowerMsg.includes('capacity') || lowerMsg.includes('kapasite') || lowerMsg.includes('kapazität') ||
+          lowerMsg.includes('temperature') || lowerMsg.includes('sıcaklık') || lowerMsg.includes('temperatur')) {
+        // Force redirect to cold room calculation
+        sessionManager.startFlow(session, 'cold_room');
+        const language = detectLanguage(message, session);
+        return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
+      }
+      
+      // For non-cold-room general queries, use multilingual response
       return await languageProcessor.generateMultilingualResponse(session, message);
   }
 }

@@ -48,8 +48,28 @@ const QUESTIONS = [
         }
     },
     {
-        id: 'products',
+        id: 'ambient_temperature',
         order: 3,
+        required: true,
+        question: {
+            en: "🌤️ **Installation Location Climate**\n\nWhat is the ambient (outside) temperature where the cold room will be installed?\n\n**Typical values by region:**\n• **Northern Europe** - 25-30°C\n• **Central Europe** - 30-35°C\n• **Southern Europe** - 35-40°C\n• **Middle East/Africa** - 40-45°C\n• **Tropical regions** - 35-45°C\n\n**Examples:**\n• \"35°C\" (standard design condition)\n• \"40°C\" (hot climate)\n• \"30°C\" (moderate climate)\n\n*This determines the temperature difference your system must handle.*",
+            tr: "🌤️ **Kurulum Yeri İklimi**\n\nSoğuk odanın kurulacağı yerdeki çevre (dış) sıcaklığı nedir?\n\n**Bölgelere göre tipik değerler:**\n• **Kuzey Avrupa** - 25-30°C\n• **Orta Avrupa** - 30-35°C\n• **Güney Avrupa** - 35-40°C\n• **Orta Doğu/Afrika** - 40-45°C\n• **Tropik bölgeler** - 35-45°C\n\n**Örnekler:**\n• \"35°C\" (standart tasarım koşulu)\n• \"40°C\" (sıcak iklim)\n• \"30°C\" (ılıman iklim)\n\n*Bu, sisteminizin karşılaması gereken sıcaklık farkını belirler.*",
+            de: "🌤️ **Installationsort-Klima**\n\nWie hoch ist die Umgebungstemperatur (außen) am Installationsort des Kühlraums?\n\n**Typische Werte nach Regionen:**\n• **Nordeuropa** - 25-30°C\n• **Mitteleuropa** - 30-35°C\n• **Südeuropa** - 35-40°C\n• **Naher Osten/Afrika** - 40-45°C\n• **Tropische Regionen** - 35-45°C\n\n**Beispiele:**\n• \"35°C\" (Standard-Auslegungsbedingung)\n• \"40°C\" (heißes Klima)\n• \"30°C\" (gemäßigtes Klima)\n\n*Dies bestimmt den Temperaturunterschied, den Ihr System bewältigen muss.*"
+        },
+        validate: (answer) => {
+            const temp = extractTemperature(answer);
+            if (temp === null || temp < 20 || temp > 55) {
+                return { 
+                    valid: false, 
+                    error: "Please provide an ambient temperature between 20°C and 55°C" 
+                };
+            }
+            return { valid: true, data: { ambient_temperature: temp } };
+        }
+    },
+    {
+        id: 'products',
+        order: 4,
         required: true,
         question: {
             en: "📦 **Product Type**\n\nWhat products will you store in this cold room?\n\n**Product categories:**\n• **Meat** - Beef, pork, poultry\n• **Fish** - Fresh fish, seafood\n• **Dairy** - Milk, cheese, yogurt\n• **Fruits** - Apples, oranges, berries\n• **Vegetables** - Leafy greens, root vegetables\n• **Frozen** - Pre-frozen products\n• **Beverages** - Beer, soft drinks\n• **General** - Mixed products\n\n**Examples:** \"meat\", \"fresh fish\", \"dairy products\", \"mixed vegetables\"",
@@ -63,7 +83,7 @@ const QUESTIONS = [
     },
     {
         id: 'daily_load',
-        order: 4,
+        order: 5,
         required: true,
         question: {
             en: "⚖️ **Daily Product Load**\n\nHow much product (in kg) will be loaded into the cold room daily?\n\nThis includes:\n• New products entering the room\n• Products being moved or restocked\n• Total daily throughput\n\n**Examples:**\n• \"500 kg per day\"\n• \"1000kg daily\"\n• \"2 tons\"\n• \"No daily loading\" (for static storage)\n\n*This affects the cooling capacity calculation.*",
@@ -83,7 +103,7 @@ const QUESTIONS = [
     },
     {
         id: 'entry_temperature',
-        order: 5,
+        order: 6,
         required: true,
         question: {
             en: "🌡️ **Product Entry Temperature**\n\nWhat temperature are products when they enter the cold room?\n\n**Common scenarios:**\n• **Room temperature** - 20-25°C (fresh products)\n• **Pre-cooled** - 5-10°C (partially chilled)\n• **Ambient** - 15-35°C (varies by season)\n• **Already frozen** - -18°C (frozen products)\n\n**Examples:**\n• \"20°C\" (room temperature)\n• \"35°C\" (hot climate)\n• \"5°C\" (pre-cooled)\n• \"-18°C\" (already frozen)\n\n*Higher entry temperatures require more cooling capacity.*",
@@ -99,26 +119,6 @@ const QUESTIONS = [
                 };
             }
             return { valid: true, data: { product_entry_temperature: temp } };
-        }
-    },
-    {
-        id: 'ambient_temperature',
-        order: 6,
-        required: true,
-        question: {
-            en: "🌤️ **Ambient Temperature**\n\nWhat is the ambient (outside) temperature where the cold room will be installed?\n\n**Typical values by region:**\n• **Northern Europe** - 25-30°C\n• **Central Europe** - 30-35°C\n• **Southern Europe** - 35-40°C\n• **Middle East/Africa** - 40-45°C\n• **Tropical regions** - 35-45°C\n\n**Examples:**\n• \"35°C\" (standard design condition)\n• \"40°C\" (hot climate)\n• \"30°C\" (moderate climate)\n\n*Higher ambient temperatures increase cooling requirements.*",
-            tr: "🌤️ **Çevre Sıcaklığı**\n\nSoğuk odanın kurulacağı yerdeki çevre (dış) sıcaklığı nedir?\n\n**Bölgelere göre tipik değerler:**\n• **Kuzey Avrupa** - 25-30°C\n• **Orta Avrupa** - 30-35°C\n• **Güney Avrupa** - 35-40°C\n• **Orta Doğu/Afrika** - 40-45°C\n• **Tropik bölgeler** - 35-45°C\n\n**Örnekler:**\n• \"35°C\" (standart tasarım koşulu)\n• \"40°C\" (sıcak iklim)\n• \"30°C\" (ılıman iklim)\n\n*Yüksek çevre sıcaklıkları soğutma gereksinimlerini artırır.*",
-            de: "🌤️ **Umgebungstemperatur**\n\nWie hoch ist die Umgebungstemperatur (außen) am Installationsort des Kühlraums?\n\n**Typische Werte nach Regionen:**\n• **Nordeuropa** - 25-30°C\n• **Mitteleuropa** - 30-35°C\n• **Südeuropa** - 35-40°C\n• **Naher Osten/Afrika** - 40-45°C\n• **Tropische Regionen** - 35-45°C\n\n**Beispiele:**\n• \"35°C\" (Standard-Auslegungsbedingung)\n• \"40°C\" (heißes Klima)\n• \"30°C\" (gemäßigtes Klima)\n\n*Höhere Umgebungstemperaturen erhöhen den Kühlbedarf.*"
-        },
-        validate: (answer) => {
-            const temp = extractTemperature(answer);
-            if (temp === null || temp < 20 || temp > 55) {
-                return { 
-                    valid: false, 
-                    error: "Please provide an ambient temperature between 20°C and 55°C" 
-                };
-            }
-            return { valid: true, data: { ambient_temperature: temp } };
         }
     },
     {
@@ -138,7 +138,11 @@ const QUESTIONS = [
                     error: "Please provide insulation thickness between 50mm and 300mm" 
                 };
             }
-            return { valid: true, data: { wall_insulation: thickness } };
+            return { valid: true, data: { 
+                wall_insulation: thickness,
+                ceiling_insulation: thickness + 20, // Usually 20mm thicker
+                floor_insulation: Math.max(50, thickness - 20) // Usually 20mm thinner
+            } };
         }
     },
     {
@@ -159,6 +163,40 @@ const QUESTIONS = [
                 };
             }
             return { valid: true, data: { door_openings_per_day: openings } };
+        }
+    },
+    {
+        id: 'cooling_time',
+        order: 9,
+        required: true,
+        question: {
+            en: "⏱️ **Cooling Time Requirements**\n\nHow quickly do products need to be cooled to storage temperature?\n\n**Typical cooling times:**\n• **6 hours** - Rapid cooling (higher capacity needed)\n• **12 hours** - Standard fast cooling\n• **24 hours** - Normal cooling (most common)\n• **48 hours** - Slow cooling (lower capacity)\n\n**Examples:**\n• \"24 hours\" (standard)\n• \"12 hours\" (fast cooling required)\n• \"6 hours\" (rapid cooling)\n\n*Shorter cooling times require higher capacity equipment.*",
+            tr: "⏱️ **Soğutma Süresi Gereksinimleri**\n\nÜrünlerin depolama sıcaklığına ne kadar sürede soğutulması gerekiyor?\n\n**Tipik soğutma süreleri:**\n• **6 saat** - Hızlı soğutma (yüksek kapasite gerekli)\n• **12 saat** - Standart hızlı soğutma\n• **24 saat** - Normal soğutma (en yaygın)\n• **48 saat** - Yavaş soğutma (düşük kapasite)\n\n**Örnekler:**\n• \"24 saat\" (standart)\n• \"12 saat\" (hızlı soğutma gerekli)\n• \"6 saat\" (çok hızlı soğutma)\n\n*Daha kısa soğutma süreleri daha yüksek kapasiteli ekipman gerektirir.*",
+            de: "⏱️ **Kühlzeit-Anforderungen**\n\nWie schnell müssen Produkte auf Lagertemperatur gekühlt werden?\n\n**Typische Kühlzeiten:**\n• **6 Stunden** - Schnellkühlung (höhere Kapazität erforderlich)\n• **12 Stunden** - Standard-Schnellkühlung\n• **24 Stunden** - Normale Kühlung (am häufigsten)\n• **48 Stunden** - Langsame Kühlung (geringere Kapazität)\n\n**Beispiele:**\n• \"24 Stunden\" (Standard)\n• \"12 Stunden\" (Schnellkühlung erforderlich)\n• \"6 Stunden\" (Schnellkühlung)\n\n*Kürzere Kühlzeiten erfordern Geräte mit höherer Kapazität.*"
+        },
+        validate: (answer) => {
+            const hours = extractCoolingTime(answer);
+            if (hours < 2 || hours > 72) {
+                return { 
+                    valid: false, 
+                    error: "Please provide cooling time between 2 and 72 hours" 
+                };
+            }
+            return { valid: true, data: { cooling_time_hours: hours } };
+        }
+    },
+    {
+        id: 'system_requirements',
+        order: 10,
+        required: true,
+        question: {
+            en: "🔧 **System Requirements**\n\nWhat are your system design preferences?\n\n**Design considerations:**\n• **Standard** - Normal safety margins (20% extra capacity)\n• **Conservative** - High safety margins (30% extra capacity)\n• **Minimal** - Tight sizing (10% extra capacity)\n• **Future expansion** - Planning for growth (40% extra capacity)\n\n**Climate considerations:**\n• **Temperate** - Moderate climate\n• **Hot/Humid** - Tropical or desert climate\n• **Mild** - Northern European climate\n\n**Examples:**\n• \"standard design with temperate climate\"\n• \"conservative sizing for hot climate\"\n• \"future expansion, moderate climate\"\n\n*Higher safety factors ensure reliable operation.*",
+            tr: "🔧 **Sistem Gereksinimleri**\n\nSistem tasarımı tercihleriniz nelerdir?\n\n**Tasarım değerlendirmeleri:**\n• **Standart** - Normal güvenlik marjları (%20 ekstra kapasite)\n• **Muhafazakar** - Yüksek güvenlik marjları (%30 ekstra kapasite)\n• **Minimal** - Sıkı boyutlandırma (%10 ekstra kapasite)\n• **Gelecek genişleme** - Büyüme planlaması (%40 ekstra kapasite)\n\n**İklim değerlendirmeleri:**\n• **Ilıman** - Orta iklim\n• **Sıcak/Nemli** - Tropik veya çöl iklimi\n• **Yumuşak** - Kuzey Avrupa iklimi\n\n**Örnekler:**\n• \"ılıman iklim ile standart tasarım\"\n• \"sıcak iklim için muhafazakar boyutlandırma\"\n• \"gelecek genişleme, orta iklim\"\n\n*Yüksek güvenlik faktörleri güvenilir çalışma sağlar.*",
+            de: "🔧 **Systemanforderungen**\n\nWas sind Ihre Systemdesign-Präferenzen?\n\n**Design-Überlegungen:**\n• **Standard** - Normale Sicherheitsmargen (20% Zusatzkapazität)\n• **Konservativ** - Hohe Sicherheitsmargen (30% Zusatzkapazität)\n• **Minimal** - Enge Dimensionierung (10% Zusatzkapazität)\n• **Zukünftige Erweiterung** - Planung für Wachstum (40% Zusatzkapazität)\n\n**Klima-Überlegungen:**\n• **Gemäßigt** - Moderates Klima\n• **Heiß/Feucht** - Tropisches oder Wüstenklima\n• **Mild** - Nordeuropäisches Klima\n\n**Beispiele:**\n• \"Standarddesign mit gemäßigtem Klima\"\n• \"Konservative Dimensionierung für heißes Klima\"\n• \"Zukünftige Erweiterung, moderates Klima\"\n\n*Höhere Sicherheitsfaktoren gewährleisten zuverlässigen Betrieb.*"
+        },
+        validate: (answer) => {
+            const requirements = extractSystemRequirements(answer);
+            return { valid: true, data: requirements };
         }
     }
 ];
@@ -231,7 +269,7 @@ function getWelcomeMessage(language) {
         en: {
             title: "❄️ **Cold Room Capacity Calculator**",
             subtitle: "Professional refrigeration system sizing with step-by-step guidance",
-            intro: "I'll guide you through **9 essential questions** to calculate the optimal cooling capacity for your cold room.",
+            intro: "I'll guide you through **10 essential questions** to calculate the optimal cooling capacity for your cold room.",
             commands: "**💬 Available Commands (use anytime):**",
             commandList: [
                 "• **help** - Show this command list",
@@ -253,7 +291,7 @@ function getWelcomeMessage(language) {
         tr: {
             title: "❄️ **Soğuk Oda Kapasite Hesaplayıcısı**",
             subtitle: "Adım adım rehberlik ile profesyonel soğutma sistemi boyutlandırması",
-            intro: "Soğuk odanız için optimal soğutma kapasitesini hesaplamak üzere **9 temel soru** ile size rehberlik edeceğim.",
+            intro: "Soğuk odanız için optimal soğutma kapasitesini hesaplamak üzere **10 temel soru** ile size rehberlik edeceğim.",
             commands: "**💬 Kullanılabilir Komutlar (istediğiniz zaman kullanın):**",
             commandList: [
                 "• **yardım** - Bu komut listesini göster",
@@ -275,7 +313,7 @@ function getWelcomeMessage(language) {
         de: {
             title: "❄️ **Kühlraum-Kapazitätsrechner**",
             subtitle: "Professionelle Kühlsystemauslegung mit Schritt-für-Schritt-Anleitung",
-            intro: "Ich führe Sie durch **9 wesentliche Fragen**, um die optimale Kühlkapazität für Ihren Kühlraum zu berechnen.",
+            intro: "Ich führe Sie durch **10 wesentliche Fragen**, um die optimale Kühlkapazität für Ihren Kühlraum zu berechnen.",
             commands: "**💬 Verfügbare Befehle (jederzeit verwendbar):**",
             commandList: [
                 "• **hilfe** - Diese Befehlsliste anzeigen",
@@ -621,6 +659,62 @@ function extractDoorOpenings(answer) {
     return numberMatch ? parseFloat(numberMatch[1]) : 10; // Default
 }
 
+function extractCoolingTime(answer) {
+    const lowerAnswer = answer.toLowerCase();
+    
+    // Extract number and check for time units
+    const numberMatch = answer.match(/(\d+(?:\.\d+)?)/);
+    if (!numberMatch) return 24; // Default
+    
+    let hours = parseFloat(numberMatch[1]);
+    
+    // Convert days to hours if specified
+    if (lowerAnswer.includes('day') || lowerAnswer.includes('gün') || lowerAnswer.includes('tag')) {
+        hours *= 24;
+    }
+    
+    return hours;
+}
+
+function extractSystemRequirements(answer) {
+    const lowerAnswer = answer.toLowerCase();
+    
+    // Extract safety factor
+    let safety_factor = 1.2; // Default standard
+    if (lowerAnswer.includes('minimal') || lowerAnswer.includes('tight')) {
+        safety_factor = 1.1;
+    } else if (lowerAnswer.includes('conservative') || lowerAnswer.includes('muhafazakar') || lowerAnswer.includes('konservativ')) {
+        safety_factor = 1.3;
+    } else if (lowerAnswer.includes('expansion') || lowerAnswer.includes('future') || lowerAnswer.includes('genişleme') || lowerAnswer.includes('erweiterung')) {
+        safety_factor = 1.4;
+    }
+    
+    // Extract climate zone
+    let climate_zone = 'temperate'; // Default
+    if (lowerAnswer.includes('hot') || lowerAnswer.includes('humid') || lowerAnswer.includes('tropical') || 
+        lowerAnswer.includes('desert') || lowerAnswer.includes('sıcak') || lowerAnswer.includes('heiß')) {
+        climate_zone = 'tropical';
+    } else if (lowerAnswer.includes('mild') || lowerAnswer.includes('cool') || lowerAnswer.includes('northern') ||
+               lowerAnswer.includes('yumuşak') || lowerAnswer.includes('mild')) {
+        climate_zone = 'arctic';
+    }
+    
+    // Extract humidity factor
+    let humidity_factor = 1.0; // Default
+    if (lowerAnswer.includes('humid') || lowerAnswer.includes('nemli') || lowerAnswer.includes('feucht')) {
+        humidity_factor = 1.15;
+    } else if (lowerAnswer.includes('dry') || lowerAnswer.includes('kuru') || lowerAnswer.includes('trocken')) {
+        humidity_factor = 0.95;
+    }
+    
+    return {
+        safety_factor: safety_factor,
+        climate_zone: climate_zone,
+        humidity_factor: humidity_factor,
+        future_expansion: safety_factor > 1.3 ? 1.1 : 1.0 // Additional expansion factor
+    };
+}
+
 function compileCalculationParameters(answers) {
     const params = {};
     
@@ -889,7 +983,9 @@ function skipCurrentQuestion(session) {
         'entry_temperature': '20°C',
         'ambient_temperature': '35°C',
         'insulation': '100mm',
-        'door_openings': '10 times'
+        'door_openings': '10 times',
+        'cooling_time': '24 hours',
+        'system_requirements': 'standard design with temperate climate'
     };
     
     const defaultAnswer = defaultAnswers[currentQuestion.id] || 'default';
