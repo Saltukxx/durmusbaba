@@ -97,7 +97,46 @@ To calculate cooling capacity, please provide:
     }
     
     return responses.get(language, responses['en'])
+
+def handle_message_with_intent_router(user_id, message_text):
+    """Handle message using Node.js intent router for better flow management"""
+    try:
+        # Call the Node.js intent router
+        result = subprocess.run([
+            'node', '-e', f'''
+            const intentRouter = require('./intentRouter');
+            const sessionManager = require('./sessionManager');
+            
+            async function processMessage() {{
+                try {{
+                    const session = sessionManager.getSession("{user_id}");
+                    const response = await intentRouter.handleMessage(session, "{message_text.replace('"', '\\"')}");
+                    console.log(response);
+                }} catch (error) {{
+                    console.error("Error:", error.message);
+                    console.log("I'm sorry, there was an error processing your request. Please try again.");
+                }}
+            }}
+            
+            processMessage();
+            '''
+        ], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
+        
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.strip()
+        else:
+            print(f"Node.js intent router error: {result.stderr}")
+            # Fallback to original Gemini response
+            return get_gemini_response(user_id, message_text)
+            
+    except Exception as e:
+        print(f"Error calling Node.js intent router: {e}")
+        # Fallback to original Gemini response
+        return get_gemini_response(user_id, message_text)
+
 import time
+import subprocess
+import sys
 import threading
 from order_notification import handle_order_webhook, notify_new_order, check_for_new_orders
 from datetime import datetime
@@ -1355,9 +1394,9 @@ def webhook():
                         message_text = msg["text"]["body"]
                         print(f"Message text: {message_text}")
                         
-                        # Get response from Gemini AI
-                        response_text = get_gemini_response(sender, message_text)
-                        print(f"Response from Gemini: {response_text}")
+                        # Use Node.js intent router for better handling
+                        response_text = handle_message_with_intent_router(sender, message_text)
+                        print(f"Response from intent router: {response_text}")
                     
                     elif message_type == "image" and "image" in msg:
                         # Handle image messages
