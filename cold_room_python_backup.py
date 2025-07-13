@@ -5,11 +5,14 @@ Used when Node.js modules are not available
 
 import re
 import time
+import json
+import os
 from typing import Dict, List, Optional, Tuple
 
 class ColdRoomFlowPython:
     def __init__(self):
-        self.active_flows = {}  # user_id -> flow_data
+        self.state_file = 'cold_room_state.json'
+        self.active_flows = self.load_state()  # user_id -> flow_data
         self.questions = [
             'dimensions',
             'temperature', 
@@ -68,6 +71,24 @@ class ColdRoomFlowPython:
             'kühl': 'cool'
         }
 
+    def load_state(self) -> Dict:
+        """Load flow state from file"""
+        try:
+            if os.path.exists(self.state_file):
+                with open(self.state_file, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"Error loading state: {e}")
+        return {}
+
+    def save_state(self):
+        """Save flow state to file"""
+        try:
+            with open(self.state_file, 'w') as f:
+                json.dump(self.active_flows, f, indent=2)
+        except Exception as e:
+            print(f"Error saving state: {e}")
+
     def has_active_flow(self, user_id: str) -> bool:
         """Check if user has active cold room flow"""
         return user_id in self.active_flows
@@ -84,6 +105,7 @@ class ColdRoomFlowPython:
         }
         
         self.active_flows[user_id] = flow_data
+        self.save_state()
         print(f"Started cold room flow for user {user_id} in {language}")
         
         return self.get_welcome_message(language) + '\n\n' + self.get_current_question(flow_data)
@@ -114,6 +136,7 @@ class ColdRoomFlowPython:
         
         # Move to next question or complete calculation
         flow_data['current_step'] += 1
+        self.save_state()  # Save state after each step
         
         if flow_data['current_step'] >= len(self.questions):
             # Complete calculation
@@ -499,6 +522,7 @@ Examples: "6m × 3m" or "6x3" or "6 3"
             
             # End the flow
             del self.active_flows[flow_data['user_id']]
+            self.save_state()
             
             # Format results
             return f"""❄️ **Cold Room Capacity Calculation Results**

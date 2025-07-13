@@ -1,0 +1,18 @@
+{
+  "491783977612": {
+    "user_id": "491783977612",
+    "language": "en",
+    "current_step": 2,
+    "answers": {
+      "dimensions": "10.0m \u00d7 6.0m \u00d7 3.0m",
+      "temperature": "-18\u00b0C"
+    },
+    "parameters": {
+      "length": 10.0,
+      "width": 6.0,
+      "height": 3.0,
+      "temperature": -18
+    },
+    "start_time": 1752449205.7422311
+  }
+}

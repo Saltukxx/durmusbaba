@@ -23,7 +23,11 @@ def handle_message_with_intent_router(user_id, message_text):
             print(f"Cold room calculation detected for user {user_id}")
             
             # Check if user has active cold room flow
-            if cold_room_flow_python.has_active_flow(user_id):
+            has_active = cold_room_flow_python.has_active_flow(user_id)
+            print(f"User {user_id} has active cold room flow: {has_active}")
+            
+            if has_active:
+                print(f"Processing existing cold room flow for user {user_id}")
                 return cold_room_flow_python.process_input(user_id, message_text)
             
             # Try to start the cold room flow via Node.js first
@@ -1354,9 +1358,15 @@ def webhook():
                         print(f"Message text: {message_text}")
                         
                         # Route to Python cold room flow if active
-                        if cold_room_flow_python.has_active_flow(sender):
+                        print(f"Checking if user {sender} has active cold room flow...")
+                        has_active_flow = cold_room_flow_python.has_active_flow(sender)
+                        print(f"User {sender} has active flow: {has_active_flow}")
+                        
+                        if has_active_flow:
+                            print(f"Processing message '{message_text}' through Python cold room flow")
                             response_text = cold_room_flow_python.process_input(sender, message_text)
                         else:
+                            print(f"Processing message '{message_text}' through Node.js intent router")
                             # Use Node.js intent router for better handling
                             response_text = handle_message_with_intent_router(sender, message_text)
                         print(f"Response from intent router: {response_text}")
