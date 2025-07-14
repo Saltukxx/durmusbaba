@@ -30,8 +30,8 @@ def handle_message_with_intent_router(user_id, message_text):
             "lastActivity": int(time.time() * 1000)  # Current time in milliseconds
         }
         
-        # Convert session to JSON string, escaping quotes
-        session_json = json.dumps(session).replace('"', '\\"')
+        # Convert session to JSON string
+        session_json = json.dumps(session)
         
         # Escape quotes in message text for JavaScript
         escaped_message = message_text.replace('"', '\\"')

@@ -12,7 +12,8 @@
       "Bash(mv:*)",
       "Bash(pip3 install:*)",
       "Bash(npm install:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
