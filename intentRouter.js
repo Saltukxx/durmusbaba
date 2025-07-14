@@ -392,12 +392,36 @@ async function handleOrderStatus(session, message) {
  * @returns {string} - Greeting response
  */
 function handleGreeting(session) {
-  const greetings = [
-    "Hello! How can I help you with DURMUSBABA.DE today?",
-    "Hi there! I'm the DURMUSBABA.DE assistant. What can I help you with?",
-    "Welcome to DURMUSBABA.DE! How may I assist you today?",
-    "Greetings! How can I make your DURMUSBABA.DE experience better today?"
-  ];
+  // Get user's language preference or detect from session
+  const language = session.preferences?.language || 'en';
+  
+  // Multilingual greetings
+  const greetings = {
+    en: [
+      "Hello! How can I help you with DURMUSBABA.DE today?",
+      "Hi there! I'm the DURMUSBABA.DE assistant. What can I help you with?",
+      "Welcome to DURMUSBABA.DE! How may I assist you today?",
+      "Greetings! How can I make your DURMUSBABA.DE experience better today?"
+    ],
+    de: [
+      "Hallo! Wie kann ich Ihnen heute bei DURMUSBABA.DE helfen?",
+      "Guten Tag! Ich bin der DURMUSBABA.DE Assistent. Womit kann ich Ihnen helfen?",
+      "Willkommen bei DURMUSBABA.DE! Wie kann ich Ihnen heute behilflich sein?",
+      "Grüß Gott! Wie kann ich Ihr DURMUSBABA.DE Erlebnis heute verbessern?"
+    ],
+    tr: [
+      "Merhaba! DURMUSBABA.DE ile ilgili size nasıl yardımcı olabilirim?",
+      "Selam! Ben DURMUSBABA.DE asistanı. Size nasıl yardımcı olabilirim?",
+      "DURMUSBABA.DE'ye hoş geldiniz! Size bugün nasıl yardımcı olabilirim?",
+      "Merhaba! DURMUSBABA.DE deneyiminizi bugün nasıl daha iyi hale getirebilirim?"
+    ]
+  };
+  
+  // Get greetings for the user's language or fall back to English
+  const languageGreetings = greetings[language] || greetings.en;
+  
+  // Pick a random greeting
+  return languageGreetings[Math.floor(Math.random() * languageGreetings.length)];
   
   // Select a random greeting
   const randomIndex = Math.floor(Math.random() * greetings.length);

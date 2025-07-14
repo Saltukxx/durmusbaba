@@ -18,7 +18,22 @@ from cold_room_python_backup import cold_room_flow_python
 def handle_message_with_intent_router(user_id, message_text):
     """Handle message using Node.js intent router for better flow management"""
     try:
-        # Call the Node.js intent router for all non-cold-room requests
+        # Create a proper session object that matches the Node.js structure
+        session = {
+            "userId": user_id,
+            "chatHistory": [],
+            "preferences": {
+                "language": None  # Will be auto-detected by Node.js
+            },
+            "activeFlow": None,
+            "flowData": {},
+            "lastActivity": int(time.time() * 1000)  # Current time in milliseconds
+        }
+        
+        # Convert session to JSON string, escaping quotes
+        session_json = json.dumps(session).replace('"', '\\"')
+        
+        # Call the Node.js intent router with proper session object
         result = subprocess.run([
             'node', '-e', f'''
             try {{
@@ -28,7 +43,8 @@ def handle_message_with_intent_router(user_id, message_text):
                 
                 async function processMessage() {{
                     try {{
-                        const session = sessionManager.getSession("{user_id}");
+                        // Use the provided session object
+                        const session = {session_json};
                         const response = await intentRouter.handleMessage(session, "{message_text.replace('"', '\\"')}");
                         console.log(response);
                     }} catch (error) {{
