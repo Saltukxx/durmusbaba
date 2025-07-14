@@ -149,19 +149,16 @@ A WhatsApp chatbot powered by Google's Gemini AI for DURMUSBABA.DE, providing cu
 
 ## Project Structure
 
-- `server.js` - Main entry point
-- `webhookHandler.js` - WhatsApp webhook handling
-- `whatsappService.js` - WhatsApp API integration
-- `geminiService.js` - Gemini AI integration
-- `sessionManager.js` - Conversation management
-- `woocommerceService.js` - WooCommerce integration
-
+- `server.js` - Main server application
 - `intentRouter.js` - Intent detection and routing
-- `languageProcessor.js` - Multilingual support
-- `coldRoomCalculator.js` - Cold room capacity calculations
-- `coldRoomFlow.js` - Cold room calculation flow management
-- `routes.js` - API routes
-- `logger.js` - Logging service
+- `languageProcessor.js` - Natural language processing
+- `geminiService.js` - Integration with Google's Gemini AI
+- `whatsappService.js` - WhatsApp Business API integration
+- `woocommerceService.js` - WooCommerce integration
+- `equipmentRecommendationFlow.js` - Equipment recommendation flow
+- `equipmentRecommendationService.js` - Equipment recommendation logic
+- `sessionManager.js` - User session management
+- `errorHandler.js` - Error handling and logging
 
 ## Advanced Features
 

@@ -12,7 +12,7 @@ import re
 from woocommerce_client import woocommerce
 from sales_assistant import is_sales_inquiry, handle_sales_inquiry
 from conversation_context import conversation_context
-from cold_room_python_backup import cold_room_flow_python
+from conversation_context import ConversationContext
 
 
 def handle_message_with_intent_router(user_id, message_text):

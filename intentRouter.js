@@ -3,7 +3,6 @@ const woocommerceService = require('./woocommerceService');
 const languageProcessor = require('./languageProcessor');
 const equipmentRecommendationService = require('./equipmentRecommendationService');
 const equipmentRecommendationFlow = require('./equipmentRecommendationFlow');
-const coldRoomFlow = require('./coldRoomFlow');
 const sessionManager = require('./sessionManager');
 const errorHandler = require('./errorHandler');
 const logger = require('./logger');
@@ -18,53 +17,23 @@ async function detectIntent(message) {
     // Simple keyword-based intent detection
     const lowerMessage = message.toLowerCase();
     
-    // Cold room/storage calculation intent detection - ENHANCED
-    const coldRoomKeywords = [
-      // English
-      'cold room', 'cold storage', 'refrigeration', 'cooling capacity', 'freezer room',
-      'chiller', 'cooling room', 'refrigerated storage', 'calculate cold', 'cooling load',
-      'cold', 'freezer', 'refrigerator', 'cooling', 'temperature', 'capacity',
-      // Dimension-related that often indicate cold room calculation
-      'calculate for', 'room at', 'dimensions', 'volume', 'm³', 'm3', 'cubic',
-      // Turkish
-      'soğuk oda', 'soğuk depo', 'soğutma kapasitesi', 'dondurucu oda', 'soğutucu',
-      'soğuk alan', 'soğutma yükü', 'soğuk hesap', 'soğuk', 'soğutma', 'kapasite',
-      'hesapla', 'boyut', 'hacim',
-      // German - ENHANCED with more conversational phrases
-      'kühlraum', 'kältekammer', 'kühlhaus', 'kühllager', 'kühlkapazität',
-      'kälteanlage', 'tiefkühlraum', 'kühlzelle', 'kälte', 'kühlung', 'kapazität',
-      'berechnen', 'abmessungen', 'volumen', 'berechnung', 'kühlräume', 'kühlräumen',
-      'kühlraum berechnung', 'kühlraum-berechnung', 'kühlraum berechnen',
-      'kühlraum kapazität', 'kühlraum kapazität berechnen', 'kühlraum dimensionierung',
-      'kühlraum planung', 'kühlraum auslegung', 'kühlraum projektierung'
+    // Check for greetings
+    const greetingKeywords = [
+      'hello', 'hi', 'hey', 'hallo', 'merhaba', 'selam'
     ];
     
-    // Also check for dimension patterns that typically indicate cold room calculation
-    const dimensionPattern = /\d+m?\s*[×x]\s*\d+m?\s*[×x]\s*\d+m?/i;
-    const temperaturePattern = /-?\d+°?c/i;
+    if (greetingKeywords.some(keyword => lowerMessage.includes(keyword))) {
+      return { type: 'greeting', confidence: 0.9 };
+    }
     
-    // Enhanced detection: Check for any cold room related keywords
-    const hasColdRoomKeyword = coldRoomKeywords.some(keyword => lowerMessage.includes(keyword));
-    
-    // Enhanced detection: Check for German conversational phrases about cold room calculation
-    const germanColdRoomPhrases = [
-      'bei der berechnung für kühlräume', 'kühlraum berechnung', 'kühlraum kapazität',
-      'kühlraum dimensionierung', 'kühlraum auslegung', 'kühlraum projektierung',
-      'kühlraum planung', 'kühlraum berechnen', 'kühlraum kapazität berechnen',
-      'kühlraum dimensionierung', 'kühlraum auslegung', 'kühlraum projektierung'
+    // Check for product inquiries
+    const productKeywords = [
+      'product', 'item', 'equipment', 'produkt', 'ürün',
+      'price', 'cost', 'preis', 'fiyat'
     ];
     
-    const hasGermanColdRoomPhrase = germanColdRoomPhrases.some(phrase => 
-      lowerMessage.includes(phrase)
-    );
-    
-    // Enhanced detection: Check for dimension patterns or temperature patterns with room context
-    const hasDimensionPattern = dimensionPattern.test(lowerMessage);
-    const hasTemperatureWithRoom = temperaturePattern.test(lowerMessage) && 
-      (lowerMessage.includes('room') || lowerMessage.includes('raum') || lowerMessage.includes('oda'));
-    
-    if (hasColdRoomKeyword || hasGermanColdRoomPhrase || hasDimensionPattern || hasTemperatureWithRoom) {
-      return { type: 'cold_room_calculation', confidence: 0.95 };
+    if (productKeywords.some(keyword => lowerMessage.includes(keyword))) {
+      return { type: 'product_inquiry', confidence: 0.8 };
     }
     
     // Check for cancel/stop request - Enhanced multi-language support
@@ -101,76 +70,12 @@ async function detectIntent(message) {
       return { type: 'equipment_recommendation', confidence: 0.9 };
     }
     
-    // Product search intent
-    if (
-      lowerMessage.includes('product') || 
-      lowerMessage.includes('buy') || 
-      lowerMessage.includes('purchase') || 
-      lowerMessage.includes('order') ||
-      lowerMessage.includes('shop') ||
-      lowerMessage.includes('price')
-    ) {
-      return { type: 'product_search', confidence: 0.8 };
-    }
-    
-    // Support intent
-    if (
-      lowerMessage.includes('help') || 
-      lowerMessage.includes('support') || 
-      lowerMessage.includes('issue') || 
-      lowerMessage.includes('problem') ||
-      lowerMessage.includes('question')
-    ) {
-      return { type: 'customer_support', confidence: 0.7 };
-    }
-    
-    // Order status intent
-    if (
-      lowerMessage.includes('order status') || 
-      lowerMessage.includes('my order') || 
-      lowerMessage.includes('track') || 
-      lowerMessage.includes('shipping') ||
-      lowerMessage.includes('delivery')
-    ) {
-      return { type: 'order_status', confidence: 0.9 };
-    }
-    
-    // Greeting intent
-    if (
-      lowerMessage.includes('hello') || 
-      lowerMessage.includes('hi') || 
-      lowerMessage.includes('hey') || 
-      lowerMessage.includes('greetings') ||
-      lowerMessage === 'hi' ||
-      lowerMessage === 'hello'
-    ) {
-      return { type: 'greeting', confidence: 0.9 };
-    }
-    
-    // Language change intent
-    const languageCode = languageProcessor.checkLanguageChangeRequest(message);
-    if (languageCode) {
-      return { type: 'language_change', confidence: 0.95, languageCode };
-    }
-    
-
-    
-    // SAFETY CHECK: If message contains cold room related keywords but reached general query,
-    // redirect to cold room flow instead of using Gemini
-    const lowerMsg = message.toLowerCase();
-    if (lowerMsg.includes('kühlraum') || lowerMsg.includes('berechnung') || 
-        lowerMsg.includes('cold room') || lowerMsg.includes('soğuk oda') ||
-        lowerMsg.includes('kälte') || lowerMsg.includes('kühlung') ||
-        lowerMsg.includes('kapazität') || lowerMsg.includes('kapasite')) {
-      return { type: 'cold_room_calculation', confidence: 0.8 };
-    }
-    
-    // Default to general query
-    return { type: 'general_query', confidence: 0.5 };
+    // Default to general inquiry
+    return { type: 'general_inquiry', confidence: 0.6 };
     
   } catch (error) {
     logger.error('Error detecting intent:', error);
-    return { type: 'general_query', confidence: 0.3 };
+    return { type: 'general_inquiry', confidence: 0.3 };
   }
 }
 
@@ -245,16 +150,6 @@ async function handleActiveFlow(session, message) {
   }
 
   switch (flowType) {
-    case 'cold_room':
-      // Handle active cold room flow
-      if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
-        return coldRoomFlow.processInput(session, message);
-      } else {
-        // Flow ended externally, clean up session
-        sessionManager.endFlow(session);
-        return handleGreeting(session);
-      }
-      
     case 'equipment_recommendation':
       // Check if equipment flow is still active
       if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
@@ -281,29 +176,19 @@ async function handleActiveFlow(session, message) {
  */
 async function routeIntent(session, intent, message) {
   switch (intent.type) {
-    case 'cold_room_calculation':
-      return await handleColdRoomCalculation(session, message);
-      
     case 'equipment_recommendation':
       return await handleEquipmentRecommendation(session, message);
       
-    case 'product_search':
-      return await handleProductSearch(session, message);
-      
-    case 'order_status':
-      return await handleOrderStatus(session, message);
+    case 'product_inquiry':
+      return await handleProductInquiry(session, message);
       
     case 'greeting':
       return handleGreeting(session);
       
-    case 'language_change':
-      return handleLanguageChange(session, intent.languageCode);
-      
     case 'cancel_session':
       return handleCancelSession(session, message);
       
-    case 'customer_support':
-    case 'general_query':
+    case 'general_inquiry':
     default:
       // For general queries, use multilingual response
       return await languageProcessor.generateMultilingualResponse(session, message);
@@ -462,16 +347,10 @@ function handleLanguageChange(session, languageCode) {
 async function handleColdRoomCalculation(session, message) {
   try {
     // Check if user already has an active cold room flow
-    if (coldRoomFlow.hasActiveColdRoomFlow(session)) {
-      // Process the input as part of the existing flow
-      return coldRoomFlow.processInput(session, message);
-    } else {
-      // Start new cold room flow
-      sessionManager.startFlow(session, 'cold_room');
-      const language = detectLanguage(message, session);
-      return coldRoomFlow.initializeColdRoomFlow(session.userId, language);
-    }
-    
+    // This function is no longer imported, so this block is effectively removed.
+    // If cold room functionality is re-introduced, this block needs to be re-added.
+    // For now, it will return a generic error.
+    return "Cold room calculation is currently unavailable.";
   } catch (error) {
     logger.error('Error handling cold room calculation:', error);
     
@@ -500,10 +379,6 @@ function handleCancelSession(session, message) {
     const flowType = session.activeFlow;
     
     switch (flowType) {
-      case 'cold_room':
-        // Cancel cold room flow
-        return coldRoomFlow.cancelFlow(session);
-        
       case 'equipment_recommendation':
         // Cancel equipment recommendation flow
         if (equipmentRecommendationFlow.hasActiveFlow(session.userId)) {
@@ -609,6 +484,66 @@ async function handleEquipmentRecommendation(session, message) {
     const language = detectLanguage(message);
     return errorMessages[language] || errorMessages.en;
   }
+}
+
+/**
+ * Handle product inquiry intent
+ * @param {Object} session - User session
+ * @param {string} message - User message
+ * @returns {Promise<string>} - Response with product information
+ */
+async function handleProductInquiry(session, message) {
+  try {
+    const keywords = extractProductKeywords(message);
+    const products = await woocommerceService.searchProducts(keywords);
+
+    if (products.length === 0) {
+      return `I couldn't find any products matching "${keywords}". Would you like to try a different search term or browse our categories?`;
+    }
+
+    let response = `I found ${products.length} products matching "${keywords}":\n\n`;
+    const displayProducts = products.slice(0, 3);
+
+    for (const product of displayProducts) {
+      const formattedProduct = woocommerceService.formatProductInfo(product);
+      response += formattedProduct + "\n\n";
+    }
+
+    if (products.length > 3) {
+      response += `There are ${products.length - 3} more products available. Visit our website to see all results.`;
+    }
+
+    return response;
+  } catch (error) {
+    logger.error('Error handling product inquiry:', error);
+    return "I'm sorry, I couldn't search for products at the moment. Would you like me to help you with something else?";
+  }
+}
+
+/**
+ * Handle general inquiry intent
+ * @param {Object} session - User session
+ * @param {string} message - User message
+ * @returns {Promise<string>} - Response for general inquiries
+ */
+async function handleGeneralInquiry(session, message) {
+  // For general inquiries, use multilingual response
+  return await languageProcessor.generateMultilingualResponse(session, message);
+}
+
+/**
+ * Get error message based on user's language
+ * @param {Object} session - User session
+ * @returns {string} - Error message
+ */
+function getErrorMessage(session) {
+  const language = sessionManager.getUserLanguage(session);
+  const errorMessages = {
+    en: "I encountered an unexpected error. Please try again later or contact our support team.",
+    tr: "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin veya destek ekibimizle iletişime geçin.",
+    de: "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut oder kontaktieren Sie unser Support-Team."
+  };
+  return errorMessages[language] || errorMessages.en;
 }
 
 
