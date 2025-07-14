@@ -18,51 +18,7 @@ from cold_room_python_backup import cold_room_flow_python
 def handle_message_with_intent_router(user_id, message_text):
     """Handle message using Node.js intent router for better flow management"""
     try:
-        # Check for cold room calculation request first (Python-side check)
-        if is_cold_room_calculation_request(message_text):
-            print(f"Cold room calculation detected for user {user_id}")
-            
-            # Check if user has active cold room flow
-            has_active = cold_room_flow_python.has_active_flow(user_id)
-            print(f"User {user_id} has active cold room flow: {has_active}")
-            
-            if has_active:
-                print(f"Processing existing cold room flow for user {user_id}")
-                return cold_room_flow_python.process_input(user_id, message_text)
-            
-            # Try to start the cold room flow via Node.js first
-            try:
-                result = subprocess.run([
-                    'node', '-e', f'''
-                    try {{
-                        require('dotenv').config();
-                        const coldRoomFlow = require('./coldRoomFlow');
-                        const sessionManager = require('./sessionManager');
-                        
-                        const session = sessionManager.getSession("{user_id}");
-                        sessionManager.startFlow(session, 'cold_room');
-                        const response = coldRoomFlow.initializeColdRoomFlow("{user_id}", 'en');
-                        console.log(response);
-                    }} catch (error) {{
-                        console.error("Node.js cold room error:", error.message);
-                        // Fallback to Python cold room response
-                        console.log("❄️ **Cold Room Capacity Calculator**\\n\\nI'll help you calculate the required cooling capacity for your cold room. I need to ask you a few questions to get accurate results.\\n\\n**Commands you can use:**\\n• Type \\"show\\" to see your current answers\\n• Type \\"back\\" to go to previous question\\n• Type \\"edit [number]\\" to edit a specific answer\\n• Type \\"restart\\" to start over\\n• Type \\"cancel\\" to exit\\n\\nLet's begin!\\n\\n📏 **Question 1/11: Room Dimensions**\\n\\nWhat are the dimensions of your cold room?\\n\\nPlease provide in format: **Length × Width × Height**\\nExamples: \\"10m × 6m × 3m\\" or \\"10x6x3\\" or \\"10 6 3\\"\\n\\n**Supported ranges:**\\n• Length: 1-50 meters\\n• Width: 1-50 meters  \\n• Height: 1-10 meters");
-                    }}
-                    '''
-                ], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
-                
-                if result.returncode == 0 and result.stdout.strip():
-                    return result.stdout.strip()
-                else:
-                    print(f"Node.js cold room flow error: {result.stderr}")
-                    # Fallback to Python cold room flow
-                    return cold_room_flow_python.initialize_flow(user_id, 'en')
-            except Exception as e:
-                print(f"Error starting cold room flow: {e}")
-                # Fallback to Python cold room flow
-                return cold_room_flow_python.initialize_flow(user_id, 'en')
-        
-        # Call the Node.js intent router for other requests
+        # Call the Node.js intent router for all non-cold-room requests
         result = subprocess.run([
             'node', '-e', f'''
             try {{
@@ -1357,17 +1313,24 @@ def webhook():
                         message_text = msg["text"]["body"]
                         print(f"Message text: {message_text}")
                         
-                        # Route to Python cold room flow if active
+                        # Check if user has active cold room flow
                         print(f"Checking if user {sender} has active cold room flow...")
                         has_active_flow = cold_room_flow_python.has_active_flow(sender)
                         print(f"User {sender} has active flow: {has_active_flow}")
                         
+                        # Route messages appropriately:
+                        # 1. If user has active cold room flow, continue with it
+                        # 2. If message is a cold room calculation request, start cold room flow
+                        # 3. Otherwise, use Node.js intent router (which routes to Gemini for general queries)
                         if has_active_flow:
                             print(f"Processing message '{message_text}' through Python cold room flow")
                             response_text = cold_room_flow_python.process_input(sender, message_text)
+                        elif is_cold_room_calculation_request(message_text):
+                            print(f"Starting cold room flow for message '{message_text}'")
+                            response_text = cold_room_flow_python.initialize_flow(sender, 'en')
                         else:
                             print(f"Processing message '{message_text}' through Node.js intent router")
-                            # Use Node.js intent router for better handling
+                            # Use Node.js intent router for better handling (routes to Gemini for general queries)
                             response_text = handle_message_with_intent_router(sender, message_text)
                         print(f"Response from intent router: {response_text}")
                     
