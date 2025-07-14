@@ -338,32 +338,6 @@ function handleLanguageChange(session, languageCode) {
   return responses[languageCode] || responses['en'];
 }
 
-/**
- * Handle cold room calculation intent
- * @param {Object} session - User session
- * @param {string} message - User message
- * @returns {Promise<string>} - Response with calculation flow
- */
-async function handleColdRoomCalculation(session, message) {
-  try {
-    // Check if user already has an active cold room flow
-    // This function is no longer imported, so this block is effectively removed.
-    // If cold room functionality is re-introduced, this block needs to be re-added.
-    // For now, it will return a generic error.
-    return "Cold room calculation is currently unavailable.";
-  } catch (error) {
-    logger.error('Error handling cold room calculation:', error);
-    
-    const errorMessages = {
-      en: "❌ I encountered an error while starting the cold room calculation. Please try again or contact our support team.",
-      tr: "❌ Soğuk oda hesaplaması başlatılırken bir hata oluştu. Lütfen tekrar deneyin veya destek ekibimizle iletişime geçin.",
-      de: "❌ Beim Starten der Kühlraum-Berechnung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie unser Support-Team."
-    };
-    
-    const language = detectLanguage(message, session);
-    return errorMessages[language] || errorMessages.en;
-  }
-}
 
 /**
  * Handle cancel session intent with unified flow management

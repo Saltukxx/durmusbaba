@@ -33,7 +33,11 @@ def handle_message_with_intent_router(user_id, message_text):
         # Convert session to JSON string, escaping quotes
         session_json = json.dumps(session).replace('"', '\\"')
         
+        # Escape quotes in message text for JavaScript
+        escaped_message = message_text.replace('"', '\\"')
+        
         # Call the Node.js intent router with proper session object
+        current_dir = os.path.dirname(os.path.abspath(__file__))
         result = subprocess.run([
             'node', '-e', f'''
             try {{
@@ -45,7 +49,7 @@ def handle_message_with_intent_router(user_id, message_text):
                     try {{
                         // Use the provided session object
                         const session = {session_json};
-                        const response = await intentRouter.handleMessage(session, "{message_text.replace('"', '\\"')}");
+                        const response = await intentRouter.handleMessage(session, "{escaped_message}");
                         console.log(response);
                     }} catch (error) {{
                         console.error("Error:", error.message);
@@ -59,7 +63,7 @@ def handle_message_with_intent_router(user_id, message_text):
                 console.log("I'm sorry, there was an error processing your request. Please try again.");
             }}
             '''
-        ], capture_output=True, text=True, cwd=os.path.dirname(os.path.abspath(__file__)))
+        ], capture_output=True, text=True, cwd=current_dir)
         
         if result.returncode == 0 and result.stdout.strip():
             return result.stdout.strip()
@@ -1329,25 +1333,9 @@ def webhook():
                         message_text = msg["text"]["body"]
                         print(f"Message text: {message_text}")
                         
-                        # Check if user has active cold room flow
-                        print(f"Checking if user {sender} has active cold room flow...")
-                        has_active_flow = cold_room_flow_python.has_active_flow(sender)
-                        print(f"User {sender} has active flow: {has_active_flow}")
-                        
-                        # Route messages appropriately:
-                        # 1. If user has active cold room flow, continue with it
-                        # 2. If message is a cold room calculation request, start cold room flow
-                        # 3. Otherwise, use Node.js intent router (which routes to Gemini for general queries)
-                        if has_active_flow:
-                            print(f"Processing message '{message_text}' through Python cold room flow")
-                            response_text = cold_room_flow_python.process_input(sender, message_text)
-                        elif is_cold_room_calculation_request(message_text):
-                            print(f"Starting cold room flow for message '{message_text}'")
-                            response_text = cold_room_flow_python.initialize_flow(sender, 'en')
-                        else:
-                            print(f"Processing message '{message_text}' through Node.js intent router")
-                            # Use Node.js intent router for better handling (routes to Gemini for general queries)
-                            response_text = handle_message_with_intent_router(sender, message_text)
+                        # Process message through Node.js intent router
+                        print(f"Processing message '{message_text}' through Node.js intent router")
+                        response_text = handle_message_with_intent_router(sender, message_text)
                         print(f"Response from intent router: {response_text}")
                     
                     elif message_type == "image" and "image" in msg:
@@ -2553,20 +2541,6 @@ def extract_order_number(text):
     
     return None
 
-def is_cold_room_calculation_request(text):
-    """Check if the message is requesting cold room calculation"""
-    text_lower = text.lower()
-    keywords = [
-        'cold room', 'cold storage', 'refrigeration', 'cooling capacity',
-        'freezer room', 'chiller', 'cooling room', 'refrigerated storage',
-        'calculate cold', 'cold requirements', 'cooling load',
-        'soğuk oda', 'soğuk depo', 'soğutma kapasitesi', 'dondurucu oda',
-        'soğutucu', 'soğuk alan', 'soğutma yükü', 'soğuk hesap',
-        'kühlraum', 'kältekammer', 'kühlhaus', 'kühllager',
-        'kühlkapazität', 'kälteanlage', 'tiefkühlraum', 'kühlzelle',
-        'calculate', 'hesapla', 'berechnen', 'capacity', 'kapasite', 'kapazität'
-    ]
-    return any(keyword in text_lower for keyword in keywords)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))
